@@ -204,7 +204,7 @@ Wave 7 (Final):
 
 ### Task 1: Project Scaffolding
 
-- [ ] 1. Initialize Bun/TypeScript project with oh-my-opencode dependency
+- [x] 1. Initialize Bun/TypeScript project with oh-my-opencode dependency
 
   **What to do**:
   - Run `bun init` in project root
@@ -308,7 +308,7 @@ Wave 7 (Final):
 
 ### Task 2: Config Schema (Zod v4)
 
-- [ ] 2. Define Zod v4 schema for olimpus.jsonc
+- [x] 2. Define Zod v4 schema for olimpus.jsonc
 
   **What to do**:
   - Create `src/config/schema.ts`
@@ -443,7 +443,7 @@ Wave 7 (Final):
 
 ### Task 3: Config Loader + Translation Layer
 
-- [ ] 3. Implement config loader and oh-my-opencode config translator
+- [x] 3. Implement config loader and oh-my-opencode config translator
 
   **What to do**:
   - Create `src/config/loader.ts`:

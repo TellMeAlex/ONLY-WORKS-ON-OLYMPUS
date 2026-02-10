@@ -1,0 +1,101 @@
+import * as fs from "fs";
+import * as path from "path";
+import { parse } from "jsonc-parser";
+import { OlimpusConfigSchema, type OlimpusConfig } from "./schema";
+
+/**
+ * Load olimpus.jsonc from project directory and optional user config directory.
+ * Search order: project dir first (overrides user config dir if both exist).
+ * Returns parsed and validated config with merged defaults.
+ */
+export function loadOlimpusConfig(projectDir: string): OlimpusConfig {
+  const homeDir = process.env.HOME ?? ".";
+  const userConfigPath = path.join(
+    homeDir,
+    ".config",
+    "opencode",
+    "olimpus.jsonc"
+  );
+  const projectConfigPath = path.join(projectDir, "olimpus.jsonc");
+
+  let configData: Record<string, unknown> = {};
+
+  if (fs.existsSync(userConfigPath)) {
+    const content = fs.readFileSync(userConfigPath, "utf-8");
+    const userConfig = parseJsonc(content, userConfigPath);
+    if (userConfig) {
+      configData = deepMerge(configData, userConfig as Record<string, unknown>);
+    }
+  }
+
+  if (fs.existsSync(projectConfigPath)) {
+    const content = fs.readFileSync(projectConfigPath, "utf-8");
+    const projectConfig = parseJsonc(content, projectConfigPath);
+    if (projectConfig) {
+      configData = deepMerge(
+        configData,
+        projectConfig as Record<string, unknown>
+      );
+    }
+  }
+
+  const result = OlimpusConfigSchema.safeParse(configData);
+  if (!result.success) {
+    const errors = result.error.issues
+      .map((issue) => `  ${issue.path.join(".")} - ${issue.message}`)
+      .join("\n");
+    throw new Error(`Invalid olimpus config:\n${errors}`);
+  }
+
+  return result.data;
+}
+
+/**
+ * Parse JSONC string and return parsed object or throw error.
+ */
+function parseJsonc(content: string, filePath: string): unknown {
+  const errors: Array<{ error: number; offset: number; length: number }> = [];
+  const parsed = parse(content, errors, { allowTrailingComma: true });
+
+  if (errors.length > 0) {
+    const errorMessages = errors
+      .map((err) => {
+        const line = content.substring(0, err.offset).split("\n").length;
+        return `  Offset ${err.offset} (line ${line}): error code ${err.error}`;
+      })
+      .join("\n");
+    throw new Error(`JSONC parse error in ${filePath}:\n${errorMessages}`);
+  }
+
+  return parsed;
+}
+
+/**
+ * Deep merge two objects. Properties from source override target.
+ * Arrays are replaced entirely (not merged).
+ */
+function deepMerge(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>
+): Record<string, unknown> {
+  const result = { ...target };
+
+  for (const [key, sourceValue] of Object.entries(source)) {
+    const targetValue = result[key];
+
+    if (isPlainObject(targetValue) && isPlainObject(sourceValue)) {
+      result[key] = deepMerge(targetValue, sourceValue);
+    } else {
+      result[key] = sourceValue;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Check if value is a plain object (not array, null, etc.)
+ */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
