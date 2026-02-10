@@ -1,0 +1,277 @@
+{
+  // ============================================================================
+  // Olimpus Plugin Configuration
+  // ============================================================================
+  // This file demonstrates the complete Olimpus meta-orchestrator configuration.
+  // Place this in your project root (olimpus.jsonc) or user config (~/.config/opencode/olimpus.jsonc)
+  // Project config takes precedence over user config.
+
+  // ============================================================================
+  // SECTION 1: META_AGENTS
+  // ============================================================================
+  // Define custom meta-agents that route user requests to specialized oh-my-opencode agents.
+  // Each meta-agent has routing rules that determine which builtin agent to delegate to.
+  
+  "meta_agents": {
+    // ========================================================================
+    // Atenea - Strategic Planning & Architecture Analysis
+    // ========================================================================
+    "atenea": {
+      // Base LLM model for this meta-agent
+      "base_model": "claude-3-5-sonnet-20241022",
+      
+      // Builtin agents this meta-agent can delegate to
+      "delegates_to": ["oracle", "prometheus", "atlas", "metis"],
+      
+      // Routing rules: evaluated in order, first match wins
+      "routing_rules": [
+        {
+          // ===== MATCHER 1: COMPLEXITY MATCHER =====
+          // Routes based on prompt complexity heuristic (line count + keywords)
+          "matcher": {
+            "type": "complexity",
+            "threshold": "high"  // "low", "medium", or "high"
+          },
+          "target_agent": "oracle",
+          "config_overrides": {
+            "prompt": "You are a strategic architecture advisor. Analyze this complex problem from first principles, considering system design patterns, scalability, maintainability, and long-term implications."
+          }
+        },
+        {
+          "matcher": {
+            "type": "complexity",
+            "threshold": "medium"
+          },
+          "target_agent": "prometheus",
+          "config_overrides": {
+            "prompt": "You are a technical strategist. Analyze this problem considering trade-offs, patterns, and best practices."
+          }
+        },
+        {
+          // ===== MATCHER 2: ALWAYS MATCHER =====
+          // Catch-all fallback (no conditions)
+          "matcher": {
+            "type": "always"
+          },
+          "target_agent": "metis",
+          "config_overrides": {
+            "prompt": "You are a general technical analyst. Synthesize information and provide comprehensive analysis."
+          }
+        }
+      ]
+    },
+
+    // ========================================================================
+    // Hermes - Communication & Research
+    // ========================================================================
+    "hermes": {
+      "base_model": "claude-3-5-sonnet-20241022",
+      "delegates_to": ["librarian", "explore", "oracle"],
+      
+      "routing_rules": [
+        {
+          // ===== MATCHER 3: KEYWORD MATCHER (ANY MODE) =====
+          // Routes if ANY of the keywords appears in the prompt (case-insensitive)
+          "matcher": {
+            "type": "keyword",
+            "keywords": ["docs", "documentation", "guide", "search", "lookup"],
+            "mode": "any"  // "any" = OR logic, "all" = AND logic
+          },
+          "target_agent": "librarian",
+          "config_overrides": {
+            "prompt": "You are a research specialist. Search comprehensively for documentation and guides."
+          }
+        },
+        {
+          // ===== MATCHER 3b: KEYWORD MATCHER (ALL MODE) =====
+          // Routes if ALL keywords appear in the prompt
+          "matcher": {
+            "type": "keyword",
+            "keywords": ["code", "find"],
+            "mode": "all"  // Requires both keywords
+          },
+          "target_agent": "explore",
+          "config_overrides": {
+            "prompt": "You are a code explorer. Find and analyze relevant code patterns."
+          }
+        },
+        {
+          "matcher": {
+            "type": "always"
+          },
+          "target_agent": "librarian"
+        }
+      ]
+    },
+
+    // ========================================================================
+    // Hefesto - Implementation & Building
+    // ========================================================================
+    "hefesto": {
+      "base_model": "claude-3-5-sonnet-20241022",
+      "delegates_to": ["sisyphus", "hephaestus"],
+      "temperature": 0.3,  // Lower temperature for more deterministic output
+      
+      "routing_rules": [
+        {
+          // ===== MATCHER 4: PROJECT_CONTEXT MATCHER =====
+          // Routes based on project structure (files and dependencies present)
+          "matcher": {
+            "type": "project_context",
+            "has_files": ["package.json"],  // Project must have package.json
+            "has_deps": ["vitest", "jest", "bun:test"]  // Project must have testing framework
+          },
+          "target_agent": "sisyphus",
+          "config_overrides": {
+            "prompt": "You are a TDD expert. Write tests first, then implementation.",
+            "variant": "tdd"
+          }
+        },
+        {
+          "matcher": {
+            "type": "project_context",
+            "has_files": ["package.json"]
+          },
+          "target_agent": "sisyphus",
+          "config_overrides": {
+            "prompt": "You are a quality-focused builder. Ensure comprehensive testing."
+          }
+        },
+        {
+          "matcher": {
+            "type": "always"
+          },
+          "target_agent": "hephaestus",
+          "config_overrides": {
+            "prompt": "You are a builder. Implement with attention to quality and best practices."
+          }
+        }
+      ]
+    },
+
+    // ========================================================================
+    // Custom Meta-Agent Example: Frontend Specialist
+    // ========================================================================
+    "frontend_specialist": {
+      "base_model": "claude-3-5-sonnet-20241022",
+      "delegates_to": ["hephaestus", "oracle"],
+      
+      "routing_rules": [
+        {
+          // ===== MATCHER 5: REGEX MATCHER =====
+          // Routes based on regex pattern matching against the prompt
+          "matcher": {
+            "type": "regex",
+            "pattern": "^(design|ui|component|button|form|style)",
+            "flags": "i"  // Case-insensitive flag
+          },
+          "target_agent": "hephaestus",
+          "config_overrides": {
+            "prompt": "You are a frontend specialist. Build responsive, accessible UI components."
+          }
+        },
+        {
+          "matcher": {
+            "type": "regex",
+            "pattern": "(performance|optimization|rendering|bundle)",
+            "flags": "i"
+          },
+          "target_agent": "oracle",
+          "config_overrides": {
+            "prompt": "You are a performance expert. Analyze and optimize frontend performance."
+          }
+        },
+        {
+          "matcher": {
+            "type": "always"
+          },
+          "target_agent": "hephaestus"
+        }
+      ]
+    }
+  },
+
+  // ============================================================================
+  // SECTION 2: AGENTS
+  // ============================================================================
+  // oh-my-opencode agent configuration passthrough
+  // Customize behavior of builtin agents like sisyphus, oracle, etc.
+  
+  "agents": {
+    "sisyphus": {
+      "model": "claude-3-5-sonnet-20241022",
+      "temperature": 0.3,
+      "description": "TDD-focused implementation agent"
+    },
+    "oracle": {
+      "model": "claude-3-5-sonnet-20241022",
+      "temperature": 0.5,
+      "description": "Strategic analysis and architecture advisor"
+    }
+  },
+
+  // ============================================================================
+  // SECTION 3: CATEGORIES
+  // ============================================================================
+  // oh-my-opencode category configuration passthrough
+  // Group related tasks and share configuration
+  
+  "categories": {
+    "frontend": {
+      "description": "Frontend development tasks",
+      "model": "claude-3-5-sonnet-20241022",
+      "temperature": 0.3
+    },
+    "backend": {
+      "description": "Backend development and API tasks",
+      "model": "claude-3-5-sonnet-20241022",
+      "temperature": 0.4
+    },
+    "documentation": {
+      "description": "Technical writing and documentation",
+      "model": "claude-3-5-sonnet-20241022",
+      "temperature": 0.2
+    }
+  },
+
+  // ============================================================================
+  // SECTION 4: SETTINGS
+  // ============================================================================
+  // Olimpus-specific configuration
+  
+  "settings": {
+    // Namespace prefix for bundled skills (default: "olimpus")
+    // Skills loaded via loadOlimpusSkills() are prefixed with this name
+    "namespace_prefix": "olimpus",
+    
+    // Maximum delegation depth to prevent infinite chains
+    // If A → B → C → A, and depth=3, the cycle is detected
+    "max_delegation_depth": 3
+  },
+
+  // ============================================================================
+  // SECTION 5: SKILLS
+  // ============================================================================
+  // Array of paths to skill definition files
+  // Skills are loaded from your project and bundled with the plugin
+  // Path is relative to project directory or absolute
+  
+  "skills": [
+    // Example 1: Load from project docs
+    "docs/skills/custom-skill.md",
+    
+    // Example 2: Absolute path
+    "/Users/yourname/shared-skills/advanced-refactoring.md"
+    
+    // Skills will be prefixed with "olimpus:" (e.g., "olimpus:custom-skill")
+    // This prevents naming conflicts with oh-my-opencode builtin skills
+  ],
+
+  // ============================================================================
+  // SECTION 6: DISABLED_HOOKS (Optional)
+  // ============================================================================
+  // oh-my-opencode hook names to disable
+  // These are passed through to oh-my-opencode plugin system
+  
+  "disabled_hooks": []
+}

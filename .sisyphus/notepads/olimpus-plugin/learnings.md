@@ -383,3 +383,326 @@ merged.config = async (input: Config) => {
 
 ---
 
+
+## [2026-02-10T19:30] Task 6: Meta-Agent Factory + Registry
+
+### createMetaAgentConfig() Implementation (src/agents/meta-agent.ts)
+
+**Core function**: `createMetaAgentConfig(def: MetaAgentDef, context: RoutingContext, metaAgentName: string): AgentConfig | null`
+
+**Execution flow**:
+1. Call `evaluateRoutingRules()` from Task 5 to find matching route
+2. Return null if no route matches (caller handles no-match case)
+3. Extract target agent name from resolved route
+4. Build delegation prompt via `buildDelegationPrompt()`
+5. Determine model: rule override OR def.base_model
+6. Determine temperature: rule override OR def.temperature (optional)
+7. Build AgentConfig object with: model, prompt, optional temperature/variant
+8. Return complete AgentConfig
+
+**Key insight**: AgentConfig.prompt is WHERE delegation happens — it contains instructions for meta-agent to use the `task` tool.
+
+### buildDelegationPrompt() Implementation
+
+**Format**: System prompt template that:
+1. Identifies meta-agent by name
+2. Explains role (coordinator for Olimpus system)
+3. States target agent decision
+4. Includes original user prompt verbatim
+5. Instructs agent to delegate via `task` tool with target agent name
+6. Specifies task tool parameter format (agent + prompt)
+
+**Result**: Delegation prompt instructs the meta-agent to call the `task` tool, passing:
+- agent: target agent name (e.g., "oracle")
+- prompt: user's original request
+
+This is the MECHANISM for meta-agent delegation within OpenCode's plugin system.
+
+### MetaAgentRegistry Class (src/agents/registry.ts)
+
+**Core Methods**:
+- `register(name: string, def: MetaAgentDef)` — Add meta-agent definition to registry
+- `getAll(): Record<string, MetaAgentDef>` — Retrieve all registered definitions
+- `resolve(name: string, context: RoutingContext): AgentConfig | null` — Resolve meta-agent to AgentConfig via createMetaAgentConfig()
+- `trackDelegation(from: string, to: string)` — Record a delegation edge in the graph
+- `checkCircular(from: string, to: string, maxDepth: number): boolean` — Detect circular dependency
+
+**Delegation Tracking**:
+- Internal map: `delegations: Record<"from:to", count>`
+- Tracks which agents delegate to which agents
+- Used for circular dependency detection
+
+**Circular Dependency Detection Algorithm**:
+- `hasCircle(current, target, depth, visited)` — Recursive DFS-style traversal
+- Tracks visited nodes to detect cycles
+- Respects max depth (default 3) to prevent infinite traversal
+- Returns true if path from current→target creates a cycle
+- Used by `checkCircular()` which initializes empty visited set
+
+**Why Circular Detection Matters**:
+- Meta-agent A delegates to B, B delegates to C, C delegates back to A = infinite loop
+- max_delegation_depth prevents excessively deep chains (config: default 3)
+- Protects against misconfigured routing rules
+
+### QA Verification Results ✅
+
+**Test Coverage** (7 tests in src/test-meta-agent.ts):
+1. **Delegation prompt generation** — Prompt includes target agent + task tool mention ✓
+2. **Factory with matching route** — AgentConfig has correct model + delegation prompt ✓
+3. **Factory with fallback** — Always matcher kicks in, delegates via fallback ✓
+4. **Registry registration** — Stores and retrieves definitions correctly ✓
+5. **Safe path detection** — Linear chain A→B→C→D not flagged as circular ✓
+6. **Circular path detection** — A→B→C→A correctly detected as circular ✓
+7. **Model override** — Routing rule override replaces base_model ✓
+
+**TypeScript**: bunx tsc --noEmit → 0 errors (full type safety)
+
+### Design Decisions
+
+**Why AgentConfig.prompt for delegation**:
+- OpenCode plugin system doesn't have direct agent-to-agent calling
+- `task` tool is the ONLY mechanism for delegation within agent sessions
+- Embedding delegation instructions in prompt makes it agent-transparent
+
+**Why null return**:
+- createMetaAgentConfig returns null when no routes match
+- Caller decides how to handle: fallback, error, default agent
+- Gives flexibility in integration layer
+
+**Why recursive DFS for circular detection**:
+- Simple algorithm for small delegation graphs (typical case: 3-4 agents max)
+- Respects depth limit prevents infinite loops
+- O(V+E) time complexity acceptable for <10 agents
+
+### Files Created
+- `src/agents/meta-agent.ts` — Factory function + delegation prompt builder (62 lines)
+- `src/agents/registry.ts` — MetaAgentRegistry class with graph traversal (153 lines)
+- `src/test-meta-agent.ts` — Verification tests, all passing (164 lines)
+
+### Integration Notes
+- Task 7 will use these to define atenea/hermes/hefesto meta-agents
+- Task 9 (entry point) will create registry instance, register definitions, call resolve()
+- Task 6 complete and verified — ready for meta-agent definitions in Task 7
+
+## [2026-02-10T20:30] Task 8: Skill Bundling System
+
+### Implementation Summary
+
+**Created three files:**
+1. `src/skills/types.ts` — Type definitions compatible with oh-my-opencode
+2. `src/skills/loader.ts` — Skill loading and merging logic
+3. `src/skills/loader.test.ts` — Comprehensive test coverage (8 tests, all passing)
+
+### SkillDefinition Type System
+
+**Interface hierarchy** (from oh-my-opencode compatibility):
+- `SkillMetadata`: Parsed YAML frontmatter fields (optional, flexible schema)
+- `CommandDefinition`: Standard skill definition with template, model, agent
+- `SkillDefinition`: Complete skill object with metadata, scope, and resolved path
+
+**Key fields in SkillDefinition**:
+- `name`: Full skill identifier (with `olimpus:` prefix)
+- `path`: Original path (relative or absolute from config)
+- `resolvedPath`: Absolute path after resolution
+- `definition`: CommandDefinition object
+- `scope`: Either "config" (base) or "olimpus" (custom)
+
+### loadOlimpusSkills() Implementation
+
+**Function signature**: `loadOlimpusSkills(skillPaths: string[], projectDir: string): SkillDefinition[]`
+
+**Execution flow**:
+1. Iterate each skill path (can be relative or absolute)
+2. Resolve path: if absolute keep it, else resolve relative to projectDir
+3. Validate existence and .md extension
+4. Read file content
+5. Parse YAML frontmatter (delimited by `---`)
+6. Extract skill name from filename
+7. Apply `olimpus:` prefix to skill name
+8. Build CommandDefinition from metadata
+9. Create SkillDefinition with scope="olimpus"
+10. Return array of skills
+
+**Frontmatter parsing**:
+- Handles YAML-like key: value pairs
+- Supports arrays: `[item1, item2, item3]` or quoted strings
+- Supports booleans: `true`, `false`
+- Strips quotes from values
+
+**Error handling**:
+- Missing files: warn + skip (non-fatal)
+- Non-markdown files: warn + skip (non-fatal)
+- Parse errors: error + skip (non-fatal)
+- Continues processing remaining skills
+
+### mergeSkills() Implementation
+
+**Function signature**: `mergeSkills(baseSkills: SkillDefinition[], olimpusSkills: SkillDefinition[]): SkillDefinition[]`
+
+**Algorithm**:
+1. Create Set of base skill names for O(1) lookup
+2. Filter olimpus skills: exclude any with conflicting base names
+3. Return [...baseSkills, ...uniqueOlimpusSkills] (base first, then olimpus)
+
+**Conflict resolution**:
+- Base skills always win (never overwritten)
+- Olimpus skills with name conflicts silently filtered
+- Order preserved: base array order maintained, olimpus appended
+
+### Testing Strategy (8 tests, all passing)
+
+1. **Frontmatter parsing**: Parse metadata (description, model, subtask) ✓
+2. **Array metadata**: Parse allowed-tools array syntax ✓
+3. **Prefix application**: Verify olimpus: prefix added ✓
+4. **Skip non-markdown**: .txt files skipped ✓
+5. **Missing file handling**: Warn + return empty ✓
+6. **Merge without conflict**: Append olimpus skills ✓
+7. **Merge with conflict**: Filter conflicting olimpus skill ✓
+8. **Order preservation**: Base + olimpus order maintained ✓
+
+### Design Decisions
+
+**Why namespace prefix (olimpus:)?**
+- Prevents accidental name collisions with base skills
+- Clear visual identification of custom skills
+- Matches oh-my-opencode pattern (builtin:, etc.)
+- No runtime overhead (just string manipulation)
+
+**Why lenient error handling?**
+- Single bad skill file shouldn't break entire bundling
+- Warnings logged for troubleshooting
+- Graceful degradation: load what you can
+
+**Why separate loader vs merger?**
+- Separation of concerns: load ≠ merge
+- Flexibility: can load from multiple sources
+- Testing: each function independently testable
+- Composition: can build higher-level logic on top
+
+**Why simple YAML parser (not full parser)?**
+- No npm dependency for YAML
+- oh-my-opencode format is simple key:value
+- Supports essential cases: strings, booleans, arrays
+- Sufficient for skill metadata requirements
+
+### Integration Notes
+
+- Next task (Task 9) will integrate skills into plugin entry point
+- Skills merged at initialization time, not runtime
+- Merged skills passed to oh-my-opencode plugin config
+- No changes needed to existing routing/meta-agent systems
+
+### Files Created
+- `src/skills/types.ts` — Type definitions (62 lines)
+- `src/skills/loader.ts` — Loading + merging logic (185 lines)
+- `src/skills/loader.test.ts` — Test suite (112 lines)
+
+
+## [2026-02-10T16:45] Task 9: Plugin Entry Point (Wire Everything Together)
+
+### src/index.ts Implementation
+
+**Plugin Entry Point**: `OlimpusPlugin: Plugin` — Main export
+
+**Execution Flow (6 Steps)**:
+
+1. **Load olimpus.jsonc config**
+   - Call `loadOlimpusConfig(input.directory)`
+   - Error handling: ENOENT → warning + defaults, schema errors → throw with context
+   - Minimal default config: empty meta_agents, agents, categories, max_depth=3
+
+2. **Create MetaAgentRegistry and register all meta-agents**
+   - Initialize `MetaAgentRegistry(maxDepth)` from config settings
+   - Extract config meta-agents via `extractMetaAgentDefs(config)`
+   - Register all config meta-agents in loop
+   - Register built-in meta-agents (atenea, hermes, hefesto) ONLY if not in config
+   - Config meta-agents take precedence over built-in defaults
+
+3. **Call createOlimpusWrapper() to get merged PluginInterface**
+   - Invoke `await createOlimpusWrapper(input, config)`
+   - Error handling: throw with oh-my-opencode wrapper context
+   - Wrapper returns merged PluginInterface (OMO base + Olimpus extensions)
+
+4. **Enhance config handler to register meta-agent AgentConfigs**
+   - Chain the base config handler (execute first)
+   - Build routing context from projectDir (files/deps empty for now)
+   - For each meta-agent in registry:
+     - Call `registry.resolve(agentName, routingContext)` to get AgentConfig
+     - Register in `configInput.agent[agentName]` (note: singular "agent")
+
+5. **Load and merge Olimpus skills if configured**
+   - Check if `config.skills` array has entries
+   - Call `loadOlimpusSkills(config.skills, input.directory)`
+   - Log success count with namespace prefix
+   - Error handling: non-fatal warnings, continue processing
+
+6. **Return final PluginInterface**
+   - Return the chained pluginInterface
+   - Includes all OMO agents + meta-agents + skills
+
+### Key Design Decisions
+
+**Why Config Takes Precedence**:
+- Line 73: `if (!configMetaAgents[name])` — built-in only registered if config doesn't define
+- Allows users to override or disable built-in meta-agents via olimpus.jsonc
+
+**Why Config Handler Chaining**:
+- Line 89-95: Base handler executes first (OMO setup)
+- Line 104-110: Then Olimpus adds meta-agent configs
+- Non-destructive composition: both handler chains complete
+
+**Why Routing Context Empty**:
+- Line 97-102: prompt="", projectFiles=[], projectDeps=[]
+- Simplified: meta-agents resolve without complex context at this stage
+- Real routing context would be evaluated when agent is actually invoked
+
+**Why Non-Fatal Skill Loading**:
+- Line 121-127: Skills errors don't stop plugin initialization
+- Plugin works even if skills fail to load
+- Users get warning but plugin still functions
+
+### Integration with All Previous Tasks
+
+**Task 1** (Project Scaffolding): Uses src/config/loader.js, src/agents/definitions/index.js, etc.
+**Task 2** (Zod Schema): OlimpusConfig type inferred for validation
+**Task 3** (Config Loader): loadOlimpusConfig() loads and merges olimpus.jsonc
+**Task 4** (Plugin Wrapper): createOlimpusWrapper() merges OMO + Olimpus PluginInterfaces
+**Task 5** (Routing): evaluateRoutingRules() called internally by registry.resolve()
+**Task 6** (Meta-Agent Factory): createMetaAgentConfig() generates dynamic AgentConfigs
+**Task 7** (Meta-Agent Definitions): atenea, hermes, hefesto registered and resolved
+**Task 8** (Skill Bundling): loadOlimpusSkills() loads custom skills with namespace prefix
+**Task 9** (Entry Point): Wires all 8 tasks together in single Plugin function
+
+### QA Verification Results ✅
+
+**Verification Checklist**:
+1. ✓ Plugin type matches @opencode-ai/plugin.Plugin signature
+2. ✓ All module imports resolve (no LSP errors after removal of memo comments)
+3. ✓ TypeScript: bunx tsc --noEmit → 0 errors
+4. ✓ Build: bun run build → dist/index.js (2.88 MB)
+5. ✓ Plugin imports successfully: `import OlimpusPlugin from './dist/index.js'`
+6. ✓ Plugin exports as function: typeof OlimpusPlugin === 'function'
+7. ✓ Error handling covers all failure paths:
+   - Config not found: warning + defaults
+   - Config invalid: throw with schema context
+   - OMO fails: throw with wrapper context
+   - Skills fail: warn but continue
+8. ✓ All 6 steps implemented and integrated
+9. ✓ Docstring present (necessary API documentation)
+10. ✓ No memo/internal comments (removed)
+
+### Files Created/Modified
+
+- `src/index.ts` (134 lines)
+  - Default export: OlimpusPlugin: Plugin
+  - Integrates loadOlimpusConfig, extractMetaAgentDefs, createOlimpusWrapper, MetaAgentRegistry, definitions, loadOlimpusSkills
+  - Error handling for all failure paths
+  - Docstring explains execution flow and error handling
+
+### Integration Notes for Task 10+
+
+- Entry point complete: OlimpusPlugin ready for OpenCode plugin loading
+- No changes needed to existing modules (Tasks 1-8)
+- Next task (Task 10): Example config (olimpus.jsonc) + documentation
+- Final task (Task 11): Integration verification (full build + type check + import test)
+

@@ -743,7 +743,7 @@ Wave 7 (Final):
 
 ### Task 6: Meta-Agent Factory + Registry
 
-- [ ] 6. Implement meta-agent factory (dynamic AgentConfig generation) and delegation registry
+- [x] 6. Implement meta-agent factory (dynamic AgentConfig generation) and delegation registry
 
   **What to do**:
   - Create `src/agents/meta-agent.ts`:
@@ -852,7 +852,7 @@ Wave 7 (Final):
 
 ### Task 7: Meta-Agent Definitions
 
-- [ ] 7. Define atenea, hermes, and hefesto meta-agents
+- [x] 7. Define atenea, hermes, and hefesto meta-agents
 
   **What to do**:
   - Create `src/agents/definitions/atenea.ts`:
@@ -946,7 +946,7 @@ Wave 7 (Final):
 
 ### Task 8: Skill Bundling System
 
-- [ ] 8. Implement Olimpus skill bundling system
+- [x] 8. Implement Olimpus skill bundling system
 
   **What to do**:
   - Create `src/skills/loader.ts`:
@@ -1025,7 +1025,7 @@ Wave 7 (Final):
 
 ### Task 9: Plugin Entry Point (Wire Everything Together)
 
-- [ ] 9. Create main plugin entry point that wires all modules together
+- [x] 9. Create main plugin entry point that wires all modules together
 
   **What to do**:
   - Create `src/index.ts`:
