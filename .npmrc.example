@@ -1,0 +1,11 @@
+# .npmrc.example - GitHub Package Registry Configuration
+# Copy to .npmrc and replace tokens with actual credentials
+
+# GitHub Package Registry - for @TellMeAlex scoped packages
+@TellMeAlex:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT_HERE
+
+# Default registry - ITX Artifactory (corporate)
+registry=https://inditex.jfrog.io/artifactory/api/npm/node-public/
+strict-ssl=false
+//inditex.jfrog.io/artifactory/api/npm/node-public/:_authToken=YOUR_ARTIFACTORY_TOKEN_HERE

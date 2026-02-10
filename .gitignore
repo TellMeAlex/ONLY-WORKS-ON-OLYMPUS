@@ -32,3 +32,17 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# npm registry configuration (contains secrets)
+.npmrc
+.sisyphus/boulder.json
+.sisyphus/notepads/olimpus-plugin/learnings.md
+.sisyphus/notepads/publish-theodev-private/decisions.md
+.sisyphus/notepads/publish-theodev-private/issues.md
+.sisyphus/notepads/publish-theodev-private/learnings.md
+.sisyphus/notepads/publish-theodev-private/problems.md
+.sisyphus/plans/olimpus-plugin.md
+.sisyphus/plans/publish-theodev-private.md
+.sisyphus/boulder.json
+.sisyphus/notepads/olimpus-plugin/learnings.md
+.sisyphus/plans/olimpus-plugin.md

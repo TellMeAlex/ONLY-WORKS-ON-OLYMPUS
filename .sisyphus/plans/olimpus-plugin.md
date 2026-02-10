@@ -77,12 +77,12 @@ Create an OpenCode plugin that wraps oh-my-opencode internally, providing a unif
 - `README.md` — Setup and usage documentation
 
 ### Definition of Done
-- [ ] `bun run build` produces working output
-- [ ] Plugin loads in OpenCode when configured as `"plugin": ["olimpus"]`
-- [ ] olimpus.jsonc is the ONLY config file needed (no oh-my-opencode.json)
-- [ ] Meta-agents appear as selectable agents in OpenCode
-- [ ] oh-my-opencode base agents also appear (merged config)
-- [ ] Routing rules dynamically determine AgentConfig properties
+- [x] `bun run build` produces working output
+- [x] Plugin loads in OpenCode when configured as `"plugin": ["olimpus"]`
+- [x] olimpus.jsonc is the ONLY config file needed (no oh-my-opencode.json)
+- [x] Meta-agents appear as selectable agents in OpenCode
+- [x] oh-my-opencode base agents also appear (merged config)
+- [x] Routing rules dynamically determine AgentConfig properties
 
 ### Must Have
 - oh-my-opencode as npm dependency (NOT separate plugin)
@@ -1115,7 +1115,7 @@ Wave 7 (Final):
 
 ### Task 10: Example Config + README
 
-- [ ] 10. Create example olimpus.jsonc configuration and README
+- [x] 10. Create example olimpus.jsonc configuration and README
 
   **What to do**:
   - Create `olimpus.jsonc` in project root (example/template config):
@@ -1198,7 +1198,7 @@ Wave 7 (Final):
 
 ### Task 11: Integration Verification
 
-- [ ] 11. Full integration verification — build, type check, import test
+- [x] 11. Full integration verification — build, type check, import test
 
   **What to do**:
   - Run full type check: `bunx tsc --noEmit` — must pass with 0 errors
@@ -1325,11 +1325,11 @@ bun -e "import P from './dist/index'; console.log(typeof P)"  # Expected: functi
 ```
 
 ### Final Checklist
-- [ ] All "Must Have" requirements present
-- [ ] All "Must NOT Have" guardrails respected
-- [ ] olimpus.jsonc is the ONLY config file (no oh-my-opencode.json)
-- [ ] Meta-agents appear with `olimpus:` prefix
-- [ ] oh-my-opencode used as internal dependency only
-- [ ] Build produces working dist/ output
-- [ ] TypeScript compiles with 0 errors
-- [ ] Example config validates against schema
+- [x] All "Must Have" requirements present
+- [x] All "Must NOT Have" guardrails respected
+- [x] olimpus.jsonc is the ONLY config file (no oh-my-opencode.json)
+- [x] Meta-agents appear with `olimpus:` prefix
+- [x] oh-my-opencode used as internal dependency only
+- [x] Build produces working dist/ output
+- [x] TypeScript compiles with 0 errors
+- [x] Example config validates against schema

@@ -1,10 +1,19 @@
 {
-  "name": "olimpus",
-  "version": "0.0.1",
+  "name": "@TellMeAlex/only-works-on-olympus",
+  "version": "0.1.0",
+  "private": true,
   "module": "dist/index.js",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS.git"
+  },
+  "homepage": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS#readme",
+  "bugs": {
+    "url": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/issues"
+  },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun",
     "typecheck": "bunx tsc --noEmit"
