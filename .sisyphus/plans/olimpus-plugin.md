@@ -541,7 +541,7 @@ Wave 7 (Final):
 
 ### Task 4: Plugin Wrapper (oh-my-opencode Integration)
 
-- [ ] 4. Implement oh-my-opencode plugin wrapper with PluginInterface merging
+- [x] 4. Implement oh-my-opencode plugin wrapper with PluginInterface merging
 
   **What to do**:
   - Create `src/plugin/wrapper.ts`:
@@ -637,7 +637,7 @@ Wave 7 (Final):
 
 ### Task 5: Routing Rule Evaluator
 
-- [ ] 5. Implement routing rule evaluation engine (matchers + resolution)
+- [x] 5. Implement routing rule evaluation engine (matchers + resolution)
 
   **What to do**:
   - Create `src/agents/routing.ts`:
