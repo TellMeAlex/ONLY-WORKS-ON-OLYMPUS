@@ -1,0 +1,27 @@
+{
+  "name": "olimpus",
+  "version": "0.0.1",
+  "module": "dist/index.js",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "oh-my-opencode": "^3.4.0",
+    "@opencode-ai/plugin": "^1.1.19",
+    "@opencode-ai/sdk": "^1.1.19",
+    "zod": "^4.1.8",
+    "jsonc-parser": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "^1.1.19",
+    "@opencode-ai/sdk": "^1.1.19"
+  }
+}
