@@ -1,0 +1,738 @@
+# Publish ONLY WORKS ON OLYMPUS to GitHub Package Registry (Private)
+
+## TL;DR
+
+> **Quick Summary**: Convert the `olimpus` plugin into a private GitHub package called `ONLY WORKS ON OLYMPUS` and publish to GitHub Package Registry (GPR). This enables secure, private distribution while keeping the source code private.
+>
+> **Deliverables**:
+> - GitHub repository `ONLY WORKS ON OLYMPUS` (private)
+> - npm package published to GitHub Package Registry as `@TellMeAlex/only-works-on-olympus`
+> - Configured `.npmrc` for GPR authentication (dual registry with ITX Artifactory)
+> - Version bumped to 0.1.0 (first publishable release)
+>
+> **Estimated Effort**: Short (15-20 min)
+> **Parallel Execution**: NO - sequential setup required
+> **Critical Path**: Delete old repo → Create new repo → Setup npmrc → Update package.json → Build → Publish
+
+---
+
+## Context
+
+### Original Request
+User wants to publish the Olimpus plugin as a private GitHub package named `ONLY WORKS ON OLYMPUS` instead of `olimpus`.
+
+### Current State
+- Plugin source code complete at `/Users/adelafde/dev/NTT/olimpo/`
+- Built bundle at `dist/index.js` (2.88 MB)
+- package.json configured but not published
+- Temporary GitHub repo `theodev` created (will be deleted)
+- No final repo exists yet
+
+### Prerequisites Check
+**User must verify**:
+1. GitHub CLI authenticated (`gh auth status`)
+2. npm logged in (`npm whoami`)
+3. GitHub personal access token with `repo`, `packages:write`, `packages:read` scopes
+4. **CRITICAL**: `GITHUB_TOKEN` environment variable set: `echo $GITHUB_TOKEN | grep -q '.' || exit 1`
+5. **CRITICAL**: `ARTIFACTORY_TOKEN` environment variable set (for ITX corporate registry)
+6. Git repository initialized in project (or will be initialized in Step 0.5)
+
+---
+
+## Work Objectives
+
+### Core Objective
+Publish the complete Olimpus plugin codebase as a private GitHub package called `theodev`, accessible only via GitHub Package Registry with proper authentication.
+
+### Concrete Deliverables
+- GitHub private repository: `https://github.com/TellMeAlex/ONLY WORKS ON OLYMPUS`
+- npm package: `@TellMeAlex/only-works-on-olympus` published to GPR
+- Functional `.npmrc` at project root with dual registry (GPR + ITX Artifactory)
+- Version 0.1.0 released on GPR
+
+### Definition of Done
+- Old repo `theodev` deleted
+- New repository `ONLY WORKS ON OLYMPUS` created on GitHub (private)
+- Source code pushed to GitHub
+- npm package published to GitHub Package Registry
+- Installation works: `npm install @TellMeAlex/only-works-on-olympus`
+- User can verify with: `npm view @TellMeAlex/only-works-on-olympus`
+
+### Must Have
+- Private GitHub repository (not public)
+- All source code committed and pushed
+- Proper GPR configuration in `.npmrc`
+- Build artifacts (dist/) included in published package
+- Semantic version 0.1.0
+
+### Must NOT Have (Guardrails)
+- No credentials committed to git
+- No `.npmrc` with token in git (use `.npmrc.example` for docs)
+- No published tags or releases yet (0.1.0 is first)
+- No changes to plugin functionality (only config/publishing setup)
+
+---
+
+## Execution Strategy
+
+### Sequential Dependencies
+```
+Step 0: Delete old theodev repo (cleanup)
+    ↓
+Step 1: Create GitHub repo (ONLY WORKS ON OLYMPUS, private)
+    ↓ (requires repo to exist)
+Step 2: Configure .npmrc for GPR auth (dual registry)
+    ↓ (requires auth token)
+Step 3: Update package.json (scoped name @TellMeAlex/only-works-on-olympus, v0.1.0)
+    ↓ (requires package.json to reference new name)
+Step 4: Build plugin (bun run build)
+    ↓ (requires clean build before publish)
+Step 5: Commit & push to GitHub
+    ↓ (requires git setup)
+Step 6: Publish to GitHub Package Registry (npm publish)
+    ↓ (requires successful publish)
+Step 7: Verify publication (npm view, npm info)
+    ↓ (final verification)
+```
+
+---
+
+## Verification Strategy
+
+### Pre-Requisites Check
+**User must manually verify these BEFORE starting**:
+- [ ] `gh auth status` returns authenticated account
+- [ ] `npm whoami` returns username
+- [ ] GitHub PAT has scopes: `repo`, `packages:write`, `packages:read`
+
+### Build Verification
+- [ ] `bun run build` → dist/index.js exists, 2.88 MB ✅
+
+### Git Setup Verification
+- [ ] `git init` (if not already done)
+- [ ] `git status` → no uncommitted files before publish
+- [ ] `git remote add origin https://github.com/{username}/theodev.git`
+- [ ] Remote configured: `git remote -v`
+
+### npmrc Configuration Verification
+- [ ] `.npmrc` created at project root with GPR config
+- [ ] `.npmrc` NOT in git (add to `.gitignore`)
+- [ ] `.npmrc.example` created for documentation
+- [ ] `npm config get registry` → returns GPR registry
+
+### Package.json Verification
+- [ ] `"name": "@{username}/theodev"` (scoped)
+- [ ] `"version": "0.1.0"` (first release)
+- [ ] `"main": "dist/index.js"` (entry point)
+- [ ] `"repository": { "url": "https://github.com/{username}/theodev.git" }`
+- [ ] `"private": true` (marked as private)
+
+### Publication Verification
+- [ ] `npm publish --dry-run` → shows what would be published
+- [ ] `npm publish` → publishes to GPR
+- [ ] `npm view @{username}/theodev` → returns package info
+- [ ] `npm view @{username}/theodev@0.1.0` → returns version details
+- [ ] Installation test: `npm install @{username}/theodev` (in separate dir)
+
+### Installation Test (Final)
+- [ ] Create test dir: `mkdir /tmp/theodev-test && cd /tmp/theodev-test`
+- [ ] `npm init -y`
+- [ ] `npm install @{username}/theodev`
+- [ ] Verify: `node_modules/@{username}/theodev/dist/index.js` exists
+- [ ] Check: `node_modules/@{username}/theodev/package.json` has correct metadata
+
+---
+
+## TODOs
+
+- [x] **0. Backup Existing .npmrc Configuration**
+
+  **Status**: COMPLETED ✅
+  - User-level ~/.npmrc backed up to ~/.npmrc.bak.{timestamp}
+  - Contains: ITX Artifactory registry configuration (corporate)
+  - DO NOT modify - project-level .npmrc will use scoped registry config
+
+  **What to do**:
+  - Verify backup exists: `ls -la ~/.npmrc.bak.*`
+  - Keep original intact for other projects
+  - Create PROJECT-LEVEL .npmrc (not user-level)
+
+  **Acceptance Criteria**:
+  - [ ] ~/.npmrc backup verified
+  - [ ] Original ~/.npmrc unchanged
+  - [ ] Project .npmrc will be created in Step 2
+
+---
+
+- [x] **0.5. Delete Old theodev Repository**
+
+  **What to do**:
+  - Delete the temporary `theodev` repository from GitHub
+  - This was created but we're renaming to `ONLY WORKS ON OLYMPUS`
+  - Clean up git remote configuration
+  
+  **Command**:
+  ```bash
+  gh repo delete theodev --confirm
+  ```
+
+  **Acceptance Criteria**:
+  - [ ] Repository `theodev` deleted from GitHub
+  - [ ] Git remote `origin` no longer points to theodev
+  - [ ] `gh repo view theodev` returns 404 error
+
+  **Recommended Agent Profile**:
+  > Quick cleanup operation
+  - **Category**: `quick`
+  - **Skills**: `git-master`
+
+  **Parallelization**:
+  - **Can Run In Parallel**: NO
+  - **Blocks**: Step 1 (new repo creation)
+
+  **Evidence to Capture**:
+  - [ ] Output of `gh repo delete theodev --confirm`
+  - [ ] Verification: `gh repo view theodev 2>&1 | grep -i "not found"`
+
+---
+
+- [x] **1. Create GitHub Repository**
+
+  **Status**: COMPLETED (will be recreated with new name) ✅
+  - Repository `theodev` created on GitHub as private (to be replaced)
+  - Remote configured: git remote → https://github.com/TellMeAlex/theodev
+  - **NEXT**: Will be deleted and replaced with `ONLY WORKS ON OLYMPUS`
+
+  **What to do**:
+  - Create private repository on GitHub called `theodev`
+  - Add description: "Meta-orchestrator plugin for oh-my-opencode with intelligent routing"
+  - Initialize with README (will be overwritten)
+  
+  **Command**:
+  ```bash
+  gh repo create theodev --private --source=. --remote=origin --push
+  ```
+
+- [x] **1. Create GitHub Repository (ONLY WORKS ON OLYMPUS)**
+
+  **What to do**:
+  - Create private repository on GitHub called `ONLY WORKS ON OLYMPUS`
+  - Add description: "Meta-orchestrator plugin for oh-my-opencode with intelligent routing"
+  - Initialize with README (will be overwritten)
+  
+  **Command**:
+  ```bash
+  gh repo create "ONLY WORKS ON OLYMPUS" --private --source=. --remote=origin --description "Meta-orchestrator plugin for oh-my-opencode with intelligent routing"
+  ```
+
+  **Acceptance Criteria**:
+  - [ ] Repository exists at `https://github.com/TellMeAlex/ONLY WORKS ON OLYMPUS`
+  - [ ] Repository is marked as Private
+  - [ ] `git remote -v` shows origin pointing to new repo
+  - [ ] Repository name shows as "ONLY WORKS ON OLYMPUS" on GitHub
+
+  **Recommended Agent Profile**:
+  > Quick CLI operations, minimal implementation logic required
+  - **Category**: `quick`
+  - **Skills**: `git-master`
+    - Justification: Git/GitHub operations are the core work; git-master handles `gh` commands and repository setup
+
+  **Parallelization**:
+  - **Can Run In Parallel**: NO
+  - **Blocks**: Step 5 (commit & push)
+
+  **References**:
+  - `gh repo create --help` - GitHub CLI documentation
+
+  **Evidence to Capture**:
+  - [ ] Screenshot of `https://github.com/TellMeAlex/ONLY WORKS ON OLYMPUS` showing "Private" badge
+  - [ ] Output of `git remote -v`
+  - [ ] Output of `gh repo view "ONLY WORKS ON OLYMPUS" --json name,isPrivate`
+
+---
+
+- [x] **2. Configure .npmrc for GitHub Package Registry (SAFE)**
+
+  **What to do**:
+  - **CRITICAL**: Create PROJECT-LEVEL `.npmrc` (in /Users/adelafde/dev/NTT/olimpo/)
+  - **CRITICAL**: Must SUBSTITUTE environment variables (not store literal `${GITHUB_TOKEN}`)
+  - DO NOT modify ~/.npmrc (it's used by other projects)
+  - Configure DUAL registry setup:
+    - Scoped: `@TellMeAlex/*` → GitHub Package Registry
+    - Default: Everything else → ITX Artifactory (existing corporate setup)
+  - Create `.npmrc.example` for documentation (no secrets)
+  - Add `.npmrc` to `.gitignore` (prevent token commits)
+  
+  **File: /Users/adelafde/dev/NTT/olimpo/.npmrc** (with token substitution)
+  
+  **CRITICAL - Use this exact shell command to write (substitutes tokens)**:
+  ```bash
+  cd /Users/adelafde/dev/NTT/olimpo
+  
+  # Verify tokens are set first
+  if [ -z "$GITHUB_TOKEN" ]; then echo "ERROR: GITHUB_TOKEN not set"; exit 1; fi
+  if [ -z "$ARTIFACTORY_TOKEN" ]; then echo "ERROR: ARTIFACTORY_TOKEN not set"; exit 1; fi
+  
+  # Write .npmrc with shell variable substitution
+  cat > .npmrc << 'NPMRC_EOF'
+  @TellMeAlex:registry=https://npm.pkg.github.com
+  //npm.pkg.github.com/:_authToken=$GITHUB_TOKEN
+  
+  registry=https://inditex.jfrog.io/artifactory/api/npm/node-public/
+  strict-ssl=false
+  //inditex.jfrog.io/artifactory/api/npm/node-public/:_authToken=$ARTIFACTORY_TOKEN
+  NPMRC_EOF
+  ```
+  
+  **Important**: Using `'NPMRC_EOF'` (single quotes) allows shell to expand `$GITHUB_TOKEN` and `$ARTIFACTORY_TOKEN` at runtime.
+
+  **File: /Users/adelafde/dev/NTT/olimpo/.npmrc.example** (no tokens)
+  ```
+  # .npmrc.example - GitHub Package Registry Configuration
+  # This file shows the structure. DO NOT commit .npmrc with tokens!
+  # To use: Copy to .npmrc and set your tokens
+  
+  @TellMeAlex:registry=https://npm.pkg.github.com
+  //npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT_HERE
+  
+  registry=https://inditex.jfrog.io/artifactory/api/npm/node-public/
+  strict-ssl=false
+  //inditex.jfrog.io/artifactory/api/npm/node-public/:_authToken=YOUR_ARTIFACTORY_TOKEN_HERE
+  ```
+
+  **Git security**:
+  - Add to `.gitignore`: `.npmrc` (not `.npmrc.example`)
+  - Verify: `git status` should show `.npmrc` as ignored
+  - Commit: `.npmrc.example` and `.gitignore` updates
+
+  **Acceptance Criteria**:
+  - [ ] `echo $GITHUB_TOKEN | grep -q '.'` returns true (token exists)
+  - [ ] `echo $ARTIFACTORY_TOKEN | grep -q '.'` returns true (token exists)
+  - [ ] `.npmrc` exists at project root (not user-level)
+  - [ ] `.npmrc` has ACTUAL TOKENS substituted (NOT literal `${GITHUB_TOKEN}`)
+  - [ ] Verify no literal tokens: `grep -q '\${GITHUB_TOKEN}' .npmrc && echo "ERROR: tokens not substituted"` returns error (meaning NOT found ✓)
+  - [ ] `.npmrc` is in `.gitignore` (NOT in git)
+  - [ ] `.npmrc.example` exists with placeholders (IS in git)
+  - [ ] `grep "^@TellMeAlex" .npmrc` → shows GitHub registry config
+  - [ ] `grep "^registry" .npmrc` → shows Artifactory as default
+  - [ ] Original ~/.npmrc unchanged: `diff ~/.npmrc ~/.npmrc.bak.{timestamp}` → no changes
+  
+  **Recommended Agent Profile**:
+  > File creation, git configuration, security setup
+  - **Category**: `quick`
+  - **Skills**: `git-master` (gitignore management + secure .npmrc setup)
+  
+  **Parallelization**:
+  - **Can Run In Parallel**: YES (with Step 3)
+  - **Parallel Group**: Wave 1 (with Step 3)
+  
+  **References**:
+  - GitHub Packages NPM docs: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry
+  - npmrc scopes: https://docs.npmjs.com/cli/v10/configuring-npm/npmrc#per-package-config-settings
+  - Git .gitignore: https://git-scm.com/docs/gitignore
+  
+  **Evidence to Capture**:
+  - [ ] Content of `.npmrc` (redacted tokens)
+  - [ ] Content of `.npmrc.example`
+  - [ ] Output of `grep "@TellMeAlex" .npmrc`
+  - [ ] Output of `grep "registry" .npmrc`
+  - [ ] Output of `git check-ignore .npmrc` (should return path)
+  - [ ] Diff showing ~/.npmrc unchanged
+
+---
+
+- [x] **3. Update package.json for Private Publication**
+
+  **What to do**:
+  - Change package name from `olimpus` to scoped `@TellMeAlex/theodev`
+  - Update version to `0.1.0` (first publishable release)
+  - Add `"private": true` flag
+  - Add repository metadata pointing to GitHub theodev
+  - Ensure main entry point is correct: `dist/index.js`
+
+  **Current package.json** (relevant fields):
+  ```json
+  {
+    "name": "olimpus",
+    "version": "0.0.1",
+    "main": "dist/index.js"
+  }
+  ```
+
+  **Target package.json** (relevant fields):
+  ```json
+  {
+    "name": "@TellMeAlex/only-works-on-olympus",
+    "version": "0.1.0",
+    "main": "dist/index.js",
+    "private": true,
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/TellMeAlex/only-works-on-olympus.git"
+    },
+    "homepage": "https://github.com/TellMeAlex/only-works-on-olympus#readme",
+    "bugs": {
+      "url": "https://github.com/TellMeAlex/only-works-on-olympus/issues"
+    }
+  }
+  ```
+
+  **CRITICAL**: Package name MUST be `@TellMeAlex/only-works-on-olympus` (NOT `theodev`)
+  - This must match `.npmrc` scoped registry: `@TellMeAlex:registry=https://npm.pkg.github.com`
+  - This must match GitHub repo name (spaces converted to hyphens)
+
+  **Acceptance Criteria**:
+  - [ ] `"name": "@TellMeAlex/only-works-on-olympus"` (scoped package name, hyphenated)
+  - [ ] `"version": "0.1.0"` (semantic versioning)
+  - [ ] `"private": true` (marked as private in npm)
+  - [ ] `"main": "dist/index.js"` (entry point unchanged)
+  - [ ] `"repository.url"` points to GitHub ONLY WORKS ON OLYMPUS repo
+  - [ ] File validates with `bun run build` (no breaking changes)
+
+  **Recommended Agent Profile**:
+  > Config file updates, JSON editing
+  - **Category**: `quick`
+  - **Skills**: `git-master` (verify no breaking changes)
+
+  **Parallelization**:
+  - **Can Run In Parallel**: YES (with Step 2)
+  - **Parallel Group**: Wave 1 (with Step 2)
+
+  **References**:
+  - `package.json` spec: https://docs.npmjs.com/cli/v10/configuring-npm/package-json
+  - Scoped packages: https://docs.npmjs.com/about-scopes
+
+  **Evidence to Capture**:
+  - [ ] Updated `package.json` (full content)
+  - [ ] Diff: `git diff package.json`
+
+---
+
+- [x] **4. Build Plugin**
+
+  **What to do**:
+  - Run clean build with new package configuration
+  - Verify bundle compiles successfully
+  - Check dist/ directory contains built files
+
+  **Command**:
+  ```bash
+  cd /Users/adelafde/dev/NTT/olimpo
+  bun run build
+  ```
+
+  **Acceptance Criteria**:
+  - [ ] `bun run build` exits with code 0
+  - [ ] `dist/index.js` exists and is ~2.88 MB
+  - [ ] No TypeScript errors: `bun run typecheck` returns 0
+  - [ ] Build completes in <5 seconds
+
+  **Recommended Agent Profile**:
+  > Build orchestration, verification
+  - **Category**: `quick`
+  - **Skills**: (none needed - standard build)
+
+  **Parallelization**:
+  - **Can Run In Parallel**: NO
+  - **Blocked By**: Step 3 (package.json changes)
+  - **Blocks**: Step 5 (git push)
+
+  **References**:
+  - `package.json` scripts: `"build": "bun build src/index.ts --outdir dist --target bun"`
+
+  **Evidence to Capture**:
+  - [ ] Output of `bun run build` (shows bundle size)
+  - [ ] Output of `ls -lah dist/`
+  - [ ] Output of `bun run typecheck`
+
+---
+
+- [x] **5. Commit & Push to GitHub**
+
+  **What to do**:
+  - Initialize git (if not done)
+  - Add all source files (exclude .npmrc with token)
+  - Commit with meaningful message
+  - Push to GitHub theodev repository
+  - Verify remote tracking is set correctly
+
+  **Commands**:
+  ```bash
+  cd /Users/adelafde/dev/NTT/olimpo
+  git add .
+  git commit -m "feat: publish only-works-on-olympus as private GitHub package
+
+  - Rename from olimpus to only-works-on-olympus (scoped: @TellMeAlex/only-works-on-olympus)
+  - Configure GitHub Package Registry authentication with dual registry (GPR + ITX Artifactory)
+  - Update to version 0.1.0 (first release)
+  - Setup .npmrc for GPR with .npmrc.example for docs
+  - Repository: https://github.com/TellMeAlex/ONLY WORKS ON OLYMPUS"
+  git push -u origin main
+  ```
+
+  **Acceptance Criteria**:
+  - [ ] `.npmrc` is in `.gitignore` (NOT committed)
+  - [ ] All source files committed (src/, dist/, example/, README.md, etc.)
+  - [ ] Commit message follows conventional commits format
+  - [ ] `git log -1 --oneline` shows commit
+  - [ ] `git remote -v` shows origin → ONLY WORKS ON OLYMPUS repo
+  - [ ] GitHub repository shows all files (view at https://github.com/TellMeAlex/ONLY WORKS ON OLYMPUS)
+  - [ ] No uncommitted changes: `git status` → clean
+
+  **Recommended Agent Profile**:
+  > Git operations, commit management
+  - **Category**: `quick`
+  - **Skills**: `git-master`
+    - Justification: Complex git operations (proper .gitignore, commit conventions, branch tracking)
+
+  **Parallelization**:
+  - **Can Run In Parallel**: NO
+  - **Blocked By**: Step 4 (build must complete)
+  - **Blocks**: Step 6 (publish requires repo to be pushed)
+
+  **References**:
+  - `.gitignore`: Ensure `.npmrc` is ignored (not `.npmrc.example`)
+  - Conventional commits: https://www.conventionalcommits.org/
+  - Git workflow: `git add → commit → push`
+
+  **Evidence to Capture**:
+  - [ ] Output of `git log --oneline -n 5`
+  - [ ] Output of `git remote -v`
+  - [ ] Screenshot of GitHub repo at https://github.com/{username}/theodev showing files
+  - [ ] Output of `git status` showing clean working tree
+
+---
+
+- [x] **6. Publish to GitHub Package Registry**
+
+  **What to do**:
+  - Run `npm publish --dry-run` to verify what will be published
+  - Publish package to GitHub Package Registry
+  - Verify package appears in GPR registry
+  - Check package is marked as private
+
+  **Commands**:
+  ```bash
+  cd /Users/adelafde/dev/NTT/olimpo
+  npm publish --dry-run  # Verify first
+  npm publish  # Actual publish to GPR
+  ```
+
+  **Acceptance Criteria**:
+  - [ ] `npm publish --dry-run` shows package name `@TellMeAlex/only-works-on-olympus` version `0.1.0`
+  - [ ] `npm publish` exits with code 0 (success)
+  - [ ] Package published: `npm view @TellMeAlex/only-works-on-olympus` returns package info
+  - [ ] Version 0.1.0 listed: `npm view @TellMeAlex/only-works-on-olympus@0.1.0` returns version details
+  - [ ] Package marked as private: `npm view @TellMeAlex/only-works-on-olympus private` shows `true`
+  - [ ] Tarball generated: `npm pack` creates `only-works-on-olympus-0.1.0.tgz` (or with scope)
+
+  **Recommended Agent Profile**:
+  > npm registry operations, package publishing
+  - **Category**: `quick`
+  - **Skills**: (none needed - standard npm publish)
+
+  **Parallelization**:
+  - **Can Run In Parallel**: NO
+  - **Blocked By**: Step 5 (git push must be complete)
+  - **Blocks**: Step 7 (verification)
+
+  **References**:
+  - npm publish docs: https://docs.npmjs.com/cli/v10/commands/npm-publish
+  - GitHub Packages docs: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#publishing-a-package
+
+  **Evidence to Capture**:
+  - [ ] Output of `npm publish --dry-run`
+  - [ ] Output of `npm publish`
+  - [ ] Output of `npm view @{username}/theodev`
+  - [ ] Output of `npm view @{username}/theodev@0.1.0`
+
+---
+
+- [x] **7. Verify Publication & Installation**
+
+  **What to do**:
+  - Query npm registry to verify package exists
+  - Test installation in isolated directory
+  - Verify installed package contains correct files
+  - Document installation instructions
+
+  **Commands**:
+  ```bash
+  # Verify in registry
+  npm view @TellMeAlex/only-works-on-olympus
+  npm view @TellMeAlex/only-works-on-olympus@0.1.0
+  npm info @TellMeAlex/only-works-on-olympus
+
+  # Test installation
+  mkdir -p /tmp/only-works-on-olympus-test
+  cd /tmp/only-works-on-olympus-test
+  npm init -y
+  npm install @TellMeAlex/only-works-on-olympus
+  ls -la node_modules/@TellMeAlex/only-works-on-olympus/
+  cat node_modules/@TellMeAlex/only-works-on-olympus/package.json | grep name,version
+  ```
+
+  **Acceptance Criteria**:
+  - [ ] `npm view @TellMeAlex/only-works-on-olympus` returns package metadata
+  - [ ] Version `0.1.0` visible in npm registry
+  - [ ] Package marked as private
+  - [ ] Installation succeeds: `npm install @TellMeAlex/only-works-on-olympus` (requires auth)
+  - [ ] Installed package has:
+    - [ ] `dist/index.js` (main entry point)
+    - [ ] `package.json` (metadata)
+    - [ ] `README.md` (documentation)
+    - [ ] `src/` (source code)
+  - [ ] Can verify: `node_modules/@TellMeAlex/only-works-on-olympus/dist/index.js` is executable
+
+  **Recommended Agent Profile**:
+  > Verification and testing, no implementation
+  - **Category**: `quick`
+  - **Skills**: (none needed - verification only)
+
+  **Parallelization**:
+  - **Can Run In Parallel**: NO
+  - **Blocked By**: Step 6 (publish must complete)
+  - **Final Task**: No blocking dependencies
+
+  **References**:
+  - npm view docs: https://docs.npmjs.com/cli/v10/commands/npm-view
+  - Package installation: https://docs.npmjs.com/cli/v10/commands/npm-install
+
+  **Evidence to Capture**:
+  - [ ] Output of `npm view @{username}/theodev` (full JSON)
+  - [ ] Output of `npm view @{username}/theodev@0.1.0`
+  - [ ] Output of test installation: `npm install @{username}/theodev`
+  - [ ] Directory listing: `ls -la node_modules/@{username}/theodev/`
+  - [ ] Verification file: `file node_modules/@{username}/theodev/dist/index.js`
+
+---
+
+## Success Criteria
+
+### Verification Commands
+```bash
+# Check repository
+gh repo view "ONLY WORKS ON OLYMPUS" --json name,isPrivate
+git remote -v
+
+# Check package registry
+npm view @TellMeAlex/only-works-on-olympus
+npm view @TellMeAlex/only-works-on-olympus@0.1.0
+
+# Check installation
+npm install @TellMeAlex/only-works-on-olympus --verbose
+ls -la node_modules/@TellMeAlex/only-works-on-olympus/dist/
+```
+
+### Final Checklist
+- [ ] GitHub repository `ONLY WORKS ON OLYMPUS` exists and is private
+- [ ] Old repo `theodev` has been deleted
+- [ ] Source code pushed to GitHub
+- [ ] package.json uses scoped name `@TellMeAlex/only-works-on-olympus`
+- [ ] Version is `0.1.0`
+- [ ] `.npmrc` configured for dual registry (not in git)
+- [ ] `.npmrc.example` exists (in git)
+- [ ] Package published to GitHub Package Registry
+- [ ] `npm view @TellMeAlex/only-works-on-olympus` returns valid data
+- [ ] Installation works with GPR authentication
+- [ ] All files present in published package
+- [ ] Ready for teams to install with: `npm install @TellMeAlex/only-works-on-olympus`
+
+---
+
+## Post-Publication
+
+### Installation Instructions for Users
+```bash
+# Configure .npmrc in your project
+echo "@TellMeAlex:registry=https://npm.pkg.github.com" >> ~/.npmrc
+echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> ~/.npmrc
+
+# Install only-works-on-olympus
+npm install @TellMeAlex/only-works-on-olympus
+
+# Or in package.json
+{
+  "dependencies": {
+    "@TellMeAlex/only-works-on-olympus": "^0.1.0"
+  }
+}
+npm install
+```
+
+### Next Steps After Publication
+1. Document in OpenCode README how to install only-works-on-olympus
+2. Update opencode.jsonc plugin array to use: `"@TellMeAlex/only-works-on-olympus"`
+3. Remove local bun link (no longer needed)
+4. Test integration in OpenCode with published package
+5. Tag release on GitHub: `git tag v0.1.0 && git push origin v0.1.0`
+
+---
+
+## Notes & Considerations
+
+### About Scoped Packages
+- Scoped packages are namespaced: `@{username}/theodev`
+- GitHub defaults scope to your username or org
+- Format allows multiple packages under same scope
+- Private scoped packages require authentication for installation
+
+### GitHub Package Registry (GPR) vs npm Registry
+- **GPR**: Private by default, tied to GitHub org/user
+- **npm Registry**: Public by default, open to internet
+- We're using GPR because you want private distribution
+- Authentication required via GitHub PAT token
+
+### GitHub Token Requirements
+The GITHUB_TOKEN or PAT must have these scopes:
+- `repo` — Read/write access to repositories
+- `packages:write` — Publish packages
+- `packages:read` — Install packages
+
+Create at: https://github.com/settings/tokens
+
+### .npmrc Handling
+**CRITICAL**: Never commit `.npmrc` with token!
+- `.npmrc` → Added to `.gitignore` (contains token)
+- `.npmrc.example` → Committed (shows structure, no token)
+- Users copy `.npmrc.example` → `.npmrc` and add their token
+
+### Versioning Strategy
+- **0.1.0**: First release, stable API but no production guarantee
+- **0.x.y**: Pre-production releases (breaking changes OK)
+- **1.0.0**: Production release when ready
+- Follow SemVer: https://semver.org/
+
+---
+
+## Rollback Plan
+
+If publication fails:
+
+**Option 1: Unpublish**
+```bash
+npm unpublish @{username}/theodev@0.1.0 --force
+# WARNING: Can only unpublish within 24 hours of publication
+```
+
+**Option 2: Fix & Republish**
+```bash
+# Fix issue
+# Update version to 0.1.1 in package.json
+# Commit: git commit -am "fix: address publication issue"
+# Push: git push
+# Republish: npm publish
+```
+
+**Option 3: Delete Repository & Start Over**
+```bash
+gh repo delete theodev  # Removes GitHub repo
+# Create new repo and retry
+```
+
+---
+
+## Rollback Checklist
+- [ ] If unpublishing within 24h: `npm unpublish @TellMeAlex/only-works-on-olympus@0.1.0 --force`
+- [ ] If keeping repo: delete tag `git tag -d v0.1.0 && git push origin --delete v0.1.0`
+- [ ] If removing everything: `gh repo delete "ONLY WORKS ON OLYMPUS"` (irreversible)

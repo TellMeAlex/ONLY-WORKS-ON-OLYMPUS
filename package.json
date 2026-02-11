@@ -1,7 +1,6 @@
 {
-  "name": "@TellMeAlex/only-works-on-olympus",
+  "name": "@tellmealex/only-works-on-olympus",
   "version": "0.1.0",
-  "private": true,
   "module": "dist/index.js",
   "type": "module",
   "main": "dist/index.js",
@@ -15,8 +14,10 @@
     "url": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/issues"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun",
-    "typecheck": "bunx tsc --noEmit"
+    "build": "bun build src/index.ts --outdir dist --target bun && bun scripts/generate-schema.ts",
+    "typecheck": "bunx tsc --noEmit",
+    "schema:generate": "bun scripts/generate-schema.ts",
+    "schema:validate": "bun scripts/validate-schema.ts"
   },
   "dependencies": {
     "oh-my-opencode": "^3.4.0",
