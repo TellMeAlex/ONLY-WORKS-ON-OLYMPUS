@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "jsonc-parser";
-import { OlimpusConfigSchema, type OlimpusConfig } from "./schema";
+import { OlimpusConfigSchema, type OlimpusConfig } from "./schema.js";
+import { scaffoldOlimpusConfig } from "./scaffolder.js";
 
 /**
  * Load olimpus.jsonc from project directory and optional user config directory.
@@ -14,7 +15,7 @@ export function loadOlimpusConfig(projectDir: string): OlimpusConfig {
     homeDir,
     ".config",
     "opencode",
-    "olimpus.jsonc"
+    "olimpus.jsonc",
   );
   const projectConfigPath = path.join(projectDir, "olimpus.jsonc");
 
@@ -34,9 +35,33 @@ export function loadOlimpusConfig(projectDir: string): OlimpusConfig {
     if (projectConfig) {
       configData = deepMerge(
         configData,
-        projectConfig as Record<string, unknown>
+        projectConfig as Record<string, unknown>,
       );
     }
+  }
+
+  // If no config exists at either location, try to scaffold
+  const userConfigExists = fs.existsSync(userConfigPath);
+  const projectConfigExists = fs.existsSync(projectConfigPath);
+
+  if (!userConfigExists && !projectConfigExists) {
+    const scaffoldResult = scaffoldOlimpusConfig({
+      projectConfigExists: false,
+      userConfigExists: false,
+    });
+
+    if (scaffoldResult && scaffoldResult.created) {
+      // Re-read the scaffolded config
+      const content = fs.readFileSync(scaffoldResult.path, "utf-8");
+      const scaffoldedConfig = parseJsonc(content, scaffoldResult.path);
+      if (scaffoldedConfig) {
+        configData = deepMerge(
+          configData,
+          scaffoldedConfig as Record<string, unknown>,
+        );
+      }
+    }
+    // If scaffolding failed or was skipped, configData remains {} (default empty config)
   }
 
   const result = OlimpusConfigSchema.safeParse(configData);
@@ -76,7 +101,7 @@ function parseJsonc(content: string, filePath: string): unknown {
  */
 function deepMerge(
   target: Record<string, unknown>,
-  source: Record<string, unknown>
+  source: Record<string, unknown>,
 ): Record<string, unknown> {
   const result = { ...target };
 

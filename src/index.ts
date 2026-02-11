@@ -31,28 +31,11 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   try {
     config = loadOlimpusConfig(input.directory);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("ENOENT")) {
-      console.warn(
-        "[Olimpus] olimpus.jsonc not found - using oh-my-opencode defaults"
-      );
-      config = {
-        meta_agents: {},
-        agents: {},
-        categories: {},
-        disabled_hooks: [],
-        settings: {
-          namespace_prefix: "olimpus",
-          max_delegation_depth: 3,
-        },
-        skills: [],
-      };
-    } else {
-      throw new Error(
-        `[Olimpus] Failed to load olimpus.jsonc: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    }
+    throw new Error(
+      `[Olimpus] Failed to load olimpus.jsonc: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
 
   const maxDepth = config.settings?.max_delegation_depth ?? 3;
@@ -82,7 +65,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
     throw new Error(
       `[Olimpus] Failed to initialize oh-my-opencode wrapper: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 
@@ -115,14 +98,14 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
       const olimpusSkills = loadOlimpusSkills(config.skills, input.directory);
       if (olimpusSkills.length > 0) {
         console.log(
-          `[Olimpus] Loaded ${olimpusSkills.length} Olimpus skills with ${namespace}: prefix`
+          `[Olimpus] Loaded ${olimpusSkills.length} Olimpus skills with ${namespace}: prefix`,
         );
       }
     } catch (error) {
       console.warn(
         `[Olimpus] Failed to load skills: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
