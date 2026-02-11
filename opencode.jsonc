@@ -1,0 +1,278 @@
+// ============================================================================
+// OpenCode Configuration for Olimpo Project
+// ============================================================================
+//
+// This is the opencode.jsonc orchestrator configuration file for Olimpo.
+// Relationship to olimpus.jsonc:
+// - opencode.jsonc: Orchestrator & LLM provider configuration (this file)
+// - olimpus.jsonc: Plugin routing configuration (meta-agents, matchers, skills)
+//
+// To use this configuration:
+// 1. Replace placeholder values ({env:VAR_NAME}) with your actual configuration
+// 2. Set environment variables for sensitive data (API keys, URLs, tokens)
+// 3. Run 'opencode models' to verify available models from your provider
+//
+// Environment variable format: {env:VARIABLE_NAME}
+// Example: "apiKey": "{env:LLM_API_KEY}" → reads from LLM_API_KEY environment variable
+
+{
+  // ============================================================================
+  // SECTION 1: PLUGIN CONFIGURATION
+  // ============================================================================
+  // Register plugins to extend opencode functionality.
+  // For Olimpo, include only "olimpus" plugin.
+  
+  "plugin": [
+    "olimpus"
+  ],
+
+  // ============================================================================
+  // SECTION 2: SHARING & SCHEMA
+  // ============================================================================
+  
+  "share": "disabled",
+  "$schema": "https://opencode.ai/config.json",
+
+  // ============================================================================
+  // SECTION 3: CODE FORMATTER
+  // ============================================================================
+  // Configure formatters for different file types.
+  
+  "formatter": {
+    "prettier": {
+      "command": [
+        "npx",
+        "prettier",
+        "--write",
+        "$FILE"
+      ],
+      "environment": {
+        "NODE_ENV": "development"
+      },
+      "extensions": [
+        ".js",
+        ".ts",
+        ".jsx",
+        ".tsx"
+      ]
+    },
+    "custom-markdown-formatter": {
+      "command": [
+        "deno",
+        "fmt",
+        "$FILE"
+      ],
+      "extensions": [
+        ".md"
+      ]
+    }
+  },
+
+  // ============================================================================
+  // SECTION 4: LLM PROVIDER
+  // ============================================================================
+  // Configure your LLM provider (OpenAI-compatible, Claude, etc.)
+  // Replace 'my-provider' with your actual provider identifier.
+  // Run 'opencode models' to see available models from your provider.
+  
+  "provider": {
+    "my-provider": {
+      "name": "LLM Provider",
+      "options": {
+        // Replace with your provider's base URL
+        "baseURL": "{env:LLM_PROVIDER_URL}",
+        // API key or authentication token
+        "apiKey": "{env:LLM_API_KEY}"
+      },
+      // npm package for OpenAI-compatible providers
+      "npm": "@ai-sdk/openai-compatible",
+      "models": {
+        "claude-sonnet-4": {
+          "name": "Claude Sonnet 4",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "cost": {
+            "input": 3,
+            "output": 15
+          }
+        },
+        "claude-opus-4": {
+          "name": "Claude Opus 4",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "cost": {
+            "input": 5,
+            "output": 10
+          }
+        },
+        "claude-haiku-4": {
+          "name": "Claude Haiku 4",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "cost": {
+            "input": 1,
+            "output": 5
+          }
+        }
+      }
+    }
+  },
+
+  // ============================================================================
+  // SECTION 5: AVAILABLE TOOLS
+  // ============================================================================
+  // Configure which tools are available to the AI.
+  
+  "tools": {
+    "write": true,
+    "bash": true,
+    "webfetch": true
+  },
+
+  // ============================================================================
+  // SECTION 6: THEME
+  // ============================================================================
+  
+  "theme": "cursor",
+
+  // ============================================================================
+  // SECTION 7: BASH PERMISSION RULES
+  // ============================================================================
+  // Configure which bash commands require permission.
+  
+  "permission": {
+    "bash": {
+      "git push": "ask",
+      "git status": "allow",
+      "git diff": "allow",
+      "npm run build": "allow",
+      "ls": "allow",
+      "pwd": "allow"
+    }
+  },
+
+  // ============================================================================
+  // SECTION 8: DISABLED PROVIDERS
+  // ============================================================================
+  // Providers to disable (not used in this configuration).
+  
+  "disabled_providers": [
+    "opencode"
+  ],
+
+  // ============================================================================
+  // SECTION 9: MODEL CONTEXT PROTOCOL (MCP)
+  // ============================================================================
+  // MCPs extend functionality. Uncomment and configure the ones you need.
+  // Replace placeholder values with your actual server URLs and credentials.
+  
+  "mcp": {
+    // Jira Integration
+    // Uncomment and configure to use Jira MCP
+    // "Jira": {
+    //   "type": "local",
+    //   "command": [
+    //     "uvx",
+    //     "--python=3.12",
+    //     "mcp-atlassian"
+    //   ],
+    //   "environment": {
+    //     "JIRA_URL": "https://your-jira-instance.example.com",
+    //     "JIRA_PERSONAL_TOKEN": "{env:JIRA_PERSONAL_TOKEN}",
+    //     "JIRA_SSL_VERIFY": "false"
+    //   },
+    //   "enabled": false
+    // },
+
+    // GitHub Integration
+    // Uncomment and configure to use GitHub MCP
+    // "github": {
+    //   "type": "remote",
+    //   "url": "https://api.github.example.com/mcp/",
+    //   "headers": {
+    //     "Authorization": "Bearer {env:GITHUB_MCP_TOKEN}"
+    //   },
+    //   "enabled": false
+    // },
+
+    // Context7 Integration
+    // Uncomment and configure to use Context7 MCP
+    // "context7": {
+    //   "type": "local",
+    //   "command": [
+    //     "npx",
+    //     "-y",
+    //     "@upstash/context7-mcp",
+    //     "--api-key",
+    //     "{env:CONTEXT7_API_KEY}"
+    //   ],
+    //   "enabled": false
+    // },
+
+    // Grep.app Integration (Public - no auth required)
+    "grep_app": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": false
+    }
+  },
+
+  // ============================================================================
+  // SECTION 10: LANGUAGE SERVER PROTOCOL (LSP)
+  // ============================================================================
+  // Configure language servers for code intelligence.
+  // Ensure these commands are in your PATH or provide absolute paths.
+  
+  "lsp": {
+    "markdown-oxide": {
+      "command": [
+        "markdown-oxide"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
+    },
+    "typescript": {
+      "command": [
+        "typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs",
+        ".mts",
+        ".cts"
+      ]
+    },
+    "eslint": {
+      "command": [
+        "eslint",
+        "--stdin",
+        "--stdin-filename",
+        "$FILE"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs",
+        ".mts",
+        ".cts",
+        ".vue"
+      ]
+    }
+  }
+}
