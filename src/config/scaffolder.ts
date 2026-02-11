@@ -23,7 +23,7 @@ export interface ScaffoldResult {
  */
 const DEFAULT_CONFIG = {
   $schema:
-    "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/main/assets/olimpus.schema.json",
+    "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json",
   meta_agents: {},
   settings: {
     namespace_prefix: "olimpus",

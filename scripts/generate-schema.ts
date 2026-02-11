@@ -3,7 +3,7 @@ import { join } from "path";
 function generateOlimpusSchema() {
   const schema = {
     $schema: "http://json-schema.org/draft-07/schema#",
-    $id: "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/main/assets/olimpus.schema.json",
+    $id: "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json",
     title: "Olimpus Plugin Configuration",
     description:
       "Configuration schema for Olimpus meta-orchestrator plugin - extends oh-my-opencode",

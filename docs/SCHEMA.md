@@ -11,7 +11,7 @@ El archivo `assets/olimpus.schema.json` define el esquema JSON Schema Draft-07 p
 ## Schema Location
 
 ```
-https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/main/assets/olimpus.schema.json
+https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json
 ```
 
 ## Cómo se usa en olimpus.jsonc

@@ -1,10 +1,20 @@
 {
-  "name": "@tellmealex/only-works-on-olympus",
+  "name": "only-works-on-olympus",
   "version": "0.1.0",
+  "description": "A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules",
+  "license": "SUL-1.0",
   "module": "dist/index.js",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "keywords": [
+    "opencode",
+    "plugin",
+    "meta-agent",
+    "routing",
+    "orchestrator",
+    "ai-agents"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS.git"
