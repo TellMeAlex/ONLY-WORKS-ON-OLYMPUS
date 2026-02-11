@@ -7,6 +7,19 @@
   // This file demonstrates the complete Olimpus meta-orchestrator configuration.
   // Place this in your project root (olimpus.jsonc) or user config (~/.config/opencode/olimpus.jsonc)
   // Project config takes precedence over user config.
+  //
+  // PHILOSOPHY (Oh-My-OpenCode Integration):
+  // • Intelligent routing: No manual agent selection—let matchers decide
+  // • Background parallelization: Fire researchers while builders work
+  // • Multi-model optimization: Use cheap models for search, expensive for decisions
+  // • Relentless execution: Tasks don't end halfway (todo_continuation=true)
+  // • Specialized workers: sisyphus, oracle, librarian, explore, metis, momus, atlas, prometheus
+  //
+  // META-AGENTS defined here (atenea, hermes, hefesto, frontend_specialist) are routers
+  // that intelligently delegate to the builtin oh-my-opencode agents above.
+  //
+  // QUICK START: Include "ulw" or "ultrawork" in your prompt to activate
+  // relentless execution mode with all features enabled.
 
   // ============================================================================
   // SECTION 1: META_AGENTS
@@ -245,10 +258,43 @@
     // Namespace prefix for bundled skills (default: "olimpus")
     // Skills loaded via loadOlimpusSkills() are prefixed with this name
     "namespace_prefix": "olimpus",
-    
+
     // Maximum delegation depth to prevent infinite chains
     // If A → B → C → A, and depth=3, the cycle is detected
-    "max_delegation_depth": 3
+    "max_delegation_depth": 3,
+
+    // ========================================================================
+    // EXTENSION: Oh-My-OpenCode Integration
+    // ========================================================================
+    // These settings enable background parallelization and multi-model orchestration
+    // following oh-my-opencode philosophy. They're optional but recommended.
+
+    // Enable background task parallelization
+    // While main agent executes, fire background researchers in parallel
+    "background_parallelization": {
+      "enabled": true,
+      "max_parallel_tasks": 3,
+      "timeout_ms": 30000
+    },
+
+    // Multi-model optimization: Use different models for different tasks
+    // Routes cheaper models (Haiku) to research/search, expensive (Opus) to decisions
+    "adaptive_model_selection": {
+      "enabled": true,
+      "research_model": "claude-haiku-4-5",        // Fast, cheap
+      "strategy_model": "claude-opus-4-6",         // Expensive but strategic
+      "default_model": "claude-3-5-sonnet-20241022" // Balanced default
+    },
+
+    // Enable relentless execution mode
+    // When "ultrawork" or "ulw" is in prompt, tasks don't stop halfway
+    "ultrawork_enabled": true,
+    "todo_continuation": true,              // Continue if agent stops
+    "verify_before_completion": true,       // Double-check work before declaring done
+
+    // LSP/AST surgical refactoring (no string replacement)
+    "lsp_refactoring_preferred": true,
+    "aggressive_comment_pruning": true      // No AI slop in comments
   },
 
   // ============================================================================
@@ -274,6 +320,46 @@
   // ============================================================================
   // oh-my-opencode hook names to disable
   // These are passed through to oh-my-opencode plugin system
-  
-  "disabled_hooks": []
+
+  "disabled_hooks": [],
+
+  // ============================================================================
+  // USAGE EXAMPLES (Oh-My-OpenCode Style)
+  // ============================================================================
+  // These examples show how to leverage Olimpus with oh-my-opencode philosophy:
+  //
+  // 🚀 ULTRAWORK MODE (Relentless Execution):
+  //   Prompt: "ulw implement a login form with OAuth and tests"
+  //   → Sisyphus takes over, fires Hermes to research OAuth patterns in background
+  //   → Builds component, writes tests, verifies everything works
+  //   → Background research continues while building
+  //
+  // 🎯 CATEGORY ROUTING (Domain Specialization):
+  //   Prompt: "Add a new REST endpoint for user profiles [tag: backend]"
+  //   → Hefesto routes to Sisyphus (if tests exist) or Hephaestus
+  //   → Intelligent routing based on project context
+  //
+  // 🔍 RESEARCH MODE (Background Parallelization):
+  //   Prompt: "How do we implement authentication? [tag: architecture]"
+  //   → Atenea leads strategy
+  //   → Hermes fires in background to find OAuth/JWT patterns
+  //   → Main agent gets context-injected findings while thinking
+  //
+  // 🎨 FRONTEND SPECIALIST:
+  //   Prompt: "@frontend_specialist design a responsive navbar component"
+  //   → Frontend specialist routes to appropriate agent
+  //   → Builds with accessibility + responsive design
+  //
+  // 💪 MULTI-MODEL ORCHESTRATION:
+  //   • Background research uses cheap Haiku model (faster, cheaper)
+  //   • Main decision-making uses Opus (strategic, thorough)
+  //   • Token usage optimized automatically
+  //
+  // PHILOSOPHY REMINDER:
+  // This config embeds oh-my-opencode principles:
+  // ✅ No manual agent selection (matchers decide)
+  // ✅ Parallel background research (fires & forgets)
+  // ✅ Multi-model (cheap for search, expensive for strategy)
+  // ✅ Relentless (todo_continuation, verify_before_completion)
+  // ✅ No shortcuts (LSP refactoring, no AI slop)
 }
