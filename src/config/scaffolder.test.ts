@@ -1,32 +1,22 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
-import { mkdirSync, writeFileSync, rmSync, existsSync, chmodSync } from "fs";
+import {
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  existsSync,
+  chmodSync,
+  statSync,
+} from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { mkdtempSync } from "fs";
 import { parse as parseJsonc } from "jsonc-parser";
 import { OlimpusConfigSchema } from "./schema.js";
-
-/**
- * Interface for the scaffolder implementation
- * (not yet implemented, tests will fail)
- */
-interface ScaffoldOptions {
-  projectConfigExists: boolean;
-  userConfigExists?: boolean;
-}
-
-interface ScaffoldResult {
-  path: string;
-  created: boolean;
-}
-
-/**
- * Function signature for scaffoldOlimpusConfig
- * (not yet implemented)
- */
-declare function scaffoldOlimpusConfig(
-  options: ScaffoldOptions,
-): ScaffoldResult | null;
+import {
+  scaffoldOlimpusConfig,
+  type ScaffoldOptions,
+  type ScaffoldResult,
+} from "./scaffolder.js";
 
 describe("scaffoldOlimpusConfig", () => {
   let tempDir: string;
@@ -104,8 +94,8 @@ describe("scaffoldOlimpusConfig", () => {
     expect(existsSync(configDir)).toBe(true);
 
     // Verify it's a directory, not a file
-    const stat = await Bun.file(configDir).exists();
-    expect(stat).toBe(true);
+    const stat = statSync(configDir);
+    expect(stat.isDirectory()).toBe(true);
   });
 
   test("generated config has $schema URL", async () => {
