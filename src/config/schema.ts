@@ -121,12 +121,56 @@ export const CategoriesSchema = z
   .optional();
 
 /**
- * Olimpus Settings Schema
+ * Provider Configuration Schema
+ */
+
+export const ProviderConfigSchema = z.object({
+  priority_chain: z.array(z.string()).optional(),
+  research_providers: z.array(z.string()).optional(),
+  strategy_providers: z.array(z.string()).optional(),
+  config: z
+    .record(
+      z.string(),
+      z.record(z.string(), z.string().or(z.boolean()).or(z.number())).optional()
+    )
+    .optional(),
+});
+
+/**
+ * Olimpus Settings Schema (Extended with oh-my-opencode integration)
  */
 
 export const SettingsSchema = z.object({
   namespace_prefix: z.string().default("olimpus"),
   max_delegation_depth: z.number().int().positive().default(3),
+
+  // Background parallelization
+  background_parallelization: z
+    .object({
+      enabled: z.boolean().optional(),
+      max_parallel_tasks: z.number().int().positive().optional(),
+      timeout_ms: z.number().int().positive().optional(),
+    })
+    .optional(),
+
+  // Adaptive model selection
+  adaptive_model_selection: z
+    .object({
+      enabled: z.boolean().optional(),
+      research_model: z.string().optional(),
+      strategy_model: z.string().optional(),
+      default_model: z.string().optional(),
+    })
+    .optional(),
+
+  // Ultrawork and relentless execution
+  ultrawork_enabled: z.boolean().optional(),
+  todo_continuation: z.boolean().optional(),
+  verify_before_completion: z.boolean().optional(),
+
+  // Code quality
+  lsp_refactoring_preferred: z.boolean().optional(),
+  aggressive_comment_pruning: z.boolean().optional(),
 });
 
 /**
@@ -136,6 +180,7 @@ export const SettingsSchema = z.object({
 export const OlimpusConfigSchema = z.object({
   // Olimpus-specific sections
   meta_agents: z.record(z.string(), MetaAgentSchema).optional(),
+  providers: ProviderConfigSchema.optional(),
   settings: SettingsSchema.optional(),
   skills: z.array(z.string()).optional(),
 
@@ -160,6 +205,7 @@ export type RoutingRule = z.infer<typeof RoutingRuleSchema>;
 export type MetaAgentDef = z.infer<typeof MetaAgentSchema>;
 export type AgentOverride = z.infer<typeof AgentOverrideSchema>;
 export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
+export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 
 export type OlimpusConfig = z.infer<typeof OlimpusConfigSchema>;

@@ -25,6 +25,10 @@ function generateOlimpusSchema() {
             },
           },
 
+          providers: {
+            $ref: "#/definitions/ProviderConfig",
+          },
+
           settings: {
             $ref: "#/definitions/OlimpusSettings",
           },
@@ -317,10 +321,68 @@ function generateOlimpusSchema() {
         additionalProperties: false,
       },
 
+      ProviderConfig: {
+        type: "object",
+        title: "Provider Configuration",
+        description:
+          "Configure provider chains and model selection strategy following oh-my-opencode conventions",
+        properties: {
+          priority_chain: {
+            type: "array",
+            title: "Global Priority Chain",
+            description:
+              "Provider fallback chain: system tries providers in order until available",
+            items: {
+              type: "string",
+            },
+            examples: [
+              ["anthropic/claude-opus-4-6", "openai/gpt-5.2", "google/gemini-3-pro"],
+            ],
+          },
+
+          research_providers: {
+            type: "array",
+            title: "Research Providers",
+            description:
+              "Cheap models for background research tasks (fire & forget)",
+            items: {
+              type: "string",
+            },
+            examples: [
+              ["anthropic/claude-haiku-4-5", "openai/gpt-4-turbo"],
+            ],
+          },
+
+          strategy_providers: {
+            type: "array",
+            title: "Strategy Providers",
+            description: "Expensive models for architectural decisions",
+            items: {
+              type: "string",
+            },
+            examples: [
+              ["anthropic/claude-opus-4-6", "openai/gpt-5.2"],
+            ],
+          },
+
+          config: {
+            type: "object",
+            title: "Per-Provider Configuration",
+            description: "Optional configuration per provider",
+            additionalProperties: {
+              type: "object",
+              additionalProperties: true,
+            },
+          },
+        },
+        additionalProperties: false,
+      },
+
       OlimpusSettings: {
         type: "object",
         title: "Olimpus Settings",
-        description: "Olimpus-specific configuration",
+        description:
+          "Olimpus-specific configuration with oh-my-opencode integration",
         properties: {
           namespace_prefix: {
             type: "string",
@@ -337,6 +399,89 @@ function generateOlimpusSchema() {
               "Maximum chain depth to prevent infinite delegation cycles (A->B->C->A)",
             default: 3,
             minimum: 1,
+          },
+
+          background_parallelization: {
+            type: "object",
+            title: "Background Parallelization",
+            description:
+              "Fire background researcher agents while main agent works",
+            properties: {
+              enabled: {
+                type: "boolean",
+                default: true,
+              },
+              max_parallel_tasks: {
+                type: "integer",
+                minimum: 1,
+                default: 3,
+              },
+              timeout_ms: {
+                type: "integer",
+                minimum: 1000,
+                default: 30000,
+              },
+            },
+          },
+
+          adaptive_model_selection: {
+            type: "object",
+            title: "Adaptive Model Selection",
+            description:
+              "Route cheap models to research, expensive to strategy (multi-model optimization)",
+            properties: {
+              enabled: {
+                type: "boolean",
+                default: true,
+              },
+              research_model: {
+                type: "string",
+                default: "anthropic/claude-haiku-4-5",
+              },
+              strategy_model: {
+                type: "string",
+                default: "anthropic/claude-opus-4-6",
+              },
+              default_model: {
+                type: "string",
+                default: "anthropic/claude-3-5-sonnet-20241022",
+              },
+            },
+          },
+
+          ultrawork_enabled: {
+            type: "boolean",
+            title: "Ultrawork Mode",
+            description: "Enable relentless execution (include 'ulw' in prompt)",
+            default: true,
+          },
+
+          todo_continuation: {
+            type: "boolean",
+            title: "Todo Continuation",
+            description: "Force agent to continue if it stops halfway",
+            default: true,
+          },
+
+          verify_before_completion: {
+            type: "boolean",
+            title: "Verify Before Completion",
+            description: "Double-check work before declaring task done",
+            default: true,
+          },
+
+          lsp_refactoring_preferred: {
+            type: "boolean",
+            title: "LSP Refactoring",
+            description: "Use LSP/AST for surgical code changes (no string replacement)",
+            default: true,
+          },
+
+          aggressive_comment_pruning: {
+            type: "boolean",
+            title: "Aggressive Comment Pruning",
+            description: "No AI slop in comments - prune unnecessary documentation",
+            default: true,
           },
         },
         additionalProperties: false,
