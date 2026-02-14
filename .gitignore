@@ -49,3 +49,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Auto Claude data directory
 .auto-claude/
+
+# Auto Claude generated files
+.claude_settings.json
+.worktrees/
+.security-key
+logs/security/
