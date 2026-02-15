@@ -1,3 +1,3 @@
-export { ateneo } from "./atenea.js";
+export { atenea } from "./atenea.js";
 export { hermes } from "./hermes.js";
-export { hefesto } from "./hefesto.js";
+export { hades } from "./hades.js";

@@ -15,8 +15,12 @@
   // • Relentless execution: Tasks don't end halfway (todo_continuation=true)
   // • Specialized workers: sisyphus, oracle, librarian, explore, metis, momus, atlas, prometheus
   //
-  // META-AGENTS defined here (atenea, hermes, hefesto, frontend_specialist) are routers
+  // META-AGENTS defined here (atenea, hermes, hades, hefesto, frontend_specialist) are routers
   // that intelligently delegate to the builtin oh-my-opencode agents above.
+  //
+  // NEW: Meta-agents now support REAL AGENT FIELDS (description, mode, color, hidden,
+  // permission, thinking, reasoningEffort, maxTokens, prompt_template) in addition to
+  // routing rules. This turns them from simple routers into full AgentConfig producers.
   //
   // QUICK START: Include "ulw" or "ultrawork" in your prompt to activate
   // relentless execution mode with all features enabled.
@@ -37,6 +41,20 @@
       
       // Builtin agents this meta-agent can delegate to
       "delegates_to": ["oracle", "prometheus", "atlas", "metis"],
+
+      // ===== REAL AGENT FIELDS (NEW - all optional) =====
+      "description": "Framework & component research orchestrator — discovers libraries, patterns, architecture solutions",
+      "mode": "subagent",
+      "color": "#E8A317",
+      "hidden": true,
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+        "webfetch": "allow",
+        "task": "allow",
+        "doom_loop": "deny",
+        "external_directory": "deny"
+      },
       
       // Routing rules: evaluated in order, first match wins
       "routing_rules": [
@@ -82,6 +100,20 @@
     "hermes": {
       "base_model": "claude-3-5-sonnet-20241022",
       "delegates_to": ["librarian", "explore", "oracle"],
+
+      // ===== REAL AGENT FIELDS (NEW - all optional) =====
+      "description": "Jira management & communication orchestrator — issue creation, epic planning, dependency tracking",
+      "mode": "subagent",
+      "color": "#F4A460",
+      "hidden": true,
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+        "webfetch": "allow",
+        "task": "allow",
+        "doom_loop": "deny",
+        "external_directory": "deny"
+      },
       
       "routing_rules": [
         {
@@ -201,6 +233,72 @@
             "type": "always"
           },
           "target_agent": "hephaestus"
+        }
+      ]
+    },
+
+    // ========================================================================
+    // Hades - Architecture Guardian (NEW)
+    // ========================================================================
+    // Reads and proposes changes, never implements directly.
+    // After proposing, offers delegation to the appropriate agent.
+    // Most restrictive permissions: only task delegation allowed.
+    "hades": {
+      "base_model": "claude-3-5-sonnet-20241022",
+      "delegates_to": ["oracle", "prometheus", "sisyphus", "explore", "librarian"],
+
+      // ===== REAL AGENT FIELDS (NEW) =====
+      // These fields produce a full AgentConfig when registered in oh-my-opencode.
+      "description": "Architecture guardian — analyzes Olimpus and oh-my-opencode structure, proposes changes, delegates implementation",
+      "mode": "subagent",
+      "color": "#8B0000",
+      "hidden": true,
+      "prompt_template": "You are Hades, the architecture guardian for the Olimpus plugin system. You NEVER implement directly — you analyze, propose, and delegate.",
+
+      // Most restrictive permission model: read-only analysis + delegation
+      "permission": {
+        "edit": "deny",
+        "bash": "deny",
+        "webfetch": "deny",
+        "task": "allow",
+        "doom_loop": "deny",
+        "external_directory": "deny"
+      },
+
+      "routing_rules": [
+        {
+          // Architecture analysis → oracle
+          "matcher": {
+            "type": "keyword",
+            "keywords": ["architecture", "how does", "explain", "understand", "internals", "design", "structure"],
+            "mode": "any"
+          },
+          "target_agent": "oracle",
+          "config_overrides": {
+            "prompt": "OLIMPUS ARCHITECTURE ANALYSIS: Analyze the Olimpus meta-orchestrator architecture. Key files: src/index.ts (entry), src/agents/routing.ts (5 matchers), src/agents/registry.ts (circular detection), src/config/schema.ts (Zod v4). Propose changes only."
+          }
+        },
+        {
+          // Critical file changes → prometheus for planning
+          "matcher": {
+            "type": "regex",
+            "pattern": "(src/agents/|meta-agent|routing|registry|MetaAgentDef|RoutingRule)",
+            "flags": "i"
+          },
+          "target_agent": "prometheus",
+          "config_overrides": {
+            "prompt": "OLIMPUS INTERNAL FILE CHANGE PROPOSAL: The request references Olimpus internal files. Create a plan maintaining architectural integrity. Plan only, offer delegation."
+          }
+        },
+        {
+          // Fallback → oracle
+          "matcher": {
+            "type": "always"
+          },
+          "target_agent": "oracle",
+          "config_overrides": {
+            "prompt": "OLIMPUS ARCHITECTURE GUARDIAN (FALLBACK): Analyze in context of Olimpus architecture. Propose changes, never implement directly."
+          }
         }
       ]
     }
@@ -335,23 +433,26 @@
     "aggressive_comment_pruning": true      // No AI slop in comments
   },
 
-  // ============================================================================
-  // SECTION 6: SKILLS
-  // ============================================================================
-  // Array of paths to skill definition files
-  // Skills are loaded from your project and bundled with the plugin
-  // Path is relative to project directory or absolute
-  
-  "skills": [
-    // Example 1: Load from project docs
-    "docs/skills/custom-skill.md",
-    
-    // Example 2: Absolute path
-    "/Users/yourname/shared-skills/advanced-refactoring.md"
-    
-    // Skills will be prefixed with "olimpus:" (e.g., "olimpus:custom-skill")
-    // This prevents naming conflicts with oh-my-opencode builtin skills
-  ],
+   // ============================================================================
+   // SECTION 6: SKILLS
+   // ============================================================================
+   // Array of paths to skill definition files
+   // Skills are loaded from your project and bundled with the plugin
+   // Path is relative to project directory or absolute
+   
+    "skills": [
+      // MYSTORES Project Skills - Jira Integration
+      "skills/jira-issue-operations/SKILL.md",
+      
+      // Example: Load from project docs
+      // "docs/skills/custom-skill.md",
+      
+      // Example: Absolute path
+      // "/Users/yourname/shared-skills/advanced-refactoring.md"
+      
+      // Skills will be prefixed with "olimpus:" (e.g., "olimpus:jira-issue-operations")
+      // This prevents naming conflicts with oh-my-opencode builtin skills
+    ],
 
   // ============================================================================
   // SECTION 7: DISABLED_HOOKS (Optional)
@@ -361,9 +462,284 @@
 
   "disabled_hooks": [],
 
-  // ============================================================================
-  // SECTION 8: USAGE EXAMPLES (Oh-My-OpenCode Style)
-  // ============================================================================
+   // ============================================================================
+   // SECTION 7: BUILT-IN META-AGENTS DOCUMENTATION
+   // ============================================================================
+   // Olimpus includes three built-in meta-agents that handle common workflows.
+   // These are pre-configured in the meta_agents section above.
+   // This section explains each meta-agent's purpose, routing behavior, and use cases.
+   //
+   // ========================================================================
+   // 1. ATENEA - Framework & Component Research Orchestrator
+   // ========================================================================
+   // PURPOSE: Research frameworks, libraries, and architectural patterns before implementation
+   // PRIMARY SKILL: Framework discovery, design pattern analysis, comparative library research
+   // STATUS: Configured above (lines 34-77)
+   //
+   // ROUTING BEHAVIOR:
+   //   • HIGH COMPLEXITY (>10 points) → oracle (strategic architecture advisor)
+   //   • MEDIUM COMPLEXITY (5-9 points) → prometheus (technical strategist)
+   //   • LOW COMPLEXITY (<5 points) → metis (general technical analyst)
+   //
+   // PRIORITY RESEARCH TARGETS:
+   //   • Inditex libraries: amiga-fwk-web, amiga-*, @inditex/* (internal priority)
+   //   • Popular frameworks: React, Next.js, Vue, Angular, Svelte
+   //   • UI libraries: shadcn/ui, Material-UI, Tailwind, Chakra
+   //   • Testing: Vitest, Jest, Playwright, Pytest
+   //   • State management: Zustand, Redux, MobX, Recoil
+   //   • Backend: Express, Django, FastAPI, NestJS, Go frameworks
+   //
+   // WORKFLOW (ATENEA ORCHESTRATION):
+   //   1. User asks: "Should we use amiga-fwk-web for this modal component?"
+   //   2. Atenea receives request → evaluates complexity → routes to oracle
+   //   3. Oracle researches:
+   //      • Current amiga-fwk-web component ecosystem
+   //      • Alternative modal solutions (shadcn, MUI, custom)
+   //      • Trade-offs: bundle size, accessibility, customization, maintenance
+   //      • Inditex integration patterns and best practices
+   //   4. Oracle documents findings → saves to .sisyphus/research/amiga-fwk-web.md
+   //   5. Oracle delegates to Prometheus for strategic recommendation
+   //   6. Prometheus summarizes decision criteria
+   //   7. Result: Research complete → Ready for implementation planning
+   //
+   // TYPICAL PROMPTS THAT ROUTE TO ATENEA:
+   //   • "Research amiga-fwk-web modal components"
+   //   • "Compare modal solutions: shadcn vs MUI vs custom"
+   //   • "What's the best approach for form handling in Next.js?"
+   //   • "Analyze Tailwind CSS vs Styled Components trade-offs"
+   //   • "Design a scalable state management solution"
+   //   • "Architecture review: microservices vs monolith?"
+   //
+   // EXAMPLE: RESEARCH WORKFLOW
+   //   Input: "Research amiga-fwk-web button component before we implement our design system"
+   //   Atenea Routes To: oracle (complexity=high, architectural decision)
+   //   Oracle Output:
+   //     • Component API review
+   //     • Accessibility compliance (WCAG)
+   //     • Customization capabilities
+   //     • Bundle impact analysis
+   //     • Integration guide for Inditex projects
+   //   File Generated: .sisyphus/research/amiga-fwk-web-button.md
+   //
+   // INTEGRATION WITH OH-MY-OPENCODE:
+   //   • Atenea fires in BACKGROUND during main implementation (parallelization)
+   //   • While Sisyphus builds, Atenea researches in parallel
+   //   • Findings injected as context for Sisyphus' decisions
+   //   • Background research doesn't block main task completion
+   //   • Cheap Haiku model used for background research (cost optimization)
+   //
+   // ========================================================================
+   // 2. HERMES - Jira Management & Communication Orchestrator
+   // ========================================================================
+   // PURPOSE: Manage Jira operations for MYSTORES project + research integration
+   // PRIMARY SKILLS: Jira issue creation/update, epic planning, dependency management
+   // SKILLS USED: olimpus:jira-issue-operations (see skills section)
+   // STATUS: Configured above (lines 82-120)
+   //
+   // ROUTING BEHAVIOR:
+   //   • Keywords: "docs", "documentation", "guide", "search", "lookup" → librarian
+   //   • Keywords: "code", "find" (both required) → explore
+   //   • Fallback → librarian (default research)
+   //
+   // JIRA OPERATIONS (MYSTORES PROJECT):
+   //   • Create Épicas (Epics) - high-level features
+   //   • Create Historias (Stories) - user-facing features
+   //   • Create Tasks - implementation work
+   //   • Create Bugs - defect tracking
+   //   • Create Sub-tasks - story breakdowns
+   //   • Link issues - dependencies, blocks, relates-to
+   //   • Update status - move through workflow
+   //   • Query issues - search and filter
+   //   • Manage sprints - assign to current/future sprints
+   //
+   // WORKFLOW (HERMES ORCHESTRATION):
+   //   1. User asks: "Create Jira epic for 'User Authentication Migration'"
+   //   2. Hermes receives request → evaluates keywords → routes to librarian
+   //   3. Librarian researches Jira conventions (if needed) or direct execution
+   //   4. With jira-issue-operations skill, creates:
+   //      • Epic: "User Authentication Migration"
+   //      • Custom fields: MYSTORES project fields (sprint, labels, etc.)
+   //      • Links: blocks/relates-to other authentication stories
+   //   5. Returns Jira ticket ID (e.g., MYSTORES-2847)
+   //   6. Hermes can delegate follow-up to Prometheus for planning sprint work
+   //
+   // TYPICAL PROMPTS THAT ROUTE TO HERMES:
+   //   • "Create Jira epic for 'Modal Component Library'"
+   //   • "Create story in MYSTORES for user profile redesign"
+   //   • "Link MYSTORES-1234 to block MYSTORES-1235"
+   //   • "Update MYSTORES-500 status to 'In Progress'"
+   //   • "Create bug for form validation issue"
+   //   • "Plan sprint: add stories to MYSTORES backlog"
+   //   • "Search Jira for existing modal components"
+   //
+   // EXAMPLE 1: EPIC CREATION WORKFLOW
+   //   Input: "Create Jira epic 'Modal Component System v2' with subtasks"
+   //   Hermes Routes To: librarian (keyword='jira', research + execution)
+   //   Librarian With Skill Creates:
+   //     • Epic MYSTORES-2950: "Modal Component System v2"
+   //     • Task MYSTORES-2951: "Design modal API spec"
+   //     • Task MYSTORES-2952: "Implement base modal component"
+   //     • Task MYSTORES-2953: "Add accessibility features (WCAG)"
+   //     • Task MYSTORES-2954: "Add animations & transitions"
+   //   Relationships: All tasks block epic completion
+   //   Sprint Assignment: Current sprint or planning sprint
+   //   Output: Epic link → MYSTORES-2950 (ready for team planning)
+   //
+   // EXAMPLE 2: ISSUE LINKING WORKFLOW
+   //   Input: "MYSTORES-1100 depends on MYSTORES-1099. Also link MYSTORES-1101"
+   //   Hermes Routes To: librarian (keyword='mystores' or implicit Jira detection)
+   //   Librarian With Skill:
+   //     • Links MYSTORES-1100 → MYSTORES-1099 (type: "blocks")
+   //     • Links MYSTORES-1100 → MYSTORES-1101 (type: "relates-to")
+   //   Validates: No circular dependencies
+   //   Output: Link confirmation + dependency graph
+   //
+   // INTEGRATION WITH ATENEA (COMBINED WORKFLOW):
+   //   1. "Research amiga-fwk-web patterns then plan Jira epic"
+   //   2. Atenea fires → researches framework (background)
+   //   3. Hermes processes → creates Jira epic immediately
+   //   4. While Sisyphus starts implementation, Atenea findings update task descriptions
+   //   5. Result: Researched + planned + building in parallel
+   //
+   // INTEGRATION WITH SISYPHUS (IMPLEMENTATION WORKFLOW):
+   //   1. "Create Jira story, then implement the feature"
+   //   2. Hermes creates story (MYSTORES-XXX)
+   //   3. Hermes passes ticket context to Sisyphus
+   //   4. Sisyphus references MYSTORES-XXX in commits and PR
+   //   5. Automated linking: PRs mention ticket → auto-links in Jira
+   //
+   // CUSTOM FIELDS SUPPORTED (MYSTORES PROJECT):
+   //   • sprint: Current/future sprint assignment
+   //   • story_points: Estimation field
+   //   • labels: Project tags (e.g., "modal", "a11y", "performance")
+   //   • priority: High, Medium, Low, Blocker
+   //   • assignee: Team member assignment
+   //   • epic_link: Link story to parent epic
+   //   • blocking: Blocks other issues (blocks/blocked-by)
+   //
+   // ========================================================================
+   // 3. HEFESTO - Implementation & Building (Already Configured)
+   // ========================================================================
+   // PURPOSE: Build features, fix bugs, refactor code with TDD emphasis
+   // STATUS: Configured above (lines 125-165)
+   // DELEGATES TO: sisyphus (TDD), hephaestus (general building)
+   //
+   // ROUTING BEHAVIOR:
+   //   • Has package.json + testing framework (vitest/jest/bun:test) → sisyphus (TDD)
+   //   • Has package.json only → sisyphus (quality-focused)
+   //   • Fallback → hephaestus (general builder)
+   //
+   // PHILOSOPHY: "Write tests first, then implementation"
+   // OUTPUT: Feature complete + tests passing + code reviewed
+   //
+   // ========================================================================
+   // 4. HADES - Architecture Guardian (NEW)
+   // ========================================================================
+   // PURPOSE: Protect and evolve Olimpus + oh-my-opencode architecture
+   // STATUS: Configured above in meta_agents section
+   // DELEGATES TO: oracle (analysis), prometheus (planning), sisyphus (implementation),
+   //               explore (codebase search), librarian (documentation)
+   //
+   // ROUTING BEHAVIOR:
+   //   • Keywords: "architecture", "how does", "explain", "internals", "design" → oracle
+   //   • Regex: src/agents/, meta-agent, routing, registry → prometheus (planning)
+   //   • Regex: oh-my-opencode, PluginInterface, AgentConfig → oracle (integration)
+   //   • Keywords: "add agent", "new agent", "modify agent" → prometheus
+   //   • Keywords: "implement", "code", "write", "fix" → sisyphus
+   //   • Keywords: "find", "search", "where is", "pattern" → explore
+   //   • Keywords: "docs", "documentation", "api", "reference" → librarian
+   //   • Keywords: "olimpus", "meta-agent", "plugin", "routing" → oracle
+   //   • Fallback → oracle (architecture guardian default)
+   //
+   // PERMISSIONS (MOST RESTRICTIVE):
+   //   • edit: DENY — Hades never edits files directly
+   //   • bash: DENY — no shell commands
+   //   • webfetch: DENY — no external requests
+   //   • task: ALLOW — can delegate to other agents
+   //   • doom_loop: DENY — no infinite loops
+   //   • external_directory: DENY — no access outside project
+   //
+   // WORKFLOW (HADES ORCHESTRATION):
+   //   1. User asks: "How should we add a new matcher type to Olimpus?"
+   //   2. Hades receives request → keyword "how" + "add" → routes to oracle
+   //   3. Oracle analyzes current architecture:
+   //      • Existing matchers in routing.ts (5 types)
+   //      • Zod schema in config/schema.ts (discriminated union)
+   //      • Registration flow in index.ts
+   //   4. Oracle proposes plan:
+   //      • New matcher evaluator function in routing.ts
+   //      • New Zod schema in config/schema.ts
+   //      • Update evaluateMatcher dispatcher
+   //   5. Hades offers: "Shall I delegate implementation to Sisyphus?"
+   //   6. If accepted → delegates to sisyphus with full plan context
+   //
+   // TYPICAL PROMPTS THAT ROUTE TO HADES:
+   //   • "How does the Olimpus routing engine work?"
+   //   • "Explain the meta-agent registry circular detection"
+   //   • "I want to modify src/agents/routing.ts to add a new matcher"
+   //   • "What's the best way to add a new agent to Olimpus?"
+   //   • "Review the architecture of the config loading system"
+   //
+   // PHILOSOPHY: "Read, analyze, propose — never implement directly"
+   // OUTPUT: Architecture analysis + proposal + delegation offer
+   //
+   // ============================================================================
+   // COMBINED USAGE PATTERNS
+   // ============================================================================
+   //
+   // PATTERN 1: RESEARCH → PLAN → BUILD (Full Workflow)
+   //   Prompt: "ulw research amiga-fwk-web modals, plan Jira epic, then implement"
+   //   Flow:
+   //     1. Atenea researches (background) → oracle/prometheus
+   //     2. Hermes plans epic → MYSTORES ticket created
+   //     3. Hefesto builds → sisyphus (TDD mode)
+   //     4. Sisyphus references epic in commits
+   //     5. Results: Research doc + Jira epic + PR with tests
+   //
+   // PATTERN 2: RESEARCH ONLY (Background Research)
+   //   Prompt: "Research Next.js 15 App Router patterns"
+   //   Flow:
+   //     1. Atenea routes to oracle (high complexity)
+   //     2. Oracle researches async/await, server components, streaming
+   //     3. Saves to .sisyphus/research/nextjs-15.md
+   //     4. Result: Comprehensive guide ready for team
+   //
+   // PATTERN 3: JIRA PLANNING ONLY
+   //   Prompt: "Create Jira epic for authentication refactor with 5 subtasks"
+   //   Flow:
+   //     1. Hermes routes to librarian (jira keywords)
+   //     2. Librarian with skill creates epic + tasks
+   //     3. Result: MYSTORES-XXXX ready for team (points, sprint, etc.)
+   //
+   // PATTERN 4: COMBINED RESEARCH + PLANNING
+   //   Prompt: "Research shadcn modal components, then create Jira story"
+   //   Flow:
+   //     1. Atenea researches → oracle finds modal patterns
+   //     2. Hermes creates story → references research in description
+   //     3. Result: Ticket includes research context + implementation guidance
+   //
+   // ============================================================================
+   // ANTI-PATTERNS (What NOT to do)
+   // ============================================================================
+   //
+   // ❌ ANTI-PATTERN 1: Manual Agent Selection
+   //   DON'T: "@oracle research this" or "@sisyphus build this"
+   //   DO: "research amiga-fwk-web" or "build modal component"
+   //   WHY: Olimpus routes automatically based on prompt analysis
+   //
+   // ❌ ANTI-PATTERN 2: Blocked Workflows
+   //   DON'T: Wait for research to finish before planning
+   //   DO: Use "ulw" mode to parallelize (research background + planning sync)
+   //   WHY: Background parallelization is oh-my-opencode philosophy
+   //
+   // ❌ ANTI-PATTERN 3: Missing Context
+   //   DON'T: "Create story" (ambiguous Jira operation)
+   //   DO: "Create Jira story: 'Add modal component to dashboard'"
+   //   WHY: Explicit context helps routing and execution
+   //
+   // ============================================================================
+   // SECTION 8: USAGE EXAMPLES (Oh-My-OpenCode Style)
+   // ============================================================================
   // These examples show how to leverage Olimpus with oh-my-opencode philosophy:
   //
   // 🚀 ULTRAWORK MODE (Relentless Execution):

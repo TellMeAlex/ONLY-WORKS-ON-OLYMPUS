@@ -82,6 +82,33 @@ export const MetaAgentSchema = z.object({
   routing_rules: z.array(RoutingRuleSchema).min(1),
   prompt_template: z.string().optional(),
   temperature: z.number().optional(),
+
+  // Real agent configuration fields (all optional for backward compatibility)
+  description: z.string().optional(),
+  mode: z.enum(["subagent", "primary", "all"]).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  maxTokens: z.number().optional(),
+  hidden: z.boolean().optional(),
+  thinking: z
+    .object({
+      type: z.enum(["enabled", "disabled"]),
+      budgetTokens: z.number().optional(),
+    })
+    .optional(),
+  reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+  permission: z
+    .object({
+      edit: z.enum(["ask", "allow", "deny"]).optional(),
+      bash: z.enum(["ask", "allow", "deny"]).optional(),
+      webfetch: z.enum(["ask", "allow", "deny"]).optional(),
+      task: z.enum(["ask", "allow", "deny"]).optional(),
+      doom_loop: z.enum(["ask", "allow", "deny"]).optional(),
+      external_directory: z.enum(["ask", "allow", "deny"]).optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -131,7 +158,9 @@ export const ProviderConfigSchema = z.object({
   config: z
     .record(
       z.string(),
-      z.record(z.string(), z.string().or(z.boolean()).or(z.number())).optional()
+      z
+        .record(z.string(), z.string().or(z.boolean()).or(z.number()))
+        .optional(),
     )
     .optional(),
 });

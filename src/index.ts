@@ -7,15 +7,16 @@ import {
   type PluginInterface,
 } from "./plugin/wrapper.js";
 import { MetaAgentRegistry } from "./agents/registry.js";
-import { ateneo, hermes, hefesto } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
+import { atenea, hermes, hades } from "./agents/definitions/index.js";
+import { createMetaAgentConfig } from "./agents/meta-agent.js";
 
 /**
  * OlimpusPlugin - Meta-orchestrator plugin for OpenCode
  *
  * Execution flow:
  * 1. Load olimpus.jsonc from project directory
- * 2. Create MetaAgentRegistry and register all meta-agents (built-in + config)
+ * 2. Create MetaAgentRegistry and register meta-agents from config
  * 3. Call createOlimpusWrapper() to get merged PluginInterface
  * 4. Enhance config handler to register meta-agent AgentConfigs
  * 5. Load and merge Olimpus skills if configured
@@ -41,21 +42,14 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   const maxDepth = config.settings?.max_delegation_depth ?? 3;
   const registry = new MetaAgentRegistry(maxDepth);
 
+  // Register built-in meta-agents
+  registry.register("atenea", atenea);
+  registry.register("hermes", hermes);
+  registry.register("hades", hades);
+
   const configMetaAgents = extractMetaAgentDefs(config);
   for (const [name, def] of Object.entries(configMetaAgents)) {
     registry.register(name, def);
-  }
-
-  const builtInMetaAgents = [
-    { name: "olimpus:atenea", def: ateneo },
-    { name: "olimpus:hermes", def: hermes },
-    { name: "olimpus:hefesto", def: hefesto },
-  ];
-
-  for (const { name, def } of builtInMetaAgents) {
-    if (!configMetaAgents[name]) {
-      registry.register(name, def);
-    }
   }
 
   let pluginInterface: PluginInterface;
@@ -77,17 +71,10 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
       await baseConfigHandler(configInput);
     }
 
-    const routingContext = {
-      prompt: "",
-      projectDir: input.directory,
-      projectFiles: [],
-      projectDeps: [],
-    };
-
     const allMetaAgents = registry.getAll();
-    for (const [agentName] of Object.entries(allMetaAgents)) {
-      const agentConfig = registry.resolve(agentName, routingContext);
-      if (agentConfig && configInput.agent) {
+    for (const [agentName, def] of Object.entries(allMetaAgents)) {
+      const agentConfig = createMetaAgentConfig(def, agentName);
+      if (configInput.agent) {
         configInput.agent[agentName] = agentConfig;
       }
     }

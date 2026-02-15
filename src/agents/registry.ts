@@ -42,16 +42,15 @@ export class MetaAgentRegistry {
   }
 
   /**
-   * Resolve a meta-agent to its AgentConfig by evaluating routing rules
-   * Returns null if no route matches
+   * Resolve a meta-agent to its AgentConfig
    */
-  resolve(name: string, context: RoutingContext): AgentConfig | null {
+  resolve(name: string, context?: RoutingContext): AgentConfig {
     const def = this.definitions.get(name);
     if (!def) {
       throw new Error(`Meta-agent "${name}" not registered`);
     }
 
-    return createMetaAgentConfig(def, context, name);
+    return createMetaAgentConfig(def, name);
   }
 
   /**
@@ -70,7 +69,7 @@ export class MetaAgentRegistry {
   checkCircular(
     from: string,
     to: string,
-    maxDepth: number = this.maxDepth
+    maxDepth: number = this.maxDepth,
   ): boolean {
     return this.hasCircle(from, to, maxDepth, new Set());
   }
@@ -87,7 +86,7 @@ export class MetaAgentRegistry {
     current: string,
     target: string,
     depth: number,
-    visited: Set<string>
+    visited: Set<string>,
   ): boolean {
     if (depth <= 0) {
       return false;

@@ -4,6 +4,7 @@ import OhMyOpenCodePlugin from "oh-my-opencode";
 import {
   translateToOMOConfig,
   extractMetaAgentDefs,
+  type OMOPluginConfig,
 } from "../config/translator";
 import type { OlimpusConfig, MetaAgentDef } from "../config/schema";
 
@@ -30,7 +31,7 @@ export type PluginInterface = Hooks;
  */
 export async function createOlimpusWrapper(
   input: PluginInput,
-  config: OlimpusConfig
+  config: OlimpusConfig,
 ): Promise<PluginInterface> {
   // Step 1: Translate to OMO config (extracts agents, categories, disabled_hooks)
   const omoConfig = translateToOMOConfig(config);
@@ -48,7 +49,7 @@ export async function createOlimpusWrapper(
   // Step 5: Merge base PluginInterface with Olimpus extensions
   const mergedInterface = mergePluginInterfaces(
     omoPluginInterface,
-    olimpusExtension
+    olimpusExtension,
   );
 
   // Step 6: Return combined PluginInterface
@@ -69,7 +70,7 @@ export async function createOlimpusWrapper(
  */
 function createOlimpusExtension(
   metaAgents: Record<string, MetaAgentDef>,
-  omoConfig: any
+  omoConfig: OMOPluginConfig,
 ): PluginInterface {
   return {
     config: async (input: Config) => {
@@ -95,7 +96,7 @@ function createOlimpusExtension(
  */
 export function mergePluginInterfaces(
   base: PluginInterface,
-  extension: PluginInterface
+  extension: PluginInterface,
 ): PluginInterface {
   const merged: PluginInterface = {};
 
@@ -124,7 +125,7 @@ export function mergePluginInterfaces(
   // Chain event handlers (base first, then extension)
   if (base.event || extension.event) {
     merged.event = async (
-      input: Parameters<NonNullable<typeof base.event>>[0]
+      input: Parameters<NonNullable<typeof base.event>>[0],
     ) => {
       if (base.event) {
         await base.event(input);
