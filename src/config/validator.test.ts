@@ -7,6 +7,7 @@ import {
   checkAgentReferencesInConfig,
   checkRegexPerformance,
   checkRegexPerformanceInConfig,
+  validateOlimpusConfig,
   createCircularDependencyError,
   createInvalidAgentReferenceError,
   createRegexPerformanceWarning,
@@ -1329,6 +1330,340 @@ describe("circular dependency", () => {
         expect(warning.path).toEqual(path);
         expect(warning.pattern).toBe(pattern);
         expect(warning.reason).toBe(reason);
+      });
+    });
+  });
+
+  describe("valid config", () => {
+    describe("validateOlimpusConfig", () => {
+      test("empty config is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with no meta_agents is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {},
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with valid meta-agents delegating to builtin agents only is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus", "hephaestus"],
+              routing_rules: [
+                {
+                  matcher: { type: "always" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with meta-agents chaining through other meta-agents (no cycles) is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            meta_a: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["meta_b", "sisyphus"],
+              routing_rules: [
+                {
+                  matcher: { type: "always" },
+                  target_agent: "meta_b",
+                },
+              ],
+            },
+            meta_b: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["oracle"],
+              routing_rules: [
+                {
+                  matcher: { type: "always" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with valid regex patterns is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test|example" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "^hello" },
+                  target_agent: "hephaestus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with valid routing rules using different matcher types is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus", "hephaestus"],
+              routing_rules: [
+                {
+                  matcher: { type: "always" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "contains", value: "test" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "^hello" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with all builtin agent references is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [
+                "sisyphus",
+                "hephaestus",
+                "oracle",
+                "librarian",
+                "explore",
+                "multimodal-looker",
+                "metis",
+                "momus",
+                "atlas",
+                "prometheus",
+              ],
+              routing_rules: [
+                {
+                  matcher: { type: "always" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with custom max_delegation_depth is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            meta_a: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["meta_b"],
+              routing_rules: [
+                { matcher: { type: "always" }, target_agent: "meta_b" },
+              ],
+            },
+            meta_b: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["meta_c"],
+              routing_rules: [
+                { matcher: { type: "always" }, target_agent: "meta_c" },
+              ],
+            },
+            meta_c: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                { matcher: { type: "always" }, target_agent: "sisyphus" },
+              ],
+            },
+          },
+          settings: {
+            max_delegation_depth: 10,
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with multiple valid meta-agents is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router_a: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus", "hephaestus"],
+              routing_rules: [
+                {
+                  matcher: { type: "contains", value: "build" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "always" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+            router_b: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["oracle", "librarian"],
+              routing_rules: [
+                {
+                  matcher: { type: "contains", value: "search" },
+                  target_agent: "librarian",
+                },
+                {
+                  matcher: { type: "always" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
+      });
+
+      test("config with simple regex patterns is valid", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "^test$" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "[a-z]+" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "\\d{3}" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = validateOlimpusConfig(config);
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.errors).toEqual([]);
+        expect(result.warnings).toEqual([]);
       });
     });
   });

@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "003-configuration-validator",
+  "state": "building",
+  "subtasks": {
+    "completed": 9,
+    "total": 16,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Validator Tests",
+    "id": null,
+    "total": 5
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 9,
+    "started_at": "2026-02-18T21:25:36.508515"
+  },
+  "last_update": "2026-02-18T21:57:57.883467"
+}
