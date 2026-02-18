@@ -306,7 +306,7 @@
               "Validate example/olimpus.jsonc and verify it passes"
             ]
           },
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "subtask-4-3",
