@@ -2,6 +2,8 @@ import type {
   Matcher,
   RoutingLoggerConfig,
 } from "../config/schema.js";
+import { dirname } from "path";
+import { mkdirSync, appendFileSync } from "fs";
 
 export interface MatcherEvaluation {
   matcher_type: string;
@@ -113,12 +115,16 @@ export class RoutingLogger {
    */
   private writeToFile(logLine: string): void {
     try {
-      const file = Bun.file(this.config.log_file);
-      const existingContent = file.exists() ? file.text() : "";
-      const newContent = existingContent
-        ? `${existingContent}\n${logLine}`
-        : logLine;
-      Bun.write(this.config.log_file, newContent);
+      // Ensure parent directory exists
+      const dir = dirname(this.config.log_file);
+      try {
+        mkdirSync(dir, { recursive: true });
+      } catch {
+        // Directory might already exist, ignore error
+      }
+
+      // Use synchronous file append for immediate write
+      appendFileSync(this.config.log_file, logLine + "\n");
     } catch (error) {
       // Silently fail to avoid disrupting routing logic
       // Error is swallowed per performance pattern - minimal overhead

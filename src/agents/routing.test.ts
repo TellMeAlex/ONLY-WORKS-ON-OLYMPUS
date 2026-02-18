@@ -38,6 +38,11 @@ describe("RoutingLogger", () => {
       rmSync(tempDir, { recursive: true, force: true });
     }
 
+    // Clean up routing.log if it exists in current directory
+    if (existsSync("routing.log")) {
+      rmSync("routing.log", { force: true });
+    }
+
     // Reset log output
     logOutput = [];
   });
@@ -437,14 +442,14 @@ describe("RoutingLogger", () => {
 
       // Act - test all matcher types
       const matcherTypes = ["keyword", "regex", "complexity", "project_context", "always"];
-      matcherTypes.forEach((type) => {
+      for (const type of matcherTypes) {
         logOutput = []; // Reset for each call
         logger.logRoutingDecision(`agent-${type}`, type, `matched: ${type}`);
         expect(logOutput.length).toBe(1);
         const logLine = logOutput[0];
         const parsed = JSON.parse(logLine) as Record<string, unknown>;
         expect(parsed.matcher_type).toBe(type);
-      });
+      }
     });
 
     test("console output with debug mode includes debug_info", () => {
@@ -1392,9 +1397,9 @@ describe("RoutingLogger", () => {
 
       // Act - test all matcher types
       const matcherTypes = ["keyword", "regex", "complexity", "project_context", "always"];
-      matcherTypes.forEach((type) => {
+      for (const type of matcherTypes) {
         logger.logRoutingDecision(`agent-${type}`, type, `matched: ${type}`);
-      });
+      }
 
       // Assert
       expect(logOutput.length).toBe(0);
@@ -1777,6 +1782,242 @@ describe("RoutingLogger", () => {
       const fileContent = readFileSync(logFile, "utf-8");
       expect(fileContent).toContain("agent-file");
       expect(fileContent).not.toContain("agent-console");
+    });
+  });
+
+  describe("performance", () => {
+    test("console logging overhead < 5ms", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision("agent-perf", "keyword", "matched: test");
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
+    });
+
+    test("console logging with debug_info overhead < 5ms", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["test", "api"] },
+          matched: true,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "^test" },
+          matched: false,
+        },
+        {
+          matcher_type: "always",
+          matcher: { type: "always" },
+          matched: false,
+        },
+      ];
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision(
+        "agent-perf-debug",
+        "keyword",
+        "matched: test, api",
+        undefined,
+        evaluations
+      );
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
+    });
+
+    test("file logging overhead < 5ms", () => {
+      // Arrange
+      const logFile = join(tempDir, "perf-file.log");
+      const config: RoutingLoggerConfig = {
+        output: "file",
+        log_file: logFile,
+      };
+      const logger = new RoutingLogger(config);
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision("agent-perf-file", "keyword", "matched: test");
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
+    });
+
+    test("file logging with debug_info overhead < 5ms", () => {
+      // Arrange
+      const logFile = join(tempDir, "perf-file-debug.log");
+      const config: RoutingLoggerConfig = {
+        output: "file",
+        log_file: logFile,
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["test"] },
+          matched: false,
+        },
+        {
+          matcher_type: "always",
+          matcher: { type: "always" },
+          matched: true,
+        },
+      ];
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision(
+        "agent-perf-file-debug",
+        "always",
+        "always match",
+        undefined,
+        evaluations
+      );
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
+    });
+
+    test("disabled logger overhead < 5ms", () => {
+      // Arrange
+      const logger = new RoutingLogger({ enabled: false });
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision("agent-perf-disabled", "keyword", "matched: test");
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
+    });
+
+    test("console logging with config_overrides overhead < 5ms", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision(
+        "agent-perf-config",
+        "keyword",
+        "matched: test",
+        {
+          model: "gpt-4",
+          temperature: 0.7,
+          prompt: "custom prompt",
+          variant: "pro",
+        }
+      );
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
+    });
+
+    test("multiple consecutive console logs all < 5ms", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+      const overheads: number[] = [];
+
+      // Act - measure multiple logs
+      for (let i = 0; i < 10; i++) {
+        const start = performance.now();
+        logger.logRoutingDecision(
+          `agent-perf-multi-${i}`,
+          "keyword",
+          `matched: test-${i}`
+        );
+        const end = performance.now();
+        overheads.push(end - start);
+      }
+
+      // Assert - all should be under 5ms
+      overheads.forEach((overhead, index) => {
+        expect(overhead).toBeLessThan(5);
+      });
+    });
+
+    test("average overhead over 10 calls < 5ms", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act - measure average time
+      const start = performance.now();
+      for (let i = 0; i < 10; i++) {
+        logger.logRoutingDecision(
+          `agent-perf-avg-${i}`,
+          "keyword",
+          `matched: test-${i}`
+        );
+      }
+      const end = performance.now();
+
+      const average = (end - start) / 10;
+
+      // Assert
+      expect(average).toBeLessThan(5);
+    });
+
+    test("file logging with config_overrides and debug_info overhead < 5ms", () => {
+      // Arrange
+      const logFile = join(tempDir, "perf-full.log");
+      const config: RoutingLoggerConfig = {
+        output: "file",
+        log_file: logFile,
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["api", "test"] },
+          matched: true,
+        },
+      ];
+
+      // Act - measure time
+      const start = performance.now();
+      logger.logRoutingDecision(
+        "agent-perf-full",
+        "keyword",
+        "matched: api, test",
+        {
+          model: "claude-3",
+          temperature: 0.5,
+          prompt: "system prompt",
+        },
+        evaluations
+      );
+      const end = performance.now();
+
+      // Assert
+      const overhead = end - start;
+      expect(overhead).toBeLessThan(5);
     });
   });
 });
