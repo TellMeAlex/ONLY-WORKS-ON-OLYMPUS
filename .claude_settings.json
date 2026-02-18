@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/**)",
+      "Write(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/**)",
+      "Edit(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/**)",
+      "Glob(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/**)",
+      "Grep(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/**)",
+      "Read(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/.auto-claude/specs/002-routing-decision-logger/**)",
+      "Write(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/.auto-claude/specs/002-routing-decision-logger/**)",
+      "Edit(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/worktrees/tasks/002-routing-decision-logger/.auto-claude/specs/002-routing-decision-logger/**)",
+      "Read(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/**)",
+      "Write(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/**)",
+      "Edit(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/**)",
+      "Glob(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/**)",
+      "Grep(/Users/alejandro/dev/ONLY-WORKS-ON-OLYMPUS/.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}
