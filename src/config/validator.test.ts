@@ -5,11 +5,15 @@ import {
   checkCircularDependenciesInConfig,
   checkAgentReferences,
   checkAgentReferencesInConfig,
+  checkRegexPerformance,
+  checkRegexPerformanceInConfig,
   createCircularDependencyError,
   createInvalidAgentReferenceError,
+  createRegexPerformanceWarning,
   createCheckResult,
   type CircularDependencyError,
   type InvalidAgentReferenceError,
+  type RegexPerformanceWarning,
   type CheckResult,
 } from "./validator.js";
 
@@ -680,6 +684,651 @@ describe("circular dependency", () => {
         expect(error.message).toBe(message);
         expect(error.path).toEqual(path);
         expect(error.reference).toBe(reference);
+      });
+    });
+  });
+
+  describe("regex performance", () => {
+    describe("checkRegexPerformance", () => {
+      test("returns empty array for empty meta_agents", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {};
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings).toEqual([]);
+      });
+
+      test("returns empty array when no regex patterns present", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings).toEqual([]);
+      });
+
+      test("detects nested quantifiers - (a+)+", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(a+)+" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.pattern).toBe("(a+)+");
+        expect(warning?.reason).toBe("Nested quantifiers can cause catastrophic backtracking");
+      });
+
+      test("detects nested quantifiers - (.*)*", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(.*)" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toContain("catastrophic");
+      });
+
+      test("detects nested quantifiers - (.+)+", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(.+)+" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toContain("catastrophic");
+      });
+
+      test("detects overlapping alternation - a|ab", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "a|ab" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toBe("Overlapping alternation can cause inefficient backtracking");
+      });
+
+      test("detects unbounded dot - ^.* at start", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "^.*test" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toBe("Unbounded .* patterns can match excessively and cause performance issues");
+      });
+
+      test("detects unbounded dot - .*$ at end", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "test.*$" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toContain("Unbounded");
+      });
+
+      test("detects consecutive unbounded dots - .*.*", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "a.*.*b" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toContain("Unbounded");
+      });
+
+      test("detects large repetition quantifier - [\\d]+{100,}", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "[\\d]+{100,}" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toBe("Large repetition quantifiers can cause excessive backtracking");
+      });
+
+      test("detects complex lookahead with quantifier - (?=.*)*", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(?=a*)*" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toBe("Complex lookaheads/lookbehinds with quantifiers can be slow");
+      });
+
+      test("detects complex lookbehind with quantifier - (?<=a+)b", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(?<=a+)b" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toContain("lookahead");
+      });
+
+      test("detects backreferences - (\\w+).*\\1", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(\\w+).*\\1" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toBe("Backreferences prevent efficient regex compilation and can be slow");
+      });
+
+      test("detects excessive alternations - more than 8 pipe operators", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "a|b|c|d|e|f|g|h|i|j" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning).toBeDefined();
+        expect(warning?.reason).toBe("Many alternations can cause the regex engine to try many paths");
+      });
+
+      test("does not warn for 8 or fewer alternations", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "a|b|c|d|e|f|g|h" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings).toEqual([]);
+      });
+
+      test("detects multiple regex performance issues in same meta-agent", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(a+)+" },
+                target_agent: "sisyphus",
+              },
+              {
+                matcher: { type: "regex", pattern: "^.*test" },
+                target_agent: "hephaestus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(2);
+        expect(warnings.every((w) => w.type === "regex_performance")).toBe(true);
+      });
+
+      test("detects regex performance issues across multiple meta-agents", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router_a: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(\\w+).*\\1" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+          router_b: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "a|ab" },
+                target_agent: "hephaestus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(2);
+        expect(warnings.every((w) => w.type === "regex_performance")).toBe(true);
+      });
+
+      test("sets correct path for regex performance warnings", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "(a+)+" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        const warning = warnings.find((w) => w.type === "regex_performance");
+        expect(warning?.path).toEqual(["meta_agents", "router", "routing_rules", "0", "matcher", "pattern"]);
+      });
+
+      test("does not check non-regex matchers", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+              {
+                matcher: { type: "contains", value: "test" },
+                target_agent: "hephaestus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings).toEqual([]);
+      });
+
+      test("mixes regex and non-regex matchers correctly", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+              {
+                matcher: { type: "regex", pattern: "(a+)+" },
+                target_agent: "hephaestus",
+              },
+              {
+                matcher: { type: "contains", value: "test" },
+                target_agent: "oracle",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const warnings = checkRegexPerformance(metaAgents);
+
+        // Assert
+        expect(warnings.length).toBe(1);
+        expect(warnings[0].pattern).toBe("(a+)+");
+      });
+    });
+
+    describe("checkRegexPerformanceInConfig", () => {
+      test("returns passed true when no meta_agents defined", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexPerformanceInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.warnings.length).toBe(0);
+      });
+
+      test("returns passed true when meta_agents is empty object", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {},
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexPerformanceInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.warnings.length).toBe(0);
+      });
+
+      test("generates warnings for regex performance issues but still passes", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "(a+)+" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexPerformanceInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true); // Regex performance warnings don't cause failure
+        expect(result.warnings.length).toBeGreaterThan(0);
+        expect(result.checkType).toBe("regex_performance");
+      });
+
+      test("passes with no regex performance issues", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test|example" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexPerformanceInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.warnings.length).toBe(0);
+      });
+
+      test("handles mixed valid and invalid regex patterns", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "(a+)+" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "example|sample" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexPerformanceInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.warnings.length).toBe(1);
+        expect(result.warnings[0].pattern).toBe("(a+)+");
+      });
+    });
+
+    describe("createRegexPerformanceWarning", () => {
+      test("creates valid regex performance warning", () => {
+        // Arrange
+        const message = "Regex pattern may cause performance issues";
+        const path = ["meta_agents", "router", "routing_rules", "0", "matcher", "pattern"];
+        const pattern = "(a+)+";
+        const reason = "Nested quantifiers can cause catastrophic backtracking";
+
+        // Act
+        const warning = createRegexPerformanceWarning(message, path, pattern, reason);
+
+        // Assert
+        expect(warning.type).toBe("regex_performance");
+        expect(warning.message).toBe(message);
+        expect(warning.path).toEqual(path);
+        expect(warning.pattern).toBe(pattern);
+        expect(warning.reason).toBe(reason);
       });
     });
   });
