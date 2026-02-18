@@ -300,17 +300,53 @@ export function formatWarnings(result: ValidationResult): string[] {
 }
 
 /**
- * Main validation function placeholder - will be implemented in later subtasks
- * This function validates an Olimpus configuration against schema and semantic rules
+ * Main validation function for Olimpus configuration.
+ * Validates an Olimpus configuration against schema and semantic rules.
+ * Orchestrates all validation checks and returns aggregated results.
+ *
+ * Checks performed (when enabled in context):
+ * - Circular dependency detection in meta-agent delegation chains
+ * - Agent reference validation (all references must be to builtin agents or defined meta-agents)
+ * - Regex performance analysis for routing rule patterns (generates warnings only)
+ *
+ * @param config - The Olimpus configuration to validate
+ * @param context - Optional validation context with configuration options
+ * @returns ValidationResult with aggregated errors, warnings, and validity status
  */
-
 export function validateOlimpusConfig(
   config: OlimpusConfig,
   context?: Partial<ValidationContext>,
 ): ValidationResult {
+  const ctx: ValidationContext = {
+    checkCircularDependencies: true,
+    checkAgentReferences: true,
+    checkRegexPerformance: true,
+    ...context,
+  };
+
   const result = createValidationResult(config);
-  // Validation logic will be added in subsequent subtasks
-  result.valid = true;
+
+  // Run circular dependency check
+  if (ctx.checkCircularDependencies) {
+    const circularCheck = checkCircularDependenciesInConfig(config, ctx);
+    result.errors.push(...circularCheck.errors);
+  }
+
+  // Run agent reference check
+  if (ctx.checkAgentReferences) {
+    const agentRefCheck = checkAgentReferencesInConfig(config, ctx);
+    result.errors.push(...agentRefCheck.errors);
+  }
+
+  // Run regex performance check (generates warnings, not errors)
+  if (ctx.checkRegexPerformance) {
+    const regexCheck = checkRegexPerformanceInConfig(config, ctx);
+    result.warnings.push(...regexCheck.warnings);
+  }
+
+  // Determine validity based on errors (warnings don't affect validity)
+  result.valid = result.errors.length === 0;
+
   return result;
 }
 
