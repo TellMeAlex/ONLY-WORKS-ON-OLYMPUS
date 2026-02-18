@@ -4,12 +4,35 @@ import type { MetaAgentDef } from "../../config/schema.js";
  * Hermes - Communication & Research Meta-Agent
  * Handles information gathering, documentation research, and synthesis
  * Routes based on keywords: docs/search → librarian, code/find → explore, analyze/review → oracle
+ * Also handles Jira lifecycle management: tickets, tasks, subtasks, user stories
  * Always falls back to librarian for general research
  */
 export const hermes: MetaAgentDef = {
   base_model: "",
   delegates_to: ["librarian", "explore", "oracle"],
   routing_rules: [
+    {
+      matcher: {
+        type: "keyword",
+        keywords: [
+          "jira",
+          "ticket",
+          "task",
+          "subtask",
+          "story",
+          "issue",
+          "sprint",
+          "backlog",
+          "epic",
+        ],
+        mode: "any",
+      },
+      target_agent: "librarian",
+      config_overrides: {
+        prompt:
+          "You are a Jira lifecycle management specialist. Research and gather information about Jira tickets, tasks, subtasks, user stories, epics, and sprints. Use available Jira API tools to fetch, search, or analyze Jira issues and projects.",
+      },
+    },
     {
       matcher: {
         type: "keyword",
