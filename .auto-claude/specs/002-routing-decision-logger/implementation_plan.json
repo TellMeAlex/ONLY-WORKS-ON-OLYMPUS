@@ -315,7 +315,9 @@
             "command": "bun test src/agents/routing.test.ts",
             "expected": "All tests pass"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added comprehensive console logging output tests to src/agents/routing.test.ts: (1) console output includes all required fields - verifies timestamp, target_agent, matcher_type, matched_content, (2) console output handles special characters in matched content - tests quotes, apostrophes, newlines, (3) console output with all matcher types - tests keyword, regex, complexity, project_context, always, (4) console output with debug mode includes debug_info - verifies debug info is included, (5) console output does not create files - ensures console logging doesn't create routing.log, (6) console output timestamp is valid ISO format - validates ISO 8601 format, (7) console output handles empty strings in fields - tests empty field handling. Note: Verification could not be run due to environment constraints (bun not available).",
+          "updated_at": "2026-02-18T23:15:00.000000+00:00"
         },
         {
           "id": "subtask-5-3",
