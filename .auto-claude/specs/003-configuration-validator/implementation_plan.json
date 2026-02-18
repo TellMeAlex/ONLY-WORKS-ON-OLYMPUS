@@ -190,7 +190,7 @@
             "command": "bun test --test-filter 'valid config'",
             "expected": "All valid config tests pass"
           },
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
