@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { OlimpusConfig } from "./schema.js";
+import type { OlimpusConfig, MetaAgentDef } from "./schema.js";
 
 /**
  * Validation Error Types - Discriminated Union
@@ -316,9 +316,8 @@ export function validateOlimpusConfig(
 
 /**
  * Builtin agent names that can be delegation targets
- * Imported from schema for use in validation
+ * Re-exported from schema for use in validation
  */
-
 export const BUILTIN_AGENT_NAMES = [
   "sisyphus",
   "hephaestus",
@@ -331,3 +330,206 @@ export const BUILTIN_AGENT_NAMES = [
   "atlas",
   "prometheus",
 ] as const;
+
+/**
+ * Tracks delegation chains to detect circular dependencies
+ * Key: "from:to", Value: depth level
+ */
+interface DelegationTracker {
+  [key: string]: number;
+}
+
+/**
+ * Helper class for circular dependency detection
+ * Based on MetaAgentRegistry pattern from src/agents/registry.ts
+ */
+class DelegationGraph {
+  private delegations: DelegationTracker = {};
+  private maxDepth: number;
+
+  constructor(maxDepth: number = 3) {
+    this.maxDepth = maxDepth;
+  }
+
+  /**
+   * Track a delegation from one agent to another
+   * Used for circular dependency detection
+   */
+  trackDelegation(from: string, to: string): void {
+    const key = `${from}:${to}`;
+    this.delegations[key] = (this.delegations[key] ?? 0) + 1;
+  }
+
+  /**
+   * Check if a delegation would create a circular dependency
+   * Returns true if circular, false if safe
+   */
+  checkCircular(
+    from: string,
+    to: string,
+    maxDepth: number = this.maxDepth
+  ): boolean {
+    return this.hasCircle(from, to, maxDepth, new Set());
+  }
+
+  /**
+   * Recursively check for circular paths in delegation chain
+   * @param current - Current agent in the chain
+   * @param target - Target agent we're trying to reach
+   * @param depth - Remaining depth to search
+   * @param visited - Set of visited nodes to detect cycles
+   * @returns true if a circular path exists, false otherwise
+   */
+  private hasCircle(
+    current: string,
+    target: string,
+    depth: number,
+    visited: Set<string>
+  ): boolean {
+    if (depth <= 0) {
+      return false;
+    }
+
+    if (visited.has(current)) {
+      // Already visited this node in this path - potential cycle
+      return true;
+    }
+
+    if (current === target) {
+      // Direct connection found
+      return true;
+    }
+
+    visited.add(current);
+
+    // Check all known delegations from current agent
+    for (const [delegation] of Object.keys(this.delegations)) {
+      const [from, next] = delegation.split(":");
+      if (from === current && next) {
+        if (this.hasCircle(next, target, depth - 1, new Set(visited))) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+}
+
+/**
+ * Check for circular dependencies in meta-agent delegation chains
+ * @param metaAgents - Map of meta-agent definitions
+ * @param maxDepth - Maximum depth to search for circular dependencies
+ * @returns Array of CircularDependencyError for each circular dependency found
+ */
+export function checkCircularDependencies(
+  metaAgents: Record<string, MetaAgentDef>,
+  maxDepth: number = 3
+): CircularDependencyError[] {
+  const errors: CircularDependencyError[] = [];
+
+  if (Object.keys(metaAgents).length === 0) {
+    return errors;
+  }
+
+  const graph = new DelegationGraph(maxDepth);
+
+  // Track all delegations from meta-agents
+  for (const [name, def] of Object.entries(metaAgents)) {
+    // Track delegations from delegates_to field
+    for (const delegate of def.delegates_to) {
+      graph.trackDelegation(name, delegate);
+    }
+
+    // Track delegations from routing_rules target_agent
+    for (const rule of def.routing_rules) {
+      graph.trackDelegation(name, rule.target_agent);
+    }
+  }
+
+  // Check each meta-agent for circular dependencies
+  for (const [name, def] of Object.entries(metaAgents)) {
+    const path: string[] = [];
+
+    // Check delegates_to for circular dependencies
+    for (const delegate of def.delegates_to) {
+      if (graph.checkCircular(delegate, name, maxDepth)) {
+        // Found circular dependency
+        path.push(name, delegate);
+        errors.push(
+          createCircularDependencyError(
+            `Circular dependency detected: "${name}" delegates to "${delegate}" which can route back to "${name}"`,
+            path,
+            [name, delegate]
+          )
+        );
+      }
+    }
+
+    // Check routing_rules for circular dependencies
+    for (const rule of def.routing_rules) {
+      if (graph.checkCircular(rule.target_agent, name, maxDepth)) {
+        // Found circular dependency
+        path.push(name, rule.target_agent);
+        errors.push(
+          createCircularDependencyError(
+            `Circular dependency detected: "${name}" can route to "${rule.target_agent}" which can route back to "${name}"`,
+            path,
+            [name, rule.target_agent]
+          )
+        );
+      }
+    }
+
+    // Check if a meta-agent directly delegates to another meta-agent
+    // This is valid in some cases but worth noting for validation
+    for (const delegate of def.delegates_to) {
+      if (delegate in metaAgents && delegate !== name) {
+        // Meta-agent delegates to another meta-agent
+        // Check for circular dependency
+        if (graph.checkCircular(delegate, name, maxDepth)) {
+          path.push(name, delegate);
+          errors.push(
+            createCircularDependencyError(
+              `Circular dependency detected between meta-agents: "${name}" -> "${delegate}"`,
+              path,
+              [name, delegate]
+            )
+          );
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Helper function to check circular dependencies from validation context
+ * @param config - The Olimpus configuration to validate
+ * @param context - Optional validation context
+ * @returns CheckResult with circular dependency check status
+ */
+export function checkCircularDependenciesInConfig(
+  config: OlimpusConfig,
+  context?: Partial<ValidationContext>
+): CheckResult {
+  const result = createCheckResult("circular_dependency");
+
+  if (!config.meta_agents || Object.keys(config.meta_agents).length === 0) {
+    result.passed = true;
+    return result;
+  }
+
+  const maxDepth = config.settings?.max_delegation_depth ?? 3;
+  const errors = checkCircularDependencies(config.meta_agents, maxDepth);
+
+  if (errors.length > 0) {
+    result.passed = false;
+    result.errors.push(...errors);
+  } else {
+    result.passed = true;
+  }
+
+  return result;
+}
