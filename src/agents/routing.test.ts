@@ -662,6 +662,425 @@ describe("RoutingLogger", () => {
       expect(firstEval.matcher_type).toBe("keyword");
       expect(firstEval.matched).toBe(true);
     });
+
+    test("includes all 5 matcher types in debug_info", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["api", "test"] },
+          matched: false,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "^add" },
+          matched: false,
+        },
+        {
+          matcher_type: "complexity",
+          matcher: { type: "complexity", threshold: "high" },
+          matched: false,
+        },
+        {
+          matcher_type: "project_context",
+          matcher: { type: "project_context", has_files: ["src/**/*.ts"] },
+          matched: false,
+        },
+        {
+          matcher_type: "always",
+          matcher: { type: "always" },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-all-types",
+        "always",
+        "always match",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(5);
+
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+      expect(allEvaluated.length).toBe(5);
+
+      // Verify each matcher type is present
+      const matcherTypes = allEvaluated.map((e) => (e as Record<string, unknown>).matcher_type as string);
+      expect(matcherTypes).toContain("keyword");
+      expect(matcherTypes).toContain("regex");
+      expect(matcherTypes).toContain("complexity");
+      expect(matcherTypes).toContain("project_context");
+      expect(matcherTypes).toContain("always");
+    });
+
+    test("preserves order of evaluated matchers", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["first"] },
+          matched: true,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "second" },
+          matched: false,
+        },
+        {
+          matcher_type: "complexity",
+          matcher: { type: "complexity", threshold: "medium" },
+          matched: false,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-order",
+        "keyword",
+        "matched: first",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+
+      expect((allEvaluated[0] as Record<string, unknown>).matcher_type).toBe("keyword");
+      expect((allEvaluated[1] as Record<string, unknown>).matcher_type).toBe("regex");
+      expect((allEvaluated[2] as Record<string, unknown>).matcher_type).toBe("complexity");
+    });
+
+    test("handles mix of matched and unmatched evaluations", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["wrong"] },
+          matched: false,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "wrong" },
+          matched: false,
+        },
+        {
+          matcher_type: "always",
+          matcher: { type: "always" },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-mixed",
+        "always",
+        "always match",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+
+      expect((allEvaluated[0] as Record<string, unknown>).matched).toBe(false);
+      expect((allEvaluated[1] as Record<string, unknown>).matched).toBe(false);
+      expect((allEvaluated[2] as Record<string, unknown>).matched).toBe(true);
+    });
+
+    test("debug mode console output with all matchers and config overrides", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["test", "api"] },
+          matched: false,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "test" },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-debug-config",
+        "regex",
+        "matched: pattern",
+        {
+          model: "gpt-4",
+          temperature: 0.7,
+          prompt: "custom prompt",
+        },
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      // Check config_overrides is present
+      expect(parsed.config_overrides).toBeDefined();
+      const overrides = parsed.config_overrides as Record<string, unknown>;
+      expect(overrides.model).toBe("gpt-4");
+      expect(overrides.temperature).toBe(0.7);
+      expect(overrides.prompt).toBe("custom prompt");
+
+      // Check debug_info is also present
+      expect(parsed.debug_info).toBeDefined();
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(2);
+    });
+
+    test("debug mode file output with all matchers", () => {
+      // Arrange
+      const logFile = join(tempDir, "debug-all-matchers.log");
+      const config: RoutingLoggerConfig = {
+        output: "file",
+        log_file: logFile,
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["test"] },
+          matched: false,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "^test" },
+          matched: false,
+        },
+        {
+          matcher_type: "complexity",
+          matcher: { type: "complexity", threshold: "high" },
+          matched: true,
+        },
+        {
+          matcher_type: "project_context",
+          matcher: { type: "project_context", has_files: ["*.ts"] },
+          matched: false,
+        },
+        {
+          matcher_type: "always",
+          matcher: { type: "always" },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-file-all",
+        "complexity",
+        "complexity >= high",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(existsSync(logFile)).toBe(true);
+      const content = readFileSync(logFile, "utf-8");
+      const parsed = JSON.parse(content.trim()) as Record<string, unknown>;
+
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(5);
+
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+      expect(allEvaluated.length).toBe(5);
+
+      // Verify matcher objects are included
+      const keywordMatcher = allEvaluated[0] as Record<string, unknown>;
+      expect(keywordMatcher.matcher_type).toBe("keyword");
+      const matcher = keywordMatcher.matcher as Record<string, unknown>;
+      expect(matcher.type).toBe("keyword");
+      expect(matcher.keywords).toBeDefined();
+    });
+
+    test("debug mode handles empty evaluations array", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-empty-eval",
+        "always",
+        "always match",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      // Empty evaluations should still include debug_info
+      expect(parsed.debug_info).toBeDefined();
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(0);
+      expect((debugInfo.all_evaluated as unknown[]).length).toBe(0);
+    });
+
+    test("debug mode with single matcher evaluation", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "always",
+          matcher: { type: "always" },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-single",
+        "always",
+        "always match",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(1);
+
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+      expect(allEvaluated.length).toBe(1);
+      expect((allEvaluated[0] as Record<string, unknown>).matcher_type).toBe("always");
+    });
+
+    test("debug mode matcher objects preserve all properties", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["api", "test"], mode: "any" },
+          matched: true,
+        },
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "^test", flags: "i" },
+          matched: false,
+        },
+        {
+          matcher_type: "complexity",
+          matcher: { type: "complexity", threshold: "high" },
+          matched: false,
+        },
+        {
+          matcher_type: "project_context",
+          matcher: {
+            type: "project_context",
+            has_files: ["src/**/*.ts"],
+            has_deps: ["lodash"],
+          },
+          matched: false,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-full-matchers",
+        "keyword",
+        "matched: api, test",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+
+      // Verify keyword matcher has all properties
+      const keywordEval = allEvaluated[0] as Record<string, unknown>;
+      const keywordMatcher = keywordEval.matcher as Record<string, unknown>;
+      expect(keywordMatcher.type).toBe("keyword");
+      expect(keywordMatcher.keywords).toEqual(["api", "test"]);
+      expect(keywordMatcher.mode).toBe("any");
+
+      // Verify regex matcher has flags
+      const regexEval = allEvaluated[1] as Record<string, unknown>;
+      const regexMatcher = regexEval.matcher as Record<string, unknown>;
+      expect(regexMatcher.flags).toBe("i");
+
+      // Verify project_context matcher has both optional fields
+      const projectEval = allEvaluated[3] as Record<string, unknown>;
+      const projectMatcher = projectEval.matcher as Record<string, unknown>;
+      expect(projectMatcher.has_files).toBeDefined();
+      expect(projectMatcher.has_deps).toBeDefined();
+    });
   });
 
   describe("logRoutingDecision - file output", () => {
