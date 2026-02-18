@@ -250,7 +250,7 @@
             "command": "chmod +x bin/olimpus.ts && bun run olimpus validate --help",
             "expected": "Command executes successfully"
           },
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
