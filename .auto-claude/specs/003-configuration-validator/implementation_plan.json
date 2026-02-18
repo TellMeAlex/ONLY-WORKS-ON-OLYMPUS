@@ -217,7 +217,7 @@
             "command": "bun run bin/olimpus.ts validate --help",
             "expected": "Help output displayed"
           },
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "subtask-3-2",
@@ -429,5 +429,5 @@
   "qa_signoff": null,
   "status": "in_progress",
   "planStatus": "in_progress",
-  "updated_at": "2026-02-18T20:57:57.833Z"
+  "updated_at": "2026-02-18T21:59:00.000Z"
 }
