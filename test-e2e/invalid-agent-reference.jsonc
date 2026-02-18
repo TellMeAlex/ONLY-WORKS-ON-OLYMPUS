@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json",
+
+  "meta_agents": {
+    "my_agent": {
+      "base_model": "claude-3-5-sonnet-20241022",
+      "delegates_to": ["oracle"],
+      "routing_rules": [
+        {
+          "matcher": { "type": "always" },
+          "target_agent": "nonexistent_agent"
+        }
+      ]
+    }
+  }
+}

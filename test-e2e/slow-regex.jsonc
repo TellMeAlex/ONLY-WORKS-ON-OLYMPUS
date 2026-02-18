@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json",
+
+  "meta_agents": {
+    "agent_with_slow_regex": {
+      "base_model": "claude-3-5-sonnet-20241022",
+      "delegates_to": ["oracle"],
+      "routing_rules": [
+        {
+          // Nested quantifiers pattern - can cause catastrophic backtracking
+          "matcher": {
+            "type": "regex",
+            "pattern": "(a+)+",
+            "flags": "i"
+          },
+          "target_agent": "oracle"
+        },
+        {
+          // Unbounded .* pattern - can match too broadly
+          "matcher": {
+            "type": "regex",
+            "pattern": "^.*",
+            "flags": "i"
+          },
+          "target_agent": "oracle"
+        },
+        {
+          // Backreference - slower than captured groups
+          "matcher": {
+            "type": "regex",
+            "pattern": "(\\w+).*\\1",
+            "flags": "i"
+          },
+          "target_agent": "oracle"
+        }
+      ]
+    }
+  }
+}
