@@ -613,3 +613,163 @@ export function checkAgentReferencesInConfig(
 
   return result;
 }
+
+/**
+ * Result of analyzing a regex pattern for performance issues
+ */
+interface RegexAnalysisResult {
+  hasIssue: boolean;
+  reason: string;
+}
+
+/**
+ * Analyze a regex pattern for common performance anti-patterns
+ * @param pattern - The regex pattern to analyze
+ * @returns RegexAnalysisResult indicating if there are performance issues
+ */
+function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
+  // Nested quantifiers - can cause catastrophic backtracking
+  // Examples: (a+)+, (.*)*, (a+)*, (.+)+
+  const nestedQuantifiers = /(\([^)]*[+*?][^)]*\)[+*?]|([+*?][+*?]))/.test(pattern);
+  if (nestedQuantifiers) {
+    return {
+      hasIssue: true,
+      reason: "Nested quantifiers can cause catastrophic backtracking",
+    };
+  }
+
+  // Overlapping alternation - patterns that start the same way
+  // Example: a|ab, .*|.*a
+  const overlappingAlternation = /(\w+)\|\1/.test(pattern);
+  if (overlappingAlternation) {
+    return {
+      hasIssue: true,
+      reason: "Overlapping alternation can cause inefficient backtracking",
+    };
+  }
+
+  // Unescaped dot with repetition - can match too broadly
+  // Examples: ^.* at start, .*$ at end, .*.* consecutive
+  const unboundedDot = /(^|\s)\.\*|\.\*$|\.\*\.\*/.test(pattern);
+  if (unboundedDot) {
+    return {
+      hasIssue: true,
+      reason: "Unbounded .* patterns can match excessively and cause performance issues",
+    };
+  }
+
+  // Repeated character class with quantifier
+  // Example: [\d]+{5,}, [a-z]{100,}
+  const largeRepetition = /\[[^\]]+\][{]\d{3,}/.test(pattern);
+  if (largeRepetition) {
+    return {
+      hasIssue: true,
+      reason: "Large repetition quantifiers can cause excessive backtracking",
+    };
+  }
+
+  // Lookahead/lookbehind with repetition - can be slow
+  // Example: (?=.*)*, (?<=a+)b
+  const complexLookaround = /(\(\?=[^)]*\*[)]|\(\?<=[^)]*[+*][)]|\(\?!.*\*)/.test(pattern);
+  if (complexLookaround) {
+    return {
+      hasIssue: true,
+      reason: "Complex lookaheads/lookbehinds with quantifiers can be slow",
+    };
+  }
+
+  // Backreferences - generally slower than captured groups
+  // Example: (\w+).*\1, (a|b).*\1
+  const backreferences = /\\\d/.test(pattern);
+  if (backreferences) {
+    return {
+      hasIssue: true,
+      reason: "Backreferences prevent efficient regex compilation and can be slow",
+    };
+  }
+
+  // Excessive alternations (many OR operations)
+  // Example: a|b|c|d|e|f|g|h|i|j
+  const excessiveAlternations = (pattern.match(/\|/g) || []).length > 8;
+  if (excessiveAlternations) {
+    return {
+      hasIssue: true,
+      reason: "Many alternations can cause the regex engine to try many paths",
+    };
+  }
+
+  return {
+    hasIssue: false,
+    reason: "",
+  };
+}
+
+/**
+ * Check for regex performance issues in meta-agent routing rules
+ * Analyzes regex patterns in matchers for potential performance anti-patterns
+ * @param metaAgents - Map of meta-agent definitions
+ * @returns Array of RegexPerformanceWarning for each performance issue found
+ */
+export function checkRegexPerformance(
+  metaAgents: Record<string, MetaAgentDef>
+): RegexPerformanceWarning[] {
+  const warnings: RegexPerformanceWarning[] = [];
+
+  if (Object.keys(metaAgents).length === 0) {
+    return warnings;
+  }
+
+  // Check each meta-agent for regex performance issues
+  for (const [agentName, def] of Object.entries(metaAgents)) {
+    // Check routing_rules for regex patterns
+    for (const [ruleIndex, rule] of def.routing_rules.entries()) {
+      if (rule.matcher.type === "regex") {
+        const pattern = rule.matcher.pattern;
+        const analysis = analyzeRegexPattern(pattern);
+
+        if (analysis.hasIssue) {
+          warnings.push(
+            createRegexPerformanceWarning(
+              `Regex pattern may cause performance issues: ${analysis.reason}`,
+              ["meta_agents", agentName, "routing_rules", String(ruleIndex), "matcher", "pattern"],
+              pattern,
+              analysis.reason
+            )
+          );
+        }
+      }
+    }
+  }
+
+  return warnings;
+}
+
+/**
+ * Helper function to check regex performance from validation context
+ * @param config - The Olimpus configuration to validate
+ * @param context - Optional validation context
+ * @returns CheckResult with regex performance check status (always passes, warnings only)
+ */
+export function checkRegexPerformanceInConfig(
+  config: OlimpusConfig,
+  context?: Partial<ValidationContext>
+): CheckResult {
+  const result = createCheckResult("regex_performance");
+
+  if (!config.meta_agents || Object.keys(config.meta_agents).length === 0) {
+    result.passed = true;
+    return result;
+  }
+
+  const warnings = checkRegexPerformance(config.meta_agents);
+
+  if (warnings.length > 0) {
+    // Regex performance issues generate warnings, not errors
+    result.passed = true; // Still passes validation, but with warnings
+    result.warnings.push(...warnings);
+  } else {
+    result.passed = true;
+  }
+
+  return result;
+}
