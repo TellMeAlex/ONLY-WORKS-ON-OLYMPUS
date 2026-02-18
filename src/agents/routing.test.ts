@@ -897,6 +897,179 @@ describe("RoutingLogger", () => {
       // Assert
       expect(existsSync(logFile)).toBe(false);
     });
+
+    test("does not log multiple times when disabled", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = { enabled: false, output: "console" };
+      const logger = new RoutingLogger(config);
+
+      // Act - log multiple times
+      for (let i = 0; i < 5; i++) {
+        logger.logRoutingDecision(
+          `agent-${i}`,
+          "keyword",
+          `matched: test-${i}`
+        );
+      }
+
+      // Assert
+      expect(logOutput.length).toBe(0);
+    });
+
+    test("does not log with config_overrides when disabled", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = { enabled: false, output: "console" };
+      const logger = new RoutingLogger(config);
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-disabled-config",
+        "keyword",
+        "matched: test",
+        {
+          model: "gpt-4",
+          temperature: 0.5,
+        }
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(0);
+    });
+
+    test("does not log with debug_info when disabled", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        enabled: false,
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["test"] },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-disabled-debug",
+        "keyword",
+        "matched: test",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(0);
+    });
+
+    test("does not log with all matcher types when disabled", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = { output: "disabled" };
+      const logger = new RoutingLogger(config);
+
+      // Act - test all matcher types
+      const matcherTypes = ["keyword", "regex", "complexity", "project_context", "always"];
+      matcherTypes.forEach((type) => {
+        logger.logRoutingDecision(`agent-${type}`, type, `matched: ${type}`);
+      });
+
+      // Assert
+      expect(logOutput.length).toBe(0);
+    });
+
+    test("does not log to file with config_overrides when disabled", () => {
+      // Arrange
+      const logFile = join(tempDir, "disabled-with-override.log");
+      const config: RoutingLoggerConfig = {
+        enabled: false,
+        output: "file",
+        log_file: logFile,
+      };
+      const logger = new RoutingLogger(config);
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-disabled-file-config",
+        "keyword",
+        "matched: test",
+        {
+          model: "claude-3",
+          prompt: "test prompt",
+        }
+      );
+
+      // Assert
+      expect(existsSync(logFile)).toBe(false);
+    });
+
+    test("does not log to file with debug_info when disabled", () => {
+      // Arrange
+      const logFile = join(tempDir, "disabled-with-debug.log");
+      const config: RoutingLoggerConfig = {
+        enabled: false,
+        output: "file",
+        log_file: logFile,
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "regex",
+          matcher: { type: "regex", pattern: "^test" },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-disabled-file-debug",
+        "regex",
+        "matched: pattern",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(existsSync(logFile)).toBe(false);
+    });
+
+    test("does not create default routing.log when disabled", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        enabled: false,
+        output: "file",
+      };
+      const logger = new RoutingLogger(config);
+
+      // Act
+      logger.logRoutingDecision("agent-disabled-default", "always", "always match");
+
+      // Assert - default routing.log should not be created when disabled
+      expect(existsSync("routing.log")).toBe(false);
+    });
+
+    test("disabled logger ignores output mode changes", () => {
+      // Arrange
+      const logger = new RoutingLogger({ enabled: false });
+
+      // Act - try logging with output: console
+      logger.logRoutingDecision("agent-disabled-1", "keyword", "matched: 1");
+
+      // Act - try logging with output: file
+      logger.logRoutingDecision("agent-disabled-2", "keyword", "matched: 2");
+
+      // Act - try logging with output: disabled
+      logger.logRoutingDecision("agent-disabled-3", "keyword", "matched: 3");
+
+      // Assert
+      expect(logOutput.length).toBe(0);
+      expect(existsSync("routing.log")).toBe(false);
+    });
   });
 
   describe("logRoutingDecision - error handling", () => {
