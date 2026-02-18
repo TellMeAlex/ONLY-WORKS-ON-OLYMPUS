@@ -8,8 +8,14 @@ import { scaffoldOlimpusConfig } from "./scaffolder.js";
  * Load olimpus.jsonc from project directory and optional user config directory.
  * Search order: project dir first (overrides user config dir if both exist).
  * Returns parsed and validated config with merged defaults.
+ *
+ * Wizard mode behavior:
+ * - By default, uses interactive wizard when no config exists
+ * - Set OLIMPUS_SKIP_WIZARD=1 environment variable to skip wizard and use silent scaffolding
  */
-export function loadOlimpusConfig(projectDir: string): OlimpusConfig {
+export async function loadOlimpusConfig(
+  projectDir: string,
+): Promise<OlimpusConfig> {
   const homeDir = process.env.HOME ?? ".";
   const userConfigPath = path.join(
     homeDir,
@@ -45,9 +51,15 @@ export function loadOlimpusConfig(projectDir: string): OlimpusConfig {
   const projectConfigExists = fs.existsSync(projectConfigPath);
 
   if (!userConfigExists && !projectConfigExists) {
-    const scaffoldResult = scaffoldOlimpusConfig({
+    // Detect wizard mode: use wizard unless OLIMPUS_SKIP_WIZARD is set
+    const skipWizard =
+      process.env.OLIMPUS_SKIP_WIZARD === "1" ||
+      process.env.OLIMPUS_SKIP_WIZARD === "true";
+
+    const scaffoldResult = await scaffoldOlimpusConfig({
       projectConfigExists: false,
       userConfigExists: false,
+      useWizard: !skipWizard,
     });
 
     if (scaffoldResult && scaffoldResult.created) {

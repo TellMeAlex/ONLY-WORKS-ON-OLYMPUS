@@ -29,7 +29,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   let config;
 
   try {
-    config = loadOlimpusConfig(input.directory);
+    config = await loadOlimpusConfig(input.directory);
   } catch (error) {
     throw new Error(
       `[Olimpus] Failed to load olimpus.jsonc: ${
