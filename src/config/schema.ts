@@ -171,6 +171,16 @@ export const SettingsSchema = z.object({
   // Code quality
   lsp_refactoring_preferred: z.boolean().optional(),
   aggressive_comment_pruning: z.boolean().optional(),
+
+  // Routing logger
+  routing_logger: z
+    .object({
+      enabled: z.boolean().optional(),
+      output: z.enum(["console", "file", "disabled"]).optional(),
+      log_file: z.string().optional(),
+      debug_mode: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 /**
