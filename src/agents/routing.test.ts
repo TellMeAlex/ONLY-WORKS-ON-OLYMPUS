@@ -396,6 +396,137 @@ describe("RoutingLogger", () => {
       expect(overrides.prompt).toBeUndefined();
       expect(overrides.variant).toBeUndefined();
     });
+
+    test("console output includes all required fields", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act
+      logger.logRoutingDecision("agent-all-fields", "keyword", "matched");
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      expect(parsed.timestamp).toBeDefined();
+      expect(parsed.target_agent).toBe("agent-all-fields");
+      expect(parsed.matcher_type).toBe("keyword");
+      expect(parsed.matched_content).toBe("matched");
+    });
+
+    test("console output handles special characters in matched content", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+      const specialContent = "matched: special \"quotes\" and 'apostrophes' \n newlines";
+
+      // Act
+      logger.logRoutingDecision("agent-special", "regex", specialContent);
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      expect(parsed.matched_content).toBe(specialContent);
+    });
+
+    test("console output with all matcher types", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act - test all matcher types
+      const matcherTypes = ["keyword", "regex", "complexity", "project_context", "always"];
+      matcherTypes.forEach((type) => {
+        logOutput = []; // Reset for each call
+        logger.logRoutingDecision(`agent-${type}`, type, `matched: ${type}`);
+        expect(logOutput.length).toBe(1);
+        const logLine = logOutput[0];
+        const parsed = JSON.parse(logLine) as Record<string, unknown>;
+        expect(parsed.matcher_type).toBe(type);
+      });
+    });
+
+    test("console output with debug mode includes debug_info", () => {
+      // Arrange
+      const config: RoutingLoggerConfig = {
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(config);
+
+      const evaluations: MatcherEvaluation[] = [
+        {
+          matcher_type: "keyword",
+          matcher: { type: "keyword", keywords: ["test"] },
+          matched: true,
+        },
+      ];
+
+      // Act
+      logger.logRoutingDecision(
+        "agent-console-debug",
+        "keyword",
+        "matched: test",
+        undefined,
+        evaluations
+      );
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      expect(parsed.debug_info).toBeDefined();
+      const debugInfo = parsed.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(1);
+    });
+
+    test("console output does not create files", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act
+      logger.logRoutingDecision("agent-no-file", "always", "always match");
+
+      // Assert - no routing.log file should be created for console output
+      expect(existsSync("routing.log")).toBe(false);
+    });
+
+    test("console output timestamp is valid ISO format", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act
+      logger.logRoutingDecision("agent-timestamp", "keyword", "matched");
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      const timestamp = parsed.timestamp as string;
+      expect(timestamp).toBeDefined();
+      const date = new Date(timestamp);
+      expect(date.getTime()).not.toBeNaN();
+    });
+
+    test("console output handles empty strings in fields", () => {
+      // Arrange
+      const logger = new RoutingLogger({ output: "console" });
+
+      // Act
+      logger.logRoutingDecision("agent-empty", "", "");
+
+      // Assert
+      expect(logOutput.length).toBe(1);
+      const logLine = logOutput[0];
+      const parsed = JSON.parse(logLine) as Record<string, unknown>;
+
+      expect(parsed.target_agent).toBe("agent-empty");
+      expect(parsed.matcher_type).toBe("");
+      expect(parsed.matched_content).toBe("");
+    });
   });
 
   describe("logRoutingDecision - debug mode", () => {
