@@ -232,7 +232,7 @@
             "command": "bun run bin/olimpus.ts validate olimpus.jsonc",
             "expected": "Validation runs and reports results"
           },
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "subtask-3-3",
