@@ -8,6 +8,7 @@ import type {
   ProjectContextMatcher,
   AlwaysMatcher,
 } from "../config/schema.js";
+import type { RoutingLogger } from "./logger.js";
 
 export interface RoutingContext {
   prompt: string;
@@ -32,17 +33,67 @@ export interface ResolvedRoute {
  */
 export function evaluateRoutingRules(
   rules: RoutingRule[],
-  context: RoutingContext
+  context: RoutingContext,
+  logger?: RoutingLogger
 ): ResolvedRoute | null {
   for (const rule of rules) {
     if (evaluateMatcher(rule.matcher, context)) {
-      return {
+      const matchedContent = getMatchedContent(rule.matcher, context);
+      const result: ResolvedRoute = {
         target_agent: rule.target_agent,
         config_overrides: rule.config_overrides,
       };
+
+      // Log the routing decision if logger is provided
+      if (logger && logger.isEnabled()) {
+        logger.logRoutingDecision(
+          result.target_agent,
+          rule.matcher.type,
+          matchedContent,
+          result.config_overrides
+        );
+      }
+
+      return result;
     }
   }
   return null;
+}
+
+/**
+ * Extracts the content that triggered the match based on matcher type
+ * Returns a human-readable description of what was matched
+ */
+function getMatchedContent(matcher: Matcher, context: RoutingContext): string {
+  switch (matcher.type) {
+    case "keyword": {
+      const promptLower = context.prompt.toLowerCase();
+      const matchedKeywords = matcher.keywords.filter((kw) =>
+        promptLower.includes(kw.toLowerCase())
+      );
+      return `matched keywords: ${matchedKeywords.join(", ")}`;
+    }
+    case "regex":
+      return `matched pattern: /${matcher.pattern}/${matcher.flags || ""}`;
+    case "complexity":
+      return `complexity score >= ${matcher.threshold}`;
+    case "project_context":
+      const fileMatches =
+        matcher.has_files && matcher.has_files.length > 0
+          ? `files: ${matcher.has_files.join(", ")}`
+          : "";
+      const depMatches =
+        matcher.has_deps && matcher.has_deps.length > 0
+          ? `deps: ${matcher.has_deps.join(", ")}`
+          : "";
+      const parts = [fileMatches, depMatches].filter(Boolean);
+      return parts.length > 0 ? parts.join("; ") : "project context match";
+    case "always":
+      return "always match";
+    default:
+      const exhaustive: never = matcher;
+      throw new Error(`Unknown matcher type: ${exhaustive}`);
+  }
 }
 
 /**
