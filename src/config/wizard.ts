@@ -23,7 +23,326 @@ import {
   isSimplePrompt,
   getProjectType,
   getProviderModel,
+  type ProjectTypeId,
 } from "./prompts.js";
+
+/**
+ * Config template for a specific project type
+ */
+interface ProjectConfigTemplate {
+  /**
+   * Default meta-agents to enable for this project type
+   */
+  defaultMetaAgents: string[];
+
+  /**
+   * Default agent configurations for this project type
+   */
+  defaultAgents?: Partial<Record<string, { model: string; temperature: number; description: string }>>;
+
+  /**
+   * Default categories for this project type
+   */
+  defaultCategories?: Record<string, { description: string; model?: string; temperature?: number }>;
+
+  /**
+   * Default settings overrides for this project type
+   */
+  defaultSettings?: {
+    background_parallelization?: boolean;
+    adaptive_model_selection?: boolean;
+    lsp_refactoring_preferred?: boolean;
+  };
+}
+
+/**
+ * Project type config templates
+ * Each project type has sensible defaults for meta-agents, agents, and categories
+ */
+const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
+  /**
+   * Web Application - Frontend-focused development
+   */
+  web: {
+    defaultMetaAgents: ["atenea", "hermes", "hefesto", "frontend_specialist"],
+    defaultAgents: {
+      sisyphus: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+        description: "TDD-focused implementation for web apps",
+      },
+      oracle: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.5,
+        description: "Strategic analysis for frontend architecture",
+      },
+    },
+    defaultCategories: {
+      frontend: {
+        description: "Frontend development tasks",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      ui_components: {
+        description: "UI component development",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      styling: {
+        description: "CSS, Tailwind, and styling tasks",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      testing: {
+        description: "Frontend testing with vitest/cypress",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+    },
+    defaultSettings: {
+      background_parallelization: true,
+      adaptive_model_selection: true,
+      lsp_refactoring_preferred: true,
+    },
+  },
+
+  /**
+   * Backend API - Server-side development
+   */
+  backend: {
+    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultAgents: {
+      sisyphus: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+        description: "TDD-focused implementation for APIs",
+      },
+      oracle: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.4,
+        description: "Strategic analysis for API architecture",
+      },
+    },
+    defaultCategories: {
+      backend: {
+        description: "Backend development and API tasks",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      database: {
+        description: "Database schema and migrations",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      api: {
+        description: "REST/GraphQL API endpoints",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      testing: {
+        description: "API testing and integration tests",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+    },
+    defaultSettings: {
+      background_parallelization: true,
+      adaptive_model_selection: true,
+      lsp_refactoring_preferred: true,
+    },
+  },
+
+  /**
+   * Full Stack - Both frontend and backend
+   */
+  fullstack: {
+    defaultMetaAgents: ["atenea", "hermes", "hefesto", "frontend_specialist"],
+    defaultAgents: {
+      sisyphus: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+        description: "TDD-focused implementation for full-stack apps",
+      },
+      oracle: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.5,
+        description: "Strategic analysis for full-stack architecture",
+      },
+    },
+    defaultCategories: {
+      frontend: {
+        description: "Frontend development tasks",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      backend: {
+        description: "Backend development and API tasks",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.4,
+      },
+      database: {
+        description: "Database schema and migrations",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      api: {
+        description: "REST/GraphQL API endpoints",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      testing: {
+        description: "End-to-end and integration tests",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      deployment: {
+        description: "CI/CD and deployment configuration",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+    },
+    defaultSettings: {
+      background_parallelization: true,
+      adaptive_model_selection: true,
+      lsp_refactoring_preferred: true,
+    },
+  },
+
+  /**
+   * CLI Tool - Command-line applications
+   */
+  cli: {
+    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultAgents: {
+      sisyphus: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+        description: "TDD-focused implementation for CLI tools",
+      },
+      oracle: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.4,
+        description: "Strategic analysis for CLI design",
+      },
+    },
+    defaultCategories: {
+      core: {
+        description: "Core CLI logic and commands",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      ui: {
+        description: "CLI interface and user experience",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      testing: {
+        description: "CLI testing and integration tests",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      documentation: {
+        description: "CLI help and documentation",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+    },
+    defaultSettings: {
+      background_parallelization: false,
+      adaptive_model_selection: true,
+      lsp_refactoring_preferred: true,
+    },
+  },
+
+  /**
+   * Library/Package - Reusable code libraries
+   */
+  library: {
+    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultAgents: {
+      sisyphus: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+        description: "TDD-focused implementation for libraries",
+      },
+      oracle: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+        description: "Strategic analysis for API design",
+      },
+    },
+    defaultCategories: {
+      core: {
+        description: "Core library functionality",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      api: {
+        description: "Public API design and documentation",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      testing: {
+        description: "Unit tests and test coverage",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+      examples: {
+        description: "Example usage and documentation",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+    },
+    defaultSettings: {
+      background_parallelization: false,
+      adaptive_model_selection: true,
+      lsp_refactoring_preferred: true,
+    },
+  },
+
+  /**
+   * Other - Generic or mixed project types
+   */
+  other: {
+    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultAgents: {
+      sisyphus: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+        description: "TDD-focused implementation agent",
+      },
+      oracle: {
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.5,
+        description: "Strategic analysis and architecture advisor",
+      },
+    },
+    defaultCategories: {
+      general: {
+        description: "General development tasks",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.3,
+      },
+      documentation: {
+        description: "Technical writing and documentation",
+        model: "claude-3-5-sonnet-20241022",
+        temperature: 0.2,
+      },
+    },
+    defaultSettings: {
+      background_parallelization: true,
+      adaptive_model_selection: true,
+      lsp_refactoring_preferred: true,
+    },
+  },
+};
+
+/**
+ * Get config template for a project type
+ */
+function getProjectTemplate(projectType: string): ProjectConfigTemplate {
+  return PROJECT_CONFIG_TEMPLATES[projectType as ProjectTypeId] || PROJECT_CONFIG_TEMPLATES.other;
+}
 
 /**
  * Result of the wizard execution
@@ -439,18 +758,29 @@ function createProviderConfig(
 
 /**
  * Create settings configuration based on feature selections
+ * @param selectedKeys - Settings explicitly selected by user
+ * @param primaryModel - Primary model for strategy tasks
+ * @param researchModel - Research model for background tasks
+ * @param projectDefaults - Project type-specific default settings
  */
 function createSettings(
   selectedKeys: string[],
   primaryModel: string,
   researchModel: string,
+  projectDefaults?: ProjectConfigTemplate["defaultSettings"],
 ): Settings {
-  const backgroundParallelization = selectedKeys.includes("background_parallelization");
-  const adaptiveModelSelection = selectedKeys.includes("adaptive_model_selection");
+  const backgroundParallelization =
+    selectedKeys.includes("background_parallelization") ||
+    projectDefaults?.background_parallelization === true;
+  const adaptiveModelSelection =
+    selectedKeys.includes("adaptive_model_selection") ||
+    projectDefaults?.adaptive_model_selection === true;
   const ultraworkEnabled = selectedKeys.includes("ultrawork_enabled");
   const todoContinuation = selectedKeys.includes("todo_continuation");
   const verifyBeforeCompletion = selectedKeys.includes("verify_before_completion");
-  const lspRefactoringPreferred = selectedKeys.includes("lsp_refactoring_preferred");
+  const lspRefactoringPreferred =
+    selectedKeys.includes("lsp_refactoring_preferred") ||
+    projectDefaults?.lsp_refactoring_preferred === true;
   const aggressiveCommentPruning = selectedKeys.includes("aggressive_comment_pruning");
 
   return {
@@ -491,45 +821,48 @@ const SCHEMA_URL =
 function buildConfig(answers: WizardAnswers): OlimpusConfig {
   const primaryModel = answers.primary_model;
   const researchModel = answers.research_model;
+  const projectTemplate = getProjectTemplate(answers.project_type);
+
+  // Determine meta-agents to use: user selection or project template defaults
+  const metaAgentIds =
+    answers.meta_agents && answers.meta_agents.length > 0
+      ? answers.meta_agents
+      : projectTemplate.defaultMetaAgents;
+
+  // Determine settings to use: user selection or empty (let template defaults apply in createSettings)
+  const settings = answers.settings ?? [];
+
+  // Build agents configuration: start with template defaults, then merge with models
+  const agents: NonNullable<OlimpusConfig["agents"]> = {
+    ...projectTemplate.defaultAgents,
+  };
+
+  // Update all agents to use the selected primary model
+  for (const agentId in agents) {
+    agents[agentId].model = primaryModel;
+  }
+
+  // Build categories: apply primary model if not specified in template
+  const categories: NonNullable<OlimpusConfig["categories"]> = {};
+  if (projectTemplate.defaultCategories) {
+    for (const [categoryId, categoryDef] of Object.entries(
+      projectTemplate.defaultCategories,
+    )) {
+      categories[categoryId] = {
+        description: categoryDef.description,
+        model: categoryDef.model ?? primaryModel,
+        temperature: categoryDef.temperature ?? 0.3,
+      };
+    }
+  }
 
   return {
-    meta_agents: answers.meta_agents
-      ? createMetaAgents(answers.meta_agents, primaryModel)
-      : undefined,
+    meta_agents: metaAgentIds.length > 0 ? createMetaAgents(metaAgentIds, primaryModel) : undefined,
     providers: createProviderConfig(primaryModel, researchModel),
-    settings: answers.settings
-      ? createSettings(answers.settings, primaryModel, researchModel)
-      : undefined,
+    settings: createSettings(settings, primaryModel, researchModel, projectTemplate.defaultSettings),
     skills: answers.skills_path ? [answers.skills_path] : undefined,
-    agents: {
-      sisyphus: {
-        model: answers.primary_model,
-        temperature: 0.3,
-        description: "TDD-focused implementation agent",
-      },
-      oracle: {
-        model: answers.primary_model,
-        temperature: 0.5,
-        description: "Strategic analysis and architecture advisor",
-      },
-    },
-    categories: {
-      frontend: {
-        description: "Frontend development tasks",
-        model: answers.primary_model,
-        temperature: 0.3,
-      },
-      backend: {
-        description: "Backend development and API tasks",
-        model: answers.primary_model,
-        temperature: 0.4,
-      },
-      documentation: {
-        description: "Technical writing and documentation",
-        model: answers.primary_model,
-        temperature: 0.2,
-      },
-    },
+    agents,
+    categories,
     disabled_hooks: [],
   };
 }
