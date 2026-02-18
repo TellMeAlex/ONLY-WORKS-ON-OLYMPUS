@@ -8,7 +8,7 @@ import type {
   ProjectContextMatcher,
   AlwaysMatcher,
 } from "../config/schema.js";
-import type { RoutingLogger } from "./logger.js";
+import type { RoutingLogger, MatcherEvaluation } from "./logger.js";
 
 export interface RoutingContext {
   prompt: string;
@@ -36,8 +36,22 @@ export function evaluateRoutingRules(
   context: RoutingContext,
   logger?: RoutingLogger
 ): ResolvedRoute | null {
+  const isDebugMode = logger?.isDebugMode() ?? false;
+  const evaluations: MatcherEvaluation[] = [];
+
   for (const rule of rules) {
-    if (evaluateMatcher(rule.matcher, context)) {
+    const matched = evaluateMatcher(rule.matcher, context);
+
+    // Track evaluation for debug mode
+    if (isDebugMode) {
+      evaluations.push({
+        matcher_type: rule.matcher.type,
+        matcher: rule.matcher,
+        matched,
+      });
+    }
+
+    if (matched) {
       const matchedContent = getMatchedContent(rule.matcher, context);
       const result: ResolvedRoute = {
         target_agent: rule.target_agent,
@@ -50,7 +64,8 @@ export function evaluateRoutingRules(
           result.target_agent,
           rule.matcher.type,
           matchedContent,
-          result.config_overrides
+          result.config_overrides,
+          isDebugMode ? evaluations : undefined
         );
       }
 
