@@ -3,9 +3,13 @@ import type { MetaAgentDef, OlimpusConfig } from "./schema.js";
 import {
   checkCircularDependencies,
   checkCircularDependenciesInConfig,
+  checkAgentReferences,
+  checkAgentReferencesInConfig,
   createCircularDependencyError,
+  createInvalidAgentReferenceError,
   createCheckResult,
   type CircularDependencyError,
+  type InvalidAgentReferenceError,
   type CheckResult,
 } from "./validator.js";
 
@@ -367,6 +371,316 @@ describe("circular dependency", () => {
       // Assert
       expect(result.checkType).toBe(checkType);
       expect(result.passed).toBe(true);
+    });
+  });
+
+  describe("agent reference", () => {
+    describe("checkAgentReferences", () => {
+      test("returns empty array for empty meta_agents", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {};
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      test("returns empty array when all agent references are valid builtin agents", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus", "hephaestus", "oracle"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+              {
+                matcher: { type: "always" },
+                target_agent: "hephaestus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      test("returns empty array when agent references include other valid meta-agents", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          meta_a: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["meta_b", "sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "meta_b",
+              },
+            ],
+          },
+          meta_b: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["oracle"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "oracle",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      test("detects invalid agent reference in delegates_to", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["invalid_agent"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors.length).toBeGreaterThan(0);
+        const error = errors.find((e) => e.type === "invalid_agent_reference");
+        expect(error).toBeDefined();
+        expect(error?.reference).toBe("invalid_agent");
+        expect(error?.path).toEqual(["meta_agents", "router", "delegates_to"]);
+      });
+
+      test("detects invalid agent reference in routing_rules target_agent", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "invalid_target",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors.length).toBeGreaterThan(0);
+        const error = errors.find((e) => e.type === "invalid_agent_reference");
+        expect(error).toBeDefined();
+        expect(error?.reference).toBe("invalid_target");
+        expect(error?.path).toEqual(["meta_agents", "router", "routing_rules", "0", "target_agent"]);
+      });
+
+      test("detects multiple invalid agent references", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["invalid_1", "invalid_2"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "invalid_3",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors.length).toBe(3);
+        const invalidReferences = errors.map((e) => e.reference);
+        expect(invalidReferences).toContain("invalid_1");
+        expect(invalidReferences).toContain("invalid_2");
+        expect(invalidReferences).toContain("invalid_3");
+      });
+
+      test("validates all builtin agent names correctly", () => {
+        // Arrange: Test all builtin agent names
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [
+              "sisyphus",
+              "hephaestus",
+              "oracle",
+              "librarian",
+              "explore",
+              "multimodal-looker",
+              "metis",
+              "momus",
+              "atlas",
+              "prometheus",
+            ],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      test("includes list of valid agents in error message", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["unknown_agent"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkAgentReferences(metaAgents);
+
+        // Assert
+        expect(errors.length).toBeGreaterThan(0);
+        const error = errors.find((e) => e.type === "invalid_agent_reference");
+        expect(error).toBeDefined();
+        expect(error?.message).toContain("Valid agents are:");
+        expect(error?.message).toContain("sisyphus");
+      });
+    });
+
+    describe("checkAgentReferencesInConfig", () => {
+      test("returns passed true when no meta_agents defined", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkAgentReferencesInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+
+      test("returns passed true when meta_agents is empty object", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {},
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkAgentReferencesInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+
+      test("detects invalid agent reference in full config", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["invalid_agent"],
+              routing_rules: [
+                { matcher: { type: "always" }, target_agent: "sisyphus" },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkAgentReferencesInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(false);
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.checkType).toBe("agent_reference");
+      });
+
+      test("passes with valid config using builtin agents", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus", "hephaestus"],
+              routing_rules: [
+                { matcher: { type: "always" }, target_agent: "sisyphus" },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkAgentReferencesInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+    });
+
+    describe("createInvalidAgentReferenceError", () => {
+      test("creates valid invalid agent reference error", () => {
+        // Arrange
+        const message = "Invalid agent reference message";
+        const path = ["meta_agents", "router", "delegates_to"];
+        const reference = "invalid_agent";
+
+        // Act
+        const error = createInvalidAgentReferenceError(message, path, reference);
+
+        // Assert
+        expect(error.type).toBe("invalid_agent_reference");
+        expect(error.message).toBe(message);
+        expect(error.path).toEqual(path);
+        expect(error.reference).toBe(reference);
+      });
     });
   });
 });

@@ -533,3 +533,83 @@ export function checkCircularDependenciesInConfig(
 
   return result;
 }
+
+/**
+ * Check for invalid agent references in meta-agent definitions
+ * Validates that all referenced agents exist in BUILTIN_AGENT_NAMES or as other meta-agents
+ * @param metaAgents - Map of meta-agent definitions
+ * @returns Array of InvalidAgentReferenceError for each invalid reference found
+ */
+export function checkAgentReferences(
+  metaAgents: Record<string, MetaAgentDef>
+): InvalidAgentReferenceError[] {
+  const errors: InvalidAgentReferenceError[] = [];
+
+  if (Object.keys(metaAgents).length === 0) {
+    return errors;
+  }
+
+  // Build set of all valid agent references
+  // Valid references: builtin agents OR other meta-agents defined in the config
+  const validAgents = new Set<string>([...BUILTIN_AGENT_NAMES, ...Object.keys(metaAgents)]);
+
+  // Check each meta-agent for invalid agent references
+  for (const [agentName, def] of Object.entries(metaAgents)) {
+    // Check delegates_to for invalid references
+    for (const delegate of def.delegates_to) {
+      if (!validAgents.has(delegate)) {
+        errors.push(
+          createInvalidAgentReferenceError(
+            `Invalid agent reference: "${delegate}" is not a recognized agent. Valid agents are: ${[...BUILTIN_AGENT_NAMES].join(", ")}`,
+            ["meta_agents", agentName, "delegates_to"],
+            delegate
+          )
+        );
+      }
+    }
+
+    // Check routing_rules target_agent for invalid references
+    for (const [ruleIndex, rule] of def.routing_rules.entries()) {
+      if (!validAgents.has(rule.target_agent)) {
+        errors.push(
+          createInvalidAgentReferenceError(
+            `Invalid agent reference: "${rule.target_agent}" is not a recognized agent. Valid agents are: ${[...BUILTIN_AGENT_NAMES].join(", ")}`,
+            ["meta_agents", agentName, "routing_rules", String(ruleIndex), "target_agent"],
+            rule.target_agent
+          )
+        );
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Helper function to check agent references from validation context
+ * @param config - The Olimpus configuration to validate
+ * @param context - Optional validation context
+ * @returns CheckResult with agent reference check status
+ */
+export function checkAgentReferencesInConfig(
+  config: OlimpusConfig,
+  context?: Partial<ValidationContext>
+): CheckResult {
+  const result = createCheckResult("agent_reference");
+
+  if (!config.meta_agents || Object.keys(config.meta_agents).length === 0) {
+    result.passed = true;
+    return result;
+  }
+
+  const errors = checkAgentReferences(config.meta_agents);
+
+  if (errors.length > 0) {
+    result.passed = false;
+    result.errors.push(...errors);
+  } else {
+    result.passed = true;
+  }
+
+  return result;
+}
