@@ -3,23 +3,23 @@
   "spec": "008-cli-routing-tester",
   "state": "building",
   "subtasks": {
-    "completed": 8,
+    "completed": 11,
     "total": 13,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Output Formatting",
+    "current": "Testing",
     "id": null,
-    "total": 3
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 10,
+    "number": 13,
     "started_at": "2026-02-19T23:59:55.053771"
   },
-  "last_update": "2026-02-20T00:26:42.228268"
+  "last_update": "2026-02-20T00:32:53.636395"
 }

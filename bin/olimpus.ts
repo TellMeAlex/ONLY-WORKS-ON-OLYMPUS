@@ -53,8 +53,9 @@ interface Command {
 
 /**
  * Parse command line options
+ * @export for testing
  */
-function parseOptions(args: string[]): CommandOptions {
+export function parseOptions(args: string[]): CommandOptions {
   const options: CommandOptions = {
     positional: [],
     help: false,
@@ -105,7 +106,7 @@ function parseOptions(args: string[]): CommandOptions {
         throw new Error("Missing value for --expect-agent option");
       }
     } else if (arg.startsWith("--expect-agent=")) {
-      options.expectAgent = arg.slice(14);
+      options.expectAgent = arg.slice(15);
       i++;
     } else {
       // Positional argument
