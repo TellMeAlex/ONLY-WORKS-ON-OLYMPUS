@@ -566,7 +566,7 @@ async function testCommand(args: string[]): Promise<number> {
           return 2;
         }
 
-        return 1;
+        return 2;
       }
     }
 
@@ -672,7 +672,7 @@ async function testCommand(args: string[]): Promise<number> {
         return 2;
       }
 
-      return 1;
+      return 2;
     }
   } catch (error) {
     if (error instanceof Error) {
