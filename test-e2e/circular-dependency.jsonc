@@ -4,7 +4,7 @@
   "meta_agents": {
     "agent_a": {
       "base_model": "claude-3-5-sonnet-20241022",
-      "delegates_to": ["oracle"],
+      "delegates_to": ["agent_b"],
       "routing_rules": [
         {
           "matcher": { "type": "always" },
@@ -15,7 +15,7 @@
 
     "agent_b": {
       "base_model": "claude-3-5-sonnet-20241022",
-      "delegates_to": ["prometheus"],
+      "delegates_to": ["agent_a"],
       "routing_rules": [
         {
           "matcher": { "type": "always" },

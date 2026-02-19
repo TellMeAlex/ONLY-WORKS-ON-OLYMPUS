@@ -61,7 +61,7 @@ export const MatcherSchema = z.discriminatedUnion("type", [
 
 export const RoutingRuleSchema = z.object({
   matcher: MatcherSchema,
-  target_agent: z.enum(BUILTIN_AGENT_NAMES),
+  target_agent: z.string(),
   config_overrides: z
     .object({
       model: z.string().optional(),
@@ -78,7 +78,7 @@ export const RoutingRuleSchema = z.object({
 
 export const MetaAgentSchema = z.object({
   base_model: z.string(),
-  delegates_to: z.array(z.enum(BUILTIN_AGENT_NAMES)).min(1),
+  delegates_to: z.array(z.string()).min(1),
   routing_rules: z.array(RoutingRuleSchema).min(1),
   prompt_template: z.string().optional(),
   temperature: z.number().optional(),

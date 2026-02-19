@@ -322,7 +322,7 @@
             "type": "manual",
             "instructions": "Review README.md to ensure 'olimpus validate' command is documented with examples"
           },
-          "status": "pending"
+          "status": "completed"
         }
       ]
     }
@@ -429,5 +429,6 @@
   "qa_signoff": null,
   "status": "in_progress",
   "planStatus": "in_progress",
-  "updated_at": "2026-02-18T21:11:00.323Z"
+  "updated_at": "2026-02-19T08:11:39.704Z",
+  "recoveryNote": "Task recovered from stuck state at 2026-02-19T08:11:34.620Z"
 }

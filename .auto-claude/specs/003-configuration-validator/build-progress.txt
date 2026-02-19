@@ -95,3 +95,17 @@ Session 4 (Implementation - E2E Verification):
   - Next subtask: subtask-4-3 (Update documentation)
 
 === END SESSION 4 ===
+
+Session 5 (Implementation - Documentation Update):
+- Subtask-4-3: Update documentation with validator usage examples
+  - Updated README.md to use correct `bun run olimpus validate` command syntax
+  - Updated sections:
+    * Configuration Validation > Using the Validator (lines 157-172)
+    * Development > Validate Configuration (lines 460-467)
+    * Integration with Development Workflow (lines 263-266)
+    * Troubleshooting sections (lines 716, 728)
+  - All examples now show correct command: `bun run olimpus validate <file>`
+  - Updated implementation_plan.json: subtask-4-3 status changed from "pending" to "completed"
+  - Committed: e0e26d5
+
+=== END SESSION 5 ===
