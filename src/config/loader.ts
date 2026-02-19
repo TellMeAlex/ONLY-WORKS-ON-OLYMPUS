@@ -41,11 +41,10 @@ export interface LoadOlimpusConfigOptions {
  * - Set OLIMPUS_SKIP_WIZARD=1 environment variable to skip wizard and use silent scaffolding
  *
  * @param projectDir - Path to the project directory containing olimpus.jsonc
- * @param options - Optional configuration for loading and validation
- * @returns Parsed and validated Olimpus configuration
- * @throws Error if config is invalid according to schema or semantic validation
- */
- */
+  * @param options - Optional configuration for loading and validation
+  * @returns Parsed and validated Olimpus configuration
+  * @throws Error if config is invalid according to schema or semantic validation
+  */
 export async function loadOlimpusConfig(
   projectDir: string,
   options?: LoadOlimpusConfigOptions,

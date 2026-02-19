@@ -1,6 +1,6 @@
 {
-  "name": "only-works-on-olympus",
-  "version": "0.1.0",
+  "name": "@TellMeAlex/only-works-on-olympus",
+  "version": "0.1.1",
   "description": "A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules",
   "license": "SUL-1.0",
   "module": "dist/index.js",
@@ -23,12 +23,16 @@
   "bugs": {
     "url": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/issues"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun && bun scripts/generate-schema.ts",
     "typecheck": "bunx tsc --noEmit",
     "schema:generate": "bun scripts/generate-schema.ts",
     "schema:validate": "bun scripts/validate-schema.ts",
-    "olimpus": "bun bin/olimpus.ts"
+    "olimpus": "bun bin/olimpus.ts",
+    "publish:github": "npm publish"
   },
   "dependencies": {
     "oh-my-opencode": "^3.4.0",
