@@ -467,9 +467,21 @@ async function testCommand(args: string[]): Promise<number> {
         ) as RoutingResult)
       : null;
 
+    // Capture evaluations for verbose mode
+    const verboseResult = !options.dryRun && options.verbose
+      ? (evaluateRoutingRules(
+          metaAgent.routing_rules,
+          routingContext,
+          undefined,
+          true
+        ) as RoutingResult)
+      : null;
+
     const result: ResolvedRoute | null = dryRunResult
       ? dryRunResult.route
-      : evaluateRoutingRules(metaAgent.routing_rules, routingContext);
+      : verboseResult
+        ? verboseResult.route
+        : evaluateRoutingRules(metaAgent.routing_rules, routingContext);
 
     // Display dry-run results (all evaluated matchers)
     if (options.dryRun && dryRunResult) {
@@ -555,6 +567,62 @@ async function testCommand(args: string[]): Promise<number> {
         }
 
         return 1;
+      }
+    }
+
+    // Display step-by-step evaluation for verbose mode (non-dry-run)
+    if (!options.dryRun && options.verbose && verboseResult) {
+      console.log(`🔍 Step-by-step evaluation:\n`);
+
+      for (const evaluation of verboseResult.evaluations) {
+        const resultPrefix = evaluation.matched ? "✅" : "❌";
+        const resultText = evaluation.matched ? "Matched" : "Not matched";
+        console.log(`${resultPrefix} ${evaluation.matcher_type} matcher`);
+        console.log(`   Result: ${resultText}`);
+
+        // Show matcher details
+        switch (evaluation.matcher.type) {
+          case "keyword":
+            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
+            console.log(`   Mode: ${evaluation.matcher.mode}`);
+            break;
+          case "regex":
+            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
+            break;
+          case "complexity":
+            console.log(`   Threshold: ${evaluation.matcher.threshold}`);
+            break;
+          case "project_context":
+            if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
+              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
+            }
+            if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
+              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
+            }
+            break;
+          case "always":
+            // No details needed for always matcher
+            break;
+        }
+
+        // Show target agent for each rule
+        const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
+        if (rule) {
+          console.log(`   Target agent: ${rule.target_agent}`);
+          if (rule.config_overrides) {
+            const overrides: string[] = [];
+            if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
+            if (rule.config_overrides.temperature !== undefined) {
+              overrides.push(`temperature=${rule.config_overrides.temperature}`);
+            }
+            if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
+            if (overrides.length > 0) {
+              console.log(`   Overrides: ${overrides.join(", ")}`);
+            }
+          }
+        }
+
+        console.log();
       }
     }
 
