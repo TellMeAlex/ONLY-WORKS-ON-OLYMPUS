@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { OlimpusConfigSchema } from "./schema.js";
+import { runWizard, type WizardResult } from "./wizard.js";
 
 /**
  * Options for scaffolding the Olimpus config
@@ -8,6 +9,19 @@ import { OlimpusConfigSchema } from "./schema.js";
 export interface ScaffoldOptions {
   projectConfigExists: boolean;
   userConfigExists?: boolean;
+  /**
+   * Whether to use interactive wizard instead of silent creation
+   */
+  useWizard?: boolean;
+  /**
+   * Wizard options (only used when useWizard is true)
+   */
+  wizardOptions?: {
+    configPath?: string;
+    autoConfirm?: boolean;
+    input?: NodeJS.ReadableStream;
+    output?: NodeJS.WritableStream;
+  };
 }
 
 /**
@@ -41,30 +55,51 @@ function formatJsonc(obj: unknown): string {
 /**
  * Scaffold Olimpus config at ~/.config/opencode/olimpus.jsonc
  *
+ * When useWizard is true: runs interactive wizard to collect user preferences
+ * When useWizard is false (default): silently creates minimal default config
+ *
  * Logic:
  * 1. If projectConfigExists, skip (return null)
- * 2. Get HOME env var; if undefined, skip (return null)
- * 3. Construct target path: {HOME}/.config/opencode/olimpus.jsonc
- * 4. If file already exists OR userConfigExists, skip (return { path, created: false })
- * 5. Create parent directories recursively; if permission error, skip (return null)
- * 6. Generate minimal JSONC content
- * 7. Validate config before writing
- * 8. Write atomically: {target}.tmp → rename to {target}
- * 9. Log success message with path
- * 10. Return { path, created: true }
+ * 2. If useWizard is true, run interactive wizard and return result
+ * 3. Get HOME env var; if undefined, skip (return null)
+ * 4. Construct target path: {HOME}/.config/opencode/olimpus.jsonc
+ * 5. If file already exists OR userConfigExists, skip (return { path, created: false })
+ * 6. Create parent directories recursively; if permission error, skip (return null)
+ * 7. Generate minimal JSONC content
+ * 8. Validate config before writing
+ * 9. Write atomically: {target}.tmp → rename to {target}
+ * 10. Log success message with path
+ * 11. Return { path, created: true }
  *
  * On any error (except already-exists): log warning, return null
  */
-export function scaffoldOlimpusConfig(
+export async function scaffoldOlimpusConfig(
   options: ScaffoldOptions,
-): ScaffoldResult | null {
+): Promise<ScaffoldResult | null> {
   try {
     // Step 1: Skip if project config exists
     if (options.projectConfigExists) {
       return null;
     }
 
-    // Step 2: Get HOME env var
+    // Step 2: If wizard mode is enabled, run interactive wizard
+    if (options.useWizard) {
+      try {
+        const wizardResult: WizardResult = await runWizard(
+          options.wizardOptions ?? {},
+        );
+        return {
+          path: wizardResult.path,
+          created: true,
+        };
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        console.warn(`[Olimpus] Wizard failed: ${err.message}`);
+        return null;
+      }
+    }
+
+    // Step 3: Get HOME env var
     const homeDir = process.env.HOME;
     if (!homeDir) {
       console.warn(
@@ -73,7 +108,7 @@ export function scaffoldOlimpusConfig(
       return null;
     }
 
-    // Step 3: Construct target path
+    // Step 4: Construct target path
     const targetPath = path.join(
       homeDir,
       ".config",
@@ -81,7 +116,7 @@ export function scaffoldOlimpusConfig(
       "olimpus.jsonc",
     );
 
-    // Step 4: Check if file already exists or user config exists
+    // Step 5: Check if file already exists or user config exists
     if (fs.existsSync(targetPath) || options.userConfigExists) {
       return {
         path: targetPath,
@@ -89,7 +124,7 @@ export function scaffoldOlimpusConfig(
       };
     }
 
-    // Step 5: Create parent directories recursively
+    // Step 6: Create parent directories recursively
     const parentDir = path.dirname(targetPath);
     try {
       fs.mkdirSync(parentDir, { recursive: true });
@@ -104,10 +139,10 @@ export function scaffoldOlimpusConfig(
       throw error;
     }
 
-    // Step 6: Generate minimal JSONC content
+    // Step 7: Generate minimal JSONC content
     const content = formatJsonc(DEFAULT_CONFIG);
 
-    // Step 7: Validate config before writing
+    // Step 8: Validate config before writing
     const parsed = JSON.parse(content);
     const validation = OlimpusConfigSchema.safeParse(parsed);
     if (!validation.success) {
@@ -115,7 +150,7 @@ export function scaffoldOlimpusConfig(
       return null;
     }
 
-    // Step 8: Write atomically (tmp file + rename)
+    // Step 9: Write atomically (tmp file + rename)
     const tempPath = `${targetPath}.tmp`;
     try {
       fs.writeFileSync(tempPath, content, "utf-8");
@@ -142,7 +177,7 @@ export function scaffoldOlimpusConfig(
       throw error;
     }
 
-    // Step 9: Log success message
+    // Step 10: Log success message
     console.log(`[Olimpus] Generated default config at ${targetPath}`);
 
     return {
