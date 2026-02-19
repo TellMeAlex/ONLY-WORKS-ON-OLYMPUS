@@ -3,7 +3,7 @@
   "spec": "004-advanced-documentation-guide",
   "state": "building",
   "subtasks": {
-    "completed": 1,
+    "completed": 2,
     "total": 10,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 4,
     "started_at": "2026-02-19T16:16:28.062359"
   },
-  "last_update": "2026-02-19T16:23:48.261481"
+  "last_update": "2026-02-19T16:28:40.039664"
 }
