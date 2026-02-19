@@ -1,7 +1,8 @@
 # OLIMPO - PROJECT KNOWLEDGE BASE
 
 **Generated**: 2026-02-11 11:18:52 UTC  
-**Commit**: 963f441 (chore: remove npmrc example file)  
+**Updated**: 2026-02-19 (CI/CD + branch protection)  
+**Commit**: f897f9e (ci: add CI/CD workflows for GitHub Packages publish)  
 **Branch**: master
 
 ---
@@ -42,6 +43,11 @@ src/
 
 dist/                             # Build output: index.js + index.d.ts
 example/                          # Example config file
+
+.github/
+└── workflows/
+    ├── ci.yml                     # PR checks: typecheck + bun test
+    └── publish.yml                # Auto-publish to GitHub Packages on merge to master
 ```
 
 ---
@@ -172,6 +178,62 @@ olimpus:
 
 ---
 
+## CI/CD
+
+### Workflows
+
+| Workflow | Trigger | Steps |
+|----------|---------|-------|
+| `ci.yml` | PR to `master` | `bun install` → `typecheck` → `bun test` |
+| `publish.yml` | Push to `master` (merge) | `bun install` → `build` → `npm publish` |
+
+### Branch Protection (`master`)
+
+- ❌ Push directo bloqueado — solo por PR
+- ✅ CI (`Typecheck & Tests`) debe pasar antes de mergear
+- ✅ Branch debe estar actualizada con master antes de mergear (`strict`)
+- ❌ Force push bloqueado
+- ❌ Borrar rama bloqueado
+- ✅ Conversaciones resueltas antes de mergear
+- ✅ Reviews invalidadas si hay nuevos commits
+
+### Publicar una nueva versión
+
+```bash
+# 1. Crear rama
+git checkout -b feat/mi-feature
+
+# 2. Hacer cambios + bump version en package.json
+#    (OBLIGATORIO: si no cambias la versión, el publish falla con 409)
+
+# 3. Push + PR
+git push origin feat/mi-feature
+gh pr create
+
+# 4. CI corre automáticamente en el PR
+# 5. Al mergear → publish automático a GitHub Packages
+```
+
+### Registry
+
+- **Paquete**: `@TellMeAlex/only-works-on-olympus`
+- **Registry**: `https://npm.pkg.github.com`
+- **Auth**: `GITHUB_TOKEN` automático en Actions (sin secrets manuales)
+- **Visibilidad**: Privado (requiere token con `read:packages` para instalar)
+
+### Instalar en otro proyecto
+
+```bash
+# .npmrc del proyecto consumidor:
+@TellMeAlex:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=<GITHUB_PAT_con_read:packages>
+
+# Instalar:
+npm install @TellMeAlex/only-works-on-olympus
+```
+
+---
+
 ## COMMANDS
 
 ```bash
@@ -188,9 +250,9 @@ bun run schema:validate     # Validate generated schema
 bun test                    # Run all tests
 bun test src/path/file.ts  # Run single test file
 
-# Publishing (manual process)
-npm publish --dry-run       # Verify before publish
-npm publish                 # Publish to npm
+# Publishing (automático via CI/CD — no hacer manualmente)
+npm publish --dry-run       # Verificar tarball antes de publicar
+npm run publish:github      # Publicar manualmente si es necesario
 ```
 
 ---
@@ -207,6 +269,9 @@ npm publish                 # Publish to npm
 8. **Bun-only project**—Node.js is not supported
 9. **Schema validation happens at plugin load time**—errors surface immediately
 10. **Config overrides flow through routing rules**—each rule can customize model, temperature, prompt for target agent
+11. **Bump version antes de mergear**—el publish falla con `409 Conflict` si la versión ya existe en GitHub Packages
+12. **No pushear `.npmrc` con tokens**—el `.npmrc` del proyecto solo contiene el scope/registry, el token va en variables de entorno locales
+13. **`GITHUB_TOKEN` en Actions tiene `write:packages` automático**—no hace falta configurar secrets adicionales para publicar
 
 ---
 
@@ -216,4 +281,6 @@ npm publish                 # Publish to npm
 - **Publishing**: `PUBLISH_TO_NPM_PUBLIC.md`
 - **Schema**: `assets/olimpus.schema.json` (JSON Schema Draft-07)
 - **Entry Point**: `src/index.ts` (start here)
+- **CI Workflow**: `.github/workflows/ci.yml`
+- **CD Workflow**: `.github/workflows/publish.yml`
 - **Subsystems**: See linked AGENTS.md files below
