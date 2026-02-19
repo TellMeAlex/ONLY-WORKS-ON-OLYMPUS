@@ -217,4 +217,18 @@ Subtask 6-1 (completed 2026-02-19T08:20:00Z):
   - Output is parseable JSON with correct field types
 - Note: Verification tests follow existing project patterns using bun:test framework with Arrange/Act/Assert structure and console.log capture for output verification.
 
+Subtask 6-2 (completed 2026-02-19T08:25:00Z):
+- Added 8 comprehensive E2E verification tests to src/agents/routing.test.ts in the 'E2E: Verify log output can be configured (console, file, disabled)' describe block.
+- Tests include:
+  1. console output - logs appear in console - Verifies console logging with evaluateRoutingRules produces output in captured console, validates log fields (target_agent, matcher_type, timestamp, matched_content), and ensures no file is created
+  2. file output - logs are written to file - Verifies file logging with evaluateRoutingRules writes to specified file, validates console output is empty for file mode, and verifies file content contains valid JSON with all required fields
+  3. file output - multiple logs are appended to file - Tests that consecutive routing decisions are properly appended to the log file with newline separation
+  4. disabled logging - no logs are produced - Verifies enabled: false produces no console output and creates no log file
+  5. disabled output mode - no logs are produced even with enabled: true - Verifies output: disabled produces no output even when enabled: true
+  6. file output with custom path - logs written to specified file - Verifies custom log_file path works correctly, including subdirectory creation
+  7. console output with debug mode - logs appear in console with debug info - Verifies debug mode with console output includes debug_info with all_evaluated matchers and total_evaluated count
+  8. file output with debug mode - logs written to file with debug info - Verifies debug mode with file output writes debug_info to file with proper structure
+- All tests follow existing patterns using bun:test framework with Arrange/Act/Assert structure and test evaluateRoutingRules through full routing flow.
+- Note: Verification could not be run due to environment constraints (bun not available).
+
 === END SESSION 6 ===

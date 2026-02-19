@@ -2648,4 +2648,302 @@ This is a complex architectural task involving:
       expect(logOutput.length).toBe(0);
     });
   });
+
+  describe("E2E: Verify debug mode provides additional context", () => {
+    test("debug mode includes all evaluated matchers in log", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["bug", "fix"],
+            mode: "any",
+          },
+          target_agent: "debug-agent",
+        },
+        {
+          matcher: {
+            type: "regex",
+            pattern: "^(add|create)",
+            flags: "i",
+          },
+          target_agent: "create-agent",
+        },
+        {
+          matcher: {
+            type: "complexity",
+            threshold: "high",
+          },
+          target_agent: "senior-agent",
+        },
+        {
+          matcher: { type: "always" },
+          target_agent: "default-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "This is a test prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify debug_info is present
+      expect(logEntry.debug_info).toBeDefined();
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(4);
+
+      // Verify all evaluated matchers are included
+      expect(Array.isArray(debugInfo.all_evaluated)).toBe(true);
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+      expect(allEvaluated.length).toBe(4);
+
+      // Verify all matcher types are present
+      const matcherTypes = allEvaluated.map((e) => (e as Record<string, unknown>).matcher_type as string);
+      expect(matcherTypes).toContain("keyword");
+      expect(matcherTypes).toContain("regex");
+      expect(matcherTypes).toContain("complexity");
+      expect(matcherTypes).toContain("always");
+    });
+
+    test("debug mode clearly marks non-matching matchers with matched: false", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["deploy", "production"],
+            mode: "any",
+          },
+          target_agent: "deploy-agent",
+        },
+        {
+          matcher: {
+            type: "regex",
+            pattern: "\\b(API|api)\\b",
+            flags: "i",
+          },
+          target_agent: "api-agent",
+        },
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+      ];
+
+      // Act - "write unit tests" will match the third rule
+      evaluateRoutingRules(rules, {
+        prompt: "Write unit tests for the authentication module",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+
+      // Verify the first two matchers are clearly marked as not matched
+      expect(allEvaluated[0] as Record<string, unknown>).toMatchObject({
+        matcher_type: "keyword",
+        matched: false,
+      });
+      expect(allEvaluated[1] as Record<string, unknown>).toMatchObject({
+        matcher_type: "regex",
+        matched: false,
+      });
+
+      // Verify the matching matcher is marked as matched
+      expect(allEvaluated[2] as Record<string, unknown>).toMatchObject({
+        matcher_type: "keyword",
+        matched: true,
+      });
+    });
+
+    test("debug mode with file output includes all evaluated matchers", () => {
+      // Arrange
+      const logFile = join(tempDir, "e2e-debug-eval.log");
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "file",
+        log_file: logFile,
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["bug"],
+            mode: "any",
+          },
+          target_agent: "bug-agent",
+        },
+        {
+          matcher: { type: "always" },
+          target_agent: "default-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Add a new feature",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(existsSync(logFile)).toBe(true);
+      const fileContent = readFileSync(logFile, "utf-8");
+      const logEntry = JSON.parse(fileContent.trim()) as Record<string, unknown>;
+
+      // Verify debug_info includes all evaluations
+      expect(logEntry.debug_info).toBeDefined();
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(2);
+      expect(Array.isArray(debugInfo.all_evaluated)).toBe(true);
+
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+      expect(allEvaluated.length).toBe(2);
+
+      // Verify matcher objects are included
+      const firstEval = allEvaluated[0] as Record<string, unknown>;
+      expect(firstEval.matcher_type).toBe("keyword");
+      expect(firstEval.matched).toBe(false);
+      expect(firstEval.matcher).toBeDefined();
+
+      const secondEval = allEvaluated[1] as Record<string, unknown>;
+      expect(secondEval.matcher_type).toBe("always");
+      expect(secondEval.matched).toBe(true);
+      expect(secondEval.matcher).toBeDefined();
+    });
+
+    test("debug mode with mixed matched and non-matching clearly distinguishes", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["low", "simple"],
+            mode: "any",
+          },
+          target_agent: "junior-agent",
+        },
+        {
+          matcher: {
+            type: "complexity",
+            threshold: "high",
+          },
+          target_agent: "senior-agent",
+        },
+        {
+          matcher: { type: "always" },
+          target_agent: "default-agent",
+        },
+      ];
+
+      // Complex prompt that should trigger complexity matcher
+      const complexPrompt = `
+Design a comprehensive system architecture involving:
+- High-performance database integration
+- Concurrency and async handling patterns
+- Security and encryption implementation
+- API integration strategies
+      `.trim();
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: complexPrompt,
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+
+      // Verify non-matching matchers are clearly marked
+      const firstEval = allEvaluated[0] as Record<string, unknown>;
+      expect(firstEval.matcher_type).toBe("keyword");
+      expect(firstEval.matched).toBe(false);
+
+      // Verify the matching matcher is clearly marked
+      const secondEval = allEvaluated[1] as Record<string, unknown>;
+      expect(secondEval.matcher_type).toBe("complexity");
+      expect(secondEval.matched).toBe(true);
+      expect(secondEval.matcher).toBeDefined();
+
+      // Verify matcher properties are preserved
+      const matcher = secondEval.matcher as Record<string, unknown>;
+      expect(matcher.type).toBe("complexity");
+      expect(matcher.threshold).toBe("high");
+    });
+
+    test("debug mode total_evaluated matches all_evaluated length", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: { type: "always" },
+          target_agent: "default-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Any prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBeDefined();
+      expect(typeof debugInfo.total_evaluated).toBe("number");
+      expect(debugInfo.total_evaluated).toBe(1);
+
+      const allEvaluated = debugInfo.all_evaluated as unknown[];
+      expect(allEvaluated.length).toBe(debugInfo.total_evaluated);
+    });
+  });
 });

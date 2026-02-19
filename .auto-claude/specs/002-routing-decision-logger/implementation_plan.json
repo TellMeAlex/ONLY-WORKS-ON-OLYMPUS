@@ -429,7 +429,9 @@
               "Test with disabled logging - verify no logs are produced"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added 8 comprehensive E2E verification tests to src/agents/routing.test.ts in the 'E2E: Verify log output can be configured (console, file, disabled)' describe block:\n\n1. console output - logs appear in console - Verifies console logging with evaluateRoutingRules produces output in captured console, validates log fields (target_agent, matcher_type, timestamp, matched_content), and ensures no file is created\n2. file output - logs are written to file - Verifies file logging with evaluateRoutingRules writes to specified file, validates console output is empty for file mode, and verifies file content contains valid JSON with all required fields\n3. file output - multiple logs are appended to file - Tests that consecutive routing decisions are properly appended to the log file with newline separation\n4. disabled logging - no logs are produced - Verifies enabled: false produces no console output and creates no log file\n5. disabled output mode - no logs are produced even with enabled: true - Verifies output: disabled produces no output even when enabled: true\n6. file output with custom path - logs written to specified file - Verifies custom log_file path works correctly, including subdirectory creation\n7. console output with debug mode - logs appear in console with debug info - Verifies debug mode with console output includes debug_info with all_evaluated matchers and total_evaluated count\n8. file output with debug mode - logs written to file with debug info - Verifies debug mode with file output writes debug_info to file with proper structure\n\nAll tests follow existing patterns using bun:test framework with Arrange/Act/Assert structure and test evaluateRoutingRules through full routing flow. Note: Verification could not be run due to environment constraints (bun not available).",
+          "updated_at": "2026-02-19T08:23:22.175953+00:00"
         },
         {
           "id": "subtask-6-3",
@@ -593,7 +595,7 @@
   "qa_signoff": null,
   "status": "in_progress",
   "planStatus": "in_progress",
-  "updated_at": "2026-02-19T08:19:01.342Z",
-  "last_updated": "2026-02-18T21:07:01.014636+00:00",
+  "updated_at": "2026-02-19T08:25:07.563Z",
+  "last_updated": "2026-02-19T08:23:22.175971+00:00",
   "recoveryNote": "Task recovered from stuck state at 2026-02-19T08:11:36.562Z"
 }
