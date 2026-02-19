@@ -32,6 +32,7 @@
     "schema:generate": "bun scripts/generate-schema.ts",
     "schema:validate": "bun scripts/validate-schema.ts",
     "olimpus": "bun bin/olimpus.ts",
+    "test": "bun test",
     "publish:github": "npm publish"
   },
   "dependencies": {
