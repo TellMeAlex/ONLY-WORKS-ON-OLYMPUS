@@ -30,6 +30,9 @@ interface CommandOptions {
   metaAgent?: string;
   positional: string[];
   help: boolean;
+  verbose: boolean;
+  dryRun?: boolean;
+  expectAgent?: string;
 }
 
 /**
@@ -48,6 +51,7 @@ function parseOptions(args: string[]): CommandOptions {
   const options: CommandOptions = {
     positional: [],
     help: false,
+    verbose: false,
   };
 
   let i = 0;
@@ -56,6 +60,12 @@ function parseOptions(args: string[]): CommandOptions {
 
     if (arg === "--help" || arg === "-h") {
       options.help = true;
+      i++;
+    } else if (arg === "--verbose" || arg === "-v") {
+      options.verbose = true;
+      i++;
+    } else if (arg === "--dry-run") {
+      options.dryRun = true;
       i++;
     } else if (arg === "--config") {
       i++;
@@ -78,6 +88,17 @@ function parseOptions(args: string[]): CommandOptions {
       }
     } else if (arg.startsWith("--meta-agent=")) {
       options.metaAgent = arg.slice(13);
+      i++;
+    } else if (arg === "--expect-agent") {
+      i++;
+      if (i < args.length) {
+        options.expectAgent = args[i];
+        i++;
+      } else {
+        throw new Error("Missing value for --expect-agent option");
+      }
+    } else if (arg.startsWith("--expect-agent=")) {
+      options.expectAgent = arg.slice(14);
       i++;
     } else {
       // Positional argument
@@ -129,6 +150,98 @@ function loadConfig(filePath: string): OlimpusConfig {
   }
 
   return result.data;
+}
+
+/**
+ * Result of scanning project context
+ */
+interface ProjectContextResult {
+  projectFiles: string[];
+  projectDeps: string[];
+}
+
+/**
+ * Scan project directory for files and dependencies
+ *
+ * @param projectDir - The root directory of the project to scan
+ * @returns Object containing arrays of file paths and dependency names
+ */
+function scanProjectContext(projectDir: string): ProjectContextResult {
+  const projectFiles: string[] = [];
+  const projectDeps: string[] = [];
+
+  // Scan for files recursively, excluding common ignore directories
+  const ignoreDirs = new Set([
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".turbo",
+    ".cache",
+    ".idea",
+    ".vscode",
+  ]);
+
+  function scanDir(dir: string, relativePath: string = ""): void {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const entryName = entry.name;
+        const entryPath = path.join(dir, entryName);
+        const entryRelativePath = relativePath
+          ? path.join(relativePath, entryName)
+          : entryName;
+
+        if (entry.isDirectory()) {
+          if (ignoreDirs.has(entryName)) {
+            continue;
+          }
+          scanDir(entryPath, entryRelativePath);
+        } else if (entry.isFile()) {
+          projectFiles.push(entryRelativePath);
+        }
+      }
+    } catch (error) {
+      // Skip directories we can't read
+    }
+  }
+
+  scanDir(projectDir);
+
+  // Scan for dependencies in package.json
+  const packageJsonPath = path.join(projectDir, "package.json");
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf-8");
+      const packageJson = JSON.parse(packageJsonContent) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+        peerDependencies?: Record<string, string>;
+      };
+
+      if (packageJson.dependencies) {
+        projectDeps.push(...Object.keys(packageJson.dependencies));
+      }
+      if (packageJson.devDependencies) {
+        projectDeps.push(...Object.keys(packageJson.devDependencies));
+      }
+      if (packageJson.peerDependencies) {
+        projectDeps.push(...Object.keys(packageJson.peerDependencies));
+      }
+    } catch (error) {
+      // Skip package.json parsing errors
+    }
+  }
+
+  // Sort results for consistent output
+  projectFiles.sort();
+  projectDeps.sort();
+
+  return { projectFiles, projectDeps };
 }
 
 /**
@@ -255,6 +368,41 @@ async function testCommand(args: string[]): Promise<number> {
 
     console.log(`\n🧪 Testing routing rules: ${filePath}\n`);
 
+    // Get project directory from config file location
+    const projectDir = path.dirname(absolutePath);
+
+    // Scan project context
+    const { projectFiles, projectDeps } = scanProjectContext(projectDir);
+
+    if (options.verbose) {
+      console.log(`📁 Project directory: ${projectDir}`);
+      console.log(`📄 Found ${projectFiles.length} files`);
+      console.log(`📦 Found ${projectDeps.length} dependencies`);
+      console.log();
+
+      if (projectFiles.length > 0) {
+        console.log(`📄 projectFiles:`);
+        for (const file of projectFiles.slice(0, 20)) {
+          console.log(`   - ${file}`);
+        }
+        if (projectFiles.length > 20) {
+          console.log(`   ... and ${projectFiles.length - 20} more files`);
+        }
+        console.log();
+      }
+
+      if (projectDeps.length > 0) {
+        console.log(`📦 projectDeps:`);
+        for (const dep of projectDeps.slice(0, 20)) {
+          console.log(`   - ${dep}`);
+        }
+        if (projectDeps.length > 20) {
+          console.log(`   ... and ${projectDeps.length - 20} more dependencies`);
+        }
+        console.log();
+      }
+    }
+
     // TODO: Implement routing rule testing logic in subsequent subtasks
     console.log("⚠️  Testing functionality will be implemented in upcoming subtasks.");
     console.log();
@@ -287,17 +435,24 @@ Options:
   --config <file>  Path to the configuration file (alternative to positional argument)
   --meta-agent <agent>
                   Meta-agent ID to test against (default: the meta-agent specified in config)
+  --verbose, -v    Show detailed output including project context
+  --dry-run        Show all evaluated matchers without selecting one
+  --expect-agent <agent>
+                  Expected agent ID to match (exit 2 if not matched, for CI)
   -h, --help       Show this help message
 
 Examples:
   olimpus test olimpus.jsonc
   olimpus test --config ./example/olimpus.jsonc
   olimpus test --config=/path/to/config.jsonc --meta-agent=my-agent
-  olimpus test olimpus.jsonc --meta-agent=custom-agent
+  olimpus test olimpus.jsonc --verbose
+  olimpus test olimpus.jsonc --dry-run
+  olimpus test olimpus.jsonc --expect-agent librarian
 
 Exit codes:
-  0                All tests passed
-  1                Tests failed or testing encountered an error
+  0                Matched expected agent or all tests passed
+  1                Error occurred
+  2                No match or expected agent not matched
 `);
 }
 
