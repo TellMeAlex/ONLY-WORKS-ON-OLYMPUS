@@ -39,7 +39,8 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   }
 
   const maxDepth = config.settings?.max_delegation_depth ?? 3;
-  const registry = new MetaAgentRegistry(maxDepth);
+  const loggerConfig = config.settings?.routing_logger;
+  const registry = new MetaAgentRegistry(maxDepth, loggerConfig);
 
   const configMetaAgents = extractMetaAgentDefs(config);
   for (const [name, def] of Object.entries(configMetaAgents)) {
