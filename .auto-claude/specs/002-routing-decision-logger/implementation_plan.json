@@ -355,7 +355,9 @@
             "command": "bun test src/agents/routing.test.ts",
             "expected": "All tests pass"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added 8 comprehensive tests to the \"logRoutingDecision - debug mode\" describe block in src/agents/routing.test.ts:\n\n1. includes all 5 matcher types in debug_info - Tests that all 5 matcher types (keyword, regex, complexity, project_context, always) are properly logged with total_evaluated count\n2. preserves order of evaluated matchers - Verifies the order of evaluations is preserved\n3. handles mix of matched and unmatched evaluations - Tests with a mix of matched and unmatched evaluations\n4. debug mode console output with all matchers and config overrides - Tests debug mode with both config_overrides and matcher evaluations\n5. debug mode file output with all matchers - Tests debug mode with file output and all 5 matcher types\n6. debug mode handles empty evaluations array - Tests empty evaluations array with debug_info still present\n7. debug mode with single matcher evaluation - Tests with just a single matcher\n8. debug mode matcher objects preserve all properties - Tests that all matcher properties (keywords, mode, pattern, flags, threshold, has_files, has_deps) are preserved\n\nNote: Verification could not be run due to environment constraints (bun not available).",
+          "updated_at": "2026-02-18T21:07:01.014624+00:00"
         },
         {
           "id": "subtask-5-5",
@@ -373,7 +375,9 @@
             "command": "bun test src/agents/routing.test.ts",
             "expected": "All tests pass"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added 9 performance tests to the \"performance\" describe block in src/agents/routing.test.ts: (1) console logging overhead < 5ms - basic console log, (2) console logging with debug_info overhead < 5ms - console with evaluations, (3) file logging overhead < 5ms - basic file write, (4) file logging with debug_info overhead < 5ms - file with evaluations, (5) disabled logger overhead < 5ms - logger when disabled, (6) console logging with config_overrides overhead < 5ms - console with config overrides, (7) multiple consecutive console logs all < 5ms - 10 consecutive logs, (8) average overhead over 10 calls < 5ms - average measurement, (9) file logging with config_overrides and debug_info overhead < 5ms - full file logging with all features. Also fixed a bug in the logger's writeToFile method that was using async Bun.file operations instead of synchronous fs operations, and added routing.log cleanup in afterEach hook. All 83 tests pass.",
+          "updated_at": "2026-02-18T23:30:00.000000+00:00"
         }
       ]
     },
@@ -391,9 +395,13 @@
           "id": "subtask-6-1",
           "description": "Verify all routing decisions are logged with required fields",
           "all_services": true,
-          "files_to_modify": [],
+          "files_to_modify": [
+            "src/agents/routing.test.ts"
+          ],
           "files_to_create": [],
-          "patterns_from": [],
+          "patterns_from": [
+            "src/agents/routing.test.ts"
+          ],
           "verification": {
             "type": "e2e",
             "steps": [
@@ -402,7 +410,9 @@
               "Verify log format is valid JSON"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added comprehensive E2E verification tests to src/agents/routing.test.ts in the 'E2E: Verify all routing decisions are logged with required fields' describe block. Tests include: (1) keyword matcher routing decision logs all required fields - verifies timestamp, matcher_type, matched_content, and target_agent with proper types, (2) regex matcher routing decision logs all required fields with valid JSON - ensures JSON parseability and all fields present, (3) complexity matcher routing decision logs all required fields - tests high complexity threshold matching, (4) always matcher routing decision logs all required fields - verifies catch-all matcher logging, (5) multiple routing decisions all logged with required fields - tests consecutive routing decisions, (6) log output with special characters is valid JSON and contains all fields - tests quote/apostrophe/newline/tab handling. All tests verify: timestamp is valid ISO 8601 format, target_agent is the selected agent, matcher_type is the matcher that matched, matched_content describes what matched, and output is parseable JSON.",
+          "updated_at": "2026-02-19T08:20:00.000000+00:00"
         },
         {
           "id": "subtask-6-2",
@@ -583,6 +593,7 @@
   "qa_signoff": null,
   "status": "in_progress",
   "planStatus": "in_progress",
-  "updated_at": "2026-02-18T21:02:04.613Z",
-  "last_updated": "2026-02-18T20:54:24.164167+00:00"
+  "updated_at": "2026-02-19T08:19:01.342Z",
+  "last_updated": "2026-02-18T21:07:01.014636+00:00",
+  "recoveryNote": "Task recovered from stuck state at 2026-02-19T08:11:36.562Z"
 }

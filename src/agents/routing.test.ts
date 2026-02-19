@@ -8,7 +8,8 @@ import {
 import { join } from "path";
 import { tmpdir } from "os";
 import { RoutingLogger, type MatcherEvaluation } from "./logger.js";
-import type { RoutingLoggerConfig } from "../config/schema.js";
+import { evaluateRoutingRules } from "./routing.js";
+import type { RoutingLoggerConfig, RoutingRule } from "../config/schema.js";
 
 describe("RoutingLogger", () => {
   let tempDir: string;
@@ -2018,6 +2019,289 @@ describe("RoutingLogger", () => {
       // Assert
       const overhead = end - start;
       expect(overhead).toBeLessThan(5);
+    });
+  });
+
+  describe("E2E: Verify all routing decisions are logged with required fields", () => {
+    test("keyword matcher routing decision logs timestamp, matcher_type, matched_content, and target_agent", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["bug", "fix", "debug"],
+            mode: "any",
+          },
+          target_agent: "debug-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Please fix this bug in the authentication module",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify all required fields are present
+      expect(logEntry.timestamp).toBeDefined();
+      expect(typeof logEntry.timestamp).toBe("string");
+      expect(logEntry.target_agent).toBe("debug-agent");
+      expect(typeof logEntry.target_agent).toBe("string");
+      expect(logEntry.matcher_type).toBe("keyword");
+      expect(typeof logEntry.matcher_type).toBe("string");
+      expect(logEntry.matched_content).toBeDefined();
+      expect(typeof logEntry.matched_content).toBe("string");
+
+      // Verify timestamp is valid ISO 8601 format
+      const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
+      expect(isoRegex.test(logEntry.timestamp as string)).toBe(true);
+    });
+
+    test("regex matcher routing decision logs all required fields with valid JSON", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "regex",
+            pattern: "\\b(API|api)\\b",
+            flags: "i",
+          },
+          target_agent: "api-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Create a new API endpoint for user authentication",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+
+      // Verify log is valid JSON
+      let logEntry: Record<string, unknown>;
+      expect(() => {
+        logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      }).not.toThrow();
+
+      logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify all required fields
+      expect(logEntry.timestamp).toBeDefined();
+      expect(logEntry.target_agent).toBe("api-agent");
+      expect(logEntry.matcher_type).toBe("regex");
+      expect(logEntry.matched_content).toBeDefined();
+      expect((logEntry.matched_content as string)).toContain("matched pattern:");
+    });
+
+    test("complexity matcher routing decision logs all required fields", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "complexity",
+            threshold: "high",
+          },
+          target_agent: "senior-agent",
+        },
+      ];
+
+      const complexPrompt = `
+This is a complex architectural task involving:
+- System architecture design
+- Performance optimization strategies
+- Database integration and concurrency handling
+- Security and encryption implementation
+- Testing infrastructure and deployment pipeline
+- API integration patterns
+- Authentication and authorization systems
+- Infrastructure and scaling considerations
+- Code refactoring and debugging approaches
+- Profiling and tracing mechanisms
+      `.trim();
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: complexPrompt,
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify all required fields
+      expect(logEntry.timestamp).toBeDefined();
+      expect(logEntry.target_agent).toBe("senior-agent");
+      expect(logEntry.matcher_type).toBe("complexity");
+      expect(logEntry.matched_content).toBeDefined();
+      expect((logEntry.matched_content as string)).toContain("complexity score >=");
+    });
+
+    test("always matcher routing decision logs all required fields", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: { type: "always" },
+          target_agent: "default-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Any prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify all required fields
+      expect(logEntry.timestamp).toBeDefined();
+      expect(logEntry.target_agent).toBe("default-agent");
+      expect(logEntry.matcher_type).toBe("always");
+      expect(logEntry.matched_content).toBe("always match");
+    });
+
+    test("multiple routing decisions all logged with required fields", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["deploy"],
+            mode: "any",
+          },
+          target_agent: "deploy-agent",
+        },
+        {
+          matcher: { type: "always" },
+          target_agent: "default-agent",
+        },
+      ];
+
+      const prompts = [
+        "Write unit tests for the API",
+        "Deploy the application to production",
+        "Build a new feature",
+      ];
+
+      // Act
+      for (const prompt of prompts) {
+        evaluateRoutingRules(rules, {
+          prompt,
+          projectDir: "/test/project",
+        }, logger);
+      }
+
+      // Assert
+      expect(logOutput.length).toBe(prompts.length);
+
+      // Verify each log entry has all required fields
+      for (let i = 0; i < logOutput.length; i++) {
+        const logEntry = JSON.parse(logOutput[i]) as Record<string, unknown>;
+        expect(logEntry.timestamp).toBeDefined();
+        expect(typeof logEntry.timestamp).toBe("string");
+        expect(logEntry.target_agent).toBeDefined();
+        expect(typeof logEntry.target_agent).toBe("string");
+        expect(logEntry.matcher_type).toBeDefined();
+        expect(typeof logEntry.matcher_type).toBe("string");
+        expect(logEntry.matched_content).toBeDefined();
+        expect(typeof logEntry.matched_content).toBe("string");
+      }
+    });
+
+    test("log output with special characters is valid JSON and contains all fields", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: 'Test with "quotes" and \'apostrophes\' and newlines\nand tabs\t',
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert
+      expect(logOutput.length).toBeGreaterThan(0);
+
+      // Verify JSON is parseable even with special characters
+      let logEntry: Record<string, unknown>;
+      expect(() => {
+        logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      }).not.toThrow();
+
+      logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify all required fields
+      expect(logEntry.timestamp).toBeDefined();
+      expect(logEntry.target_agent).toBe("test-agent");
+      expect(logEntry.matcher_type).toBe("keyword");
+      expect(logEntry.matched_content).toBeDefined();
     });
   });
 });
