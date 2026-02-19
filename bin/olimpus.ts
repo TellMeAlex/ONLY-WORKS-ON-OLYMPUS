@@ -25,6 +25,8 @@ import {
   evaluateRoutingRules,
   type RoutingContext,
   type ResolvedRoute,
+  type RoutingResult,
+  type MatcherEvaluation,
 } from "../src/agents/routing.js";
 
 /**
@@ -456,18 +458,113 @@ async function testCommand(args: string[]): Promise<number> {
     };
 
     // Evaluate routing rules
-    const result: ResolvedRoute | null = evaluateRoutingRules(
-      metaAgent.routing_rules,
-      routingContext
-    );
+    const dryRunResult = options.dryRun
+      ? (evaluateRoutingRules(
+          metaAgent.routing_rules,
+          routingContext,
+          undefined,
+          true
+        ) as RoutingResult)
+      : null;
 
-    // Display results
+    const result: ResolvedRoute | null = dryRunResult
+      ? dryRunResult.route
+      : evaluateRoutingRules(metaAgent.routing_rules, routingContext);
+
+    // Display dry-run results (all evaluated matchers)
+    if (options.dryRun && dryRunResult) {
+      console.log(`🔍 Dry-run mode - showing all evaluated matchers:\n`);
+
+      for (const evaluation of dryRunResult.evaluations) {
+        const resultPrefix = evaluation.matched ? "✅" : "❌";
+        const resultText = evaluation.matched ? "Matched" : "Not matched";
+        console.log(`${resultPrefix} Evaluating matcher: ${evaluation.matcher_type}`);
+        console.log(`   Result: ${resultText}`);
+
+        // Show matcher details
+        switch (evaluation.matcher.type) {
+          case "keyword":
+            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
+            console.log(`   Mode: ${evaluation.matcher.mode}`);
+            break;
+          case "regex":
+            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
+            break;
+          case "complexity":
+            console.log(`   Threshold: ${evaluation.matcher.threshold}`);
+            break;
+          case "project_context":
+            if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
+              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
+            }
+            if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
+              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
+            }
+            break;
+          case "always":
+            // No details needed for always matcher
+            break;
+        }
+
+        // Show target agent for each rule
+        const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
+        if (rule) {
+          console.log(`   Target agent: ${rule.target_agent}`);
+          if (rule.config_overrides) {
+            const overrides: string[] = [];
+            if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
+            if (rule.config_overrides.temperature !== undefined) {
+              overrides.push(`temperature=${rule.config_overrides.temperature}`);
+            }
+            if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
+            if (overrides.length > 0) {
+              console.log(`   Overrides: ${overrides.join(", ")}`);
+            }
+          }
+        }
+
+        console.log();
+      }
+
+      // Show final result
+      if (result) {
+        console.log(`✅ Final match: ${result.target_agent}`);
+        console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
+        console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
+        console.log();
+
+        // Check if the matched agent matches the expected agent
+        if (options.expectAgent) {
+          if (result.target_agent === options.expectAgent) {
+            console.log(`✅ Expected agent matched: ${options.expectAgent}`);
+            return 0;
+          } else {
+            console.log(`❌ Expected agent: ${options.expectAgent}`);
+            console.log(`   Actual matched agent: ${result.target_agent}`);
+            return 2;
+          }
+        }
+
+        return 0;
+      } else {
+        console.log(`❌ No matching agent found for the given prompt.`);
+        console.log();
+
+        if (options.expectAgent) {
+          return 2;
+        }
+
+        return 1;
+      }
+    }
+
+    // Display normal results (non-dry-run)
     if (result) {
       console.log(`✅ Matched agent: ${result.target_agent}`);
       console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
       console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
 
-      if (options.verbose || options.dryRun) {
+      if (options.verbose) {
         console.log(`   Target agent: ${result.target_agent}`);
         if (result.config_overrides) {
           const overrides: string[] = [];

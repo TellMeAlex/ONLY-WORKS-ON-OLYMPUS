@@ -29,6 +29,11 @@ export interface ResolvedRoute {
   };
 }
 
+export interface RoutingResult {
+  route: ResolvedRoute | null;
+  evaluations: MatcherEvaluation[];
+}
+
 /**
  * Evaluates routing rules in order and returns the first matching route
  * Returns null if no rules match
@@ -37,15 +42,28 @@ export function evaluateRoutingRules(
   rules: RoutingRule[],
   context: RoutingContext,
   logger?: RoutingLogger
-): ResolvedRoute | null {
+): ResolvedRoute | null;
+export function evaluateRoutingRules(
+  rules: RoutingRule[],
+  context: RoutingContext,
+  logger?: RoutingLogger,
+  captureEvaluations?: true
+): RoutingResult;
+export function evaluateRoutingRules(
+  rules: RoutingRule[],
+  context: RoutingContext,
+  logger?: RoutingLogger,
+  captureEvaluations?: boolean
+): ResolvedRoute | RoutingResult | null {
   const isDebugMode = logger?.isDebugMode() ?? false;
+  const shouldCapture = captureEvaluations || isDebugMode;
   const evaluations: MatcherEvaluation[] = [];
 
   for (const rule of rules) {
     const matched = evaluateMatcher(rule.matcher, context);
 
-    // Track evaluation for debug mode
-    if (isDebugMode) {
+    // Track evaluation for debug mode or when capturing evaluations
+    if (shouldCapture) {
       evaluations.push({
         matcher_type: rule.matcher.type,
         matcher: rule.matcher,
@@ -73,8 +91,17 @@ export function evaluateRoutingRules(
         );
       }
 
+      // Return just the route if not capturing evaluations, otherwise return full result
+      if (shouldCapture) {
+        return { route: result, evaluations };
+      }
       return result;
     }
+  }
+
+  // Return null or the result object based on captureEvaluations flag
+  if (shouldCapture) {
+    return { route: null, evaluations };
   }
   return null;
 }
