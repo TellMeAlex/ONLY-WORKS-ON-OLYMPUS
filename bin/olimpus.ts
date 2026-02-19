@@ -21,6 +21,11 @@ import {
   formatErrors,
   formatWarnings,
 } from "../src/config/validator.js";
+import {
+  evaluateRoutingRules,
+  type RoutingContext,
+  type ResolvedRoute,
+} from "../src/agents/routing.js";
 
 /**
  * Parsed command options
@@ -403,11 +408,105 @@ async function testCommand(args: string[]): Promise<number> {
       }
     }
 
-    // TODO: Implement routing rule testing logic in subsequent subtasks
-    console.log("⚠️  Testing functionality will be implemented in upcoming subtasks.");
-    console.log();
+    // Determine meta-agent ID
+    let metaAgentId: string | undefined;
+    if (options.metaAgent) {
+      metaAgentId = options.metaAgent;
+    } else if (config.meta_agents && Object.keys(config.meta_agents).length === 1) {
+      // Use the only meta-agent if there's exactly one
+      metaAgentId = Object.keys(config.meta_agents)[0];
+    } else if (config.meta_agents && Object.keys(config.meta_agents).length > 0) {
+      throw new Error(
+        "Multiple meta-agents found. Use --meta-agent <agent> to specify which one to test."
+      );
+    } else {
+      throw new Error("No meta-agents found in configuration.");
+    }
 
-    return 0;
+    // Verify the meta-agent exists
+    const metaAgent = config.meta_agents?.[metaAgentId];
+    if (!metaAgent) {
+      throw new Error(`Meta-agent not found: ${metaAgentId}`);
+    }
+
+    // Get test prompt from positional arguments
+    let testPrompt: string;
+    if (options.positional.length > 0) {
+      // If config was passed as --config, positional[0] is the test prompt
+      // If config was passed as positional, the remaining args form the test prompt
+      const startIndex = options.config ? 0 : 1;
+      testPrompt = options.positional.slice(startIndex).join(" ");
+    } else {
+      throw new Error("Test prompt is required. Provide it as a positional argument after the config file.");
+    }
+
+    if (options.verbose) {
+      console.log(`🤖 Meta-agent: ${metaAgentId}`);
+      console.log(`📝 Test prompt: ${testPrompt}`);
+      console.log(`📋 Routing rules: ${metaAgent.routing_rules.length}`);
+      console.log();
+    }
+
+    // Create routing context
+    const routingContext: RoutingContext = {
+      prompt: testPrompt,
+      projectDir,
+      projectFiles,
+      projectDeps,
+    };
+
+    // Evaluate routing rules
+    const result: ResolvedRoute | null = evaluateRoutingRules(
+      metaAgent.routing_rules,
+      routingContext
+    );
+
+    // Display results
+    if (result) {
+      console.log(`✅ Matched agent: ${result.target_agent}`);
+
+      if (options.verbose || options.dryRun) {
+        console.log(`   Target agent: ${result.target_agent}`);
+        if (result.config_overrides) {
+          const overrides: string[] = [];
+          if (result.config_overrides.model) overrides.push(`model=${result.config_overrides.model}`);
+          if (result.config_overrides.temperature !== undefined) {
+            overrides.push(`temperature=${result.config_overrides.temperature}`);
+          }
+          if (result.config_overrides.variant) overrides.push(`variant=${result.config_overrides.variant}`);
+          if (result.config_overrides.prompt) overrides.push(`prompt=${result.config_overrides.prompt.slice(0, 50)}...`);
+          if (overrides.length > 0) {
+            console.log(`   Overrides: ${overrides.join(", ")}`);
+          }
+        }
+      }
+
+      // Check if the matched agent matches the expected agent
+      if (options.expectAgent) {
+        if (result.target_agent === options.expectAgent) {
+          console.log();
+          console.log(`✅ Expected agent matched: ${options.expectAgent}`);
+          return 0;
+        } else {
+          console.log();
+          console.log(`❌ Expected agent: ${options.expectAgent}`);
+          console.log(`   Actual matched agent: ${result.target_agent}`);
+          return 2;
+        }
+      }
+
+      console.log();
+      return 0;
+    } else {
+      console.log(`❌ No matching agent found for the given prompt.`);
+      console.log();
+
+      if (options.expectAgent) {
+        return 2;
+      }
+
+      return 1;
+    }
   } catch (error) {
     if (error instanceof Error) {
       console.error(`\n❌ Error: ${error.message}\n`);
