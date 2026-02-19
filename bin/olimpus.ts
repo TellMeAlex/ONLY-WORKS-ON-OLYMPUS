@@ -27,6 +27,7 @@ import {
  */
 interface CommandOptions {
   config?: string;
+  metaAgent?: string;
   positional: string[];
   help: boolean;
 }
@@ -66,6 +67,17 @@ function parseOptions(args: string[]): CommandOptions {
       }
     } else if (arg.startsWith("--config=")) {
       options.config = arg.slice(9);
+      i++;
+    } else if (arg === "--meta-agent") {
+      i++;
+      if (i < args.length) {
+        options.metaAgent = args[i];
+        i++;
+      } else {
+        throw new Error("Missing value for --meta-agent option");
+      }
+    } else if (arg.startsWith("--meta-agent=")) {
+      options.metaAgent = arg.slice(13);
       i++;
     } else {
       // Positional argument
@@ -273,12 +285,15 @@ Arguments:
 
 Options:
   --config <file>  Path to the configuration file (alternative to positional argument)
+  --meta-agent <agent>
+                  Meta-agent ID to test against (default: the meta-agent specified in config)
   -h, --help       Show this help message
 
 Examples:
   olimpus test olimpus.jsonc
   olimpus test --config ./example/olimpus.jsonc
-  olimpus test --config=/path/to/config.jsonc
+  olimpus test --config=/path/to/config.jsonc --meta-agent=my-agent
+  olimpus test olimpus.jsonc --meta-agent=custom-agent
 
 Exit codes:
   0                All tests passed
