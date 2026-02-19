@@ -19,6 +19,8 @@ export interface RoutingContext {
 
 export interface ResolvedRoute {
   target_agent: string;
+  matcher_type?: string;
+  matched_content?: string;
   config_overrides?: {
     model?: string;
     temperature?: number;
@@ -55,6 +57,8 @@ export function evaluateRoutingRules(
       const matchedContent = getMatchedContent(rule.matcher, context);
       const result: ResolvedRoute = {
         target_agent: rule.target_agent,
+        matcher_type: rule.matcher.type,
+        matched_content: matchedContent,
         config_overrides: rule.config_overrides,
       };
 

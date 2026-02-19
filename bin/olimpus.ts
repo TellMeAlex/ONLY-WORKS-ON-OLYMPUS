@@ -464,6 +464,8 @@ async function testCommand(args: string[]): Promise<number> {
     // Display results
     if (result) {
       console.log(`✅ Matched agent: ${result.target_agent}`);
+      console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
+      console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
 
       if (options.verbose || options.dryRun) {
         console.log(`   Target agent: ${result.target_agent}`);
