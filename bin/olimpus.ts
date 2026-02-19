@@ -23,12 +23,58 @@ import {
 } from "../src/config/validator.js";
 
 /**
+ * Parsed command options
+ */
+interface CommandOptions {
+  config?: string;
+  positional: string[];
+  help: boolean;
+}
+
+/**
  * CLI command interface
  */
 interface Command {
   name: string;
   description: string;
   execute: (args: string[]) => number | Promise<number>;
+}
+
+/**
+ * Parse command line options
+ */
+function parseOptions(args: string[]): CommandOptions {
+  const options: CommandOptions = {
+    positional: [],
+    help: false,
+  };
+
+  let i = 0;
+  while (i < args.length) {
+    const arg = args[i];
+
+    if (arg === "--help" || arg === "-h") {
+      options.help = true;
+      i++;
+    } else if (arg === "--config") {
+      i++;
+      if (i < args.length) {
+        options.config = args[i];
+        i++;
+      } else {
+        throw new Error("Missing value for --config option");
+      }
+    } else if (arg.startsWith("--config=")) {
+      options.config = arg.slice(9);
+      i++;
+    } else {
+      // Positional argument
+      options.positional.push(arg);
+      i++;
+    }
+  }
+
+  return options;
 }
 
 /**
@@ -77,15 +123,25 @@ function loadConfig(filePath: string): OlimpusConfig {
  * Validate command handler
  */
 async function validateCommand(args: string[]): Promise<number> {
+  const options = parseOptions(args);
+
   // Show help if requested
-  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+  if (options.help || (options.positional.length === 0 && !options.config)) {
     showValidateHelp();
     return 0;
   }
 
-  const filePath = args[0];
-
   try {
+    // Get config file path from --config option or positional argument
+    let filePath: string;
+    if (options.config) {
+      filePath = options.config;
+    } else if (options.positional.length > 0) {
+      filePath = options.positional[0];
+    } else {
+      throw new Error("Configuration file path is required. Use --config <file> or provide as positional argument.");
+    }
+
     // Load configuration
     const config = loadConfig(filePath);
     const absolutePath = path.resolve(filePath);
@@ -135,20 +191,22 @@ async function validateCommand(args: string[]): Promise<number> {
  */
 function showValidateHelp(): void {
   console.log(`
-Usage: olimpus validate <config-file>
+Usage: olimpus validate [options] [<config-file>]
 
 Validate a configuration file for errors, circular dependencies, invalid agent references, and other common issues.
 
 Arguments:
   <config-file>    Path to the configuration file to validate (e.g., olimpus.jsonc)
+                  If --config is provided, this argument is ignored.
 
 Options:
+  --config <file>  Path to the configuration file (alternative to positional argument)
   -h, --help       Show this help message
 
 Examples:
   olimpus validate olimpus.jsonc
-  olimpus validate ./example/olimpus.jsonc
-  olimpus validate /path/to/config.jsonc
+  olimpus validate --config ./example/olimpus.jsonc
+  olimpus validate --config=/path/to/config.jsonc
 
 Exit codes:
   0                Configuration is valid
@@ -160,15 +218,25 @@ Exit codes:
  * Test command handler
  */
 async function testCommand(args: string[]): Promise<number> {
+  const options = parseOptions(args);
+
   // Show help if requested
-  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+  if (options.help || (options.positional.length === 0 && !options.config)) {
     showTestHelp();
     return 0;
   }
 
-  const filePath = args[0];
-
   try {
+    // Get config file path from --config option or positional argument
+    let filePath: string;
+    if (options.config) {
+      filePath = options.config;
+    } else if (options.positional.length > 0) {
+      filePath = options.positional[0];
+    } else {
+      throw new Error("Configuration file path is required. Use --config <file> or provide as positional argument.");
+    }
+
     // Load configuration
     const config = loadConfig(filePath);
     const absolutePath = path.resolve(filePath);
@@ -195,20 +263,22 @@ async function testCommand(args: string[]): Promise<number> {
  */
 function showTestHelp(): void {
   console.log(`
-Usage: olimpus test <config-file>
+Usage: olimpus test [options] [<config-file>]
 
 Test routing rules to verify they match the expected behavior for various user queries.
 
 Arguments:
   <config-file>    Path to the configuration file to test (e.g., olimpus.jsonc)
+                  If --config is provided, this argument is treated as the test query.
 
 Options:
+  --config <file>  Path to the configuration file (alternative to positional argument)
   -h, --help       Show this help message
 
 Examples:
   olimpus test olimpus.jsonc
-  olimpus test ./example/olimpus.jsonc
-  olimpus test /path/to/config.jsonc
+  olimpus test --config ./example/olimpus.jsonc
+  olimpus test --config=/path/to/config.jsonc
 
 Exit codes:
   0                All tests passed
