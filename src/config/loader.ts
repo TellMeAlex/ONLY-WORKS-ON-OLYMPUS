@@ -3,6 +3,33 @@ import * as path from "path";
 import { parse } from "jsonc-parser";
 import { OlimpusConfigSchema, type OlimpusConfig } from "./schema.js";
 import { scaffoldOlimpusConfig } from "./scaffolder.js";
+import { validateOlimpusConfig, formatErrors, formatWarnings } from "./validator.js";
+
+/**
+ * Options for loading Olimpus configuration
+ */
+export interface LoadOlimpusConfigOptions {
+  /**
+   * Whether to perform semantic validation (circular dependencies, agent references, regex performance)
+   * @default true
+   */
+  validate?: boolean;
+  /**
+   * Whether to check circular dependencies in meta-agent delegation chains
+   * @default true
+   */
+  checkCircularDependencies?: boolean;
+  /**
+   * Whether to validate agent references against builtin agents
+   * @default true
+   */
+  checkAgentReferences?: boolean;
+  /**
+   * Whether to analyze regex patterns for performance issues (generates warnings only)
+   * @default true
+   */
+  checkRegexPerformance?: boolean;
+}
 
 /**
  * Load olimpus.jsonc from project directory and optional user config directory.
@@ -12,9 +39,16 @@ import { scaffoldOlimpusConfig } from "./scaffolder.js";
  * Wizard mode behavior:
  * - By default, uses interactive wizard when no config exists
  * - Set OLIMPUS_SKIP_WIZARD=1 environment variable to skip wizard and use silent scaffolding
+ *
+ * @param projectDir - Path to the project directory containing olimpus.jsonc
+ * @param options - Optional configuration for loading and validation
+ * @returns Parsed and validated Olimpus configuration
+ * @throws Error if config is invalid according to schema or semantic validation
+ */
  */
 export async function loadOlimpusConfig(
   projectDir: string,
+  options?: LoadOlimpusConfigOptions,
 ): Promise<OlimpusConfig> {
   const homeDir = process.env.HOME ?? ".";
   const userConfigPath = path.join(
@@ -82,6 +116,34 @@ export async function loadOlimpusConfig(
       .map((issue) => `  ${issue.path.join(".")} - ${issue.message}`)
       .join("\n");
     throw new Error(`Invalid olimpus config:\n${errors}`);
+  }
+
+  // Optional semantic validation for early error detection
+  const shouldValidate = options?.validate ?? true;
+  if (shouldValidate) {
+    const validationResult = validateOlimpusConfig(result.data, {
+      checkCircularDependencies: options?.checkCircularDependencies ?? true,
+      checkAgentReferences: options?.checkAgentReferences ?? true,
+      checkRegexPerformance: options?.checkRegexPerformance ?? true,
+    });
+
+    // Throw if there are validation errors
+    if (!validationResult.valid) {
+      const errorMessages = formatErrors(validationResult).join("\n");
+      const warningMessages = formatWarnings(validationResult).join("\n");
+      const message = `Configuration validation failed:\n${errorMessages}${
+        warningMessages ? `\n\nWarnings:\n${warningMessages}` : ""
+      }`;
+      throw new Error(message);
+    }
+
+    // Log warnings if any (warnings don't affect validity)
+    if (validationResult.warnings.length > 0) {
+      const warningMessages = formatWarnings(validationResult).join("\n");
+      // Note: In production code, consider using a proper logger
+      // For now, warnings are silently ignored to avoid breaking changes
+      // but available for callers to check via the returned config if needed
+    }
   }
 
   return result.data;

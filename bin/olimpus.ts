@@ -1,0 +1,219 @@
+#!/usr/bin/env bun
+
+/**
+ * Olimpus CLI - Command-line interface for Olimpus configuration management
+ *
+ * Usage:
+ *   olimpus validate <config-file>    Validate a configuration file
+ *   olimpus validate --help           Show help for validate command
+ *   olimpus --help                     Show general help
+ */
+
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { parse } from "jsonc-parser";
+import { OlimpusConfigSchema, type OlimpusConfig } from "../src/config/schema.js";
+import {
+  validateOlimpusConfig,
+  getValidationSummary,
+  formatErrors,
+  formatWarnings,
+} from "../src/config/validator.js";
+
+/**
+ * CLI command interface
+ */
+interface Command {
+  name: string;
+  description: string;
+  execute: (args: string[]) => number | Promise<number>;
+}
+
+/**
+ * Parse JSONC file content
+ */
+function parseJsoncFile(filePath: string): unknown {
+  const content = fs.readFileSync(filePath, "utf-8");
+  const errors: Array<{ error: number; offset: number; length: number }> = [];
+  const parsed = parse(content, errors, { allowTrailingComma: true });
+
+  if (errors.length > 0) {
+    const errorMessages = errors
+      .map((err) => {
+        const line = content.substring(0, err.offset).split("\n").length;
+        return `  Offset ${err.offset} (line ${line}): error code ${err.error}`;
+      })
+      .join("\n");
+    throw new Error(`JSONC parse error in ${filePath}:\n${errorMessages}`);
+  }
+
+  return parsed;
+}
+
+/**
+ * Load and parse configuration from a JSONC file
+ */
+function loadConfig(filePath: string): OlimpusConfig {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Configuration file not found: ${filePath}`);
+  }
+
+  const data = parseJsoncFile(filePath);
+  const result = OlimpusConfigSchema.safeParse(data);
+
+  if (!result.success) {
+    const errors = result.error.issues
+      .map((issue) => `  ${issue.path.join(".")} - ${issue.message}`)
+      .join("\n");
+    throw new Error(`Invalid olimpus config:\n${errors}`);
+  }
+
+  return result.data;
+}
+
+/**
+ * Validate command handler
+ */
+async function validateCommand(args: string[]): Promise<number> {
+  // Show help if requested
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showValidateHelp();
+    return 0;
+  }
+
+  const filePath = args[0];
+
+  try {
+    // Load configuration
+    const config = loadConfig(filePath);
+    const absolutePath = path.resolve(filePath);
+
+    // Validate configuration
+    const result = validateOlimpusConfig(config, {
+      configPath: absolutePath,
+      configName: path.basename(filePath),
+    });
+
+    // Print results
+    console.log(`\n📋 Validating: ${filePath}\n`);
+
+    if (result.valid) {
+      console.log("✅ " + getValidationSummary(result));
+    } else {
+      console.log("❌ " + getValidationSummary(result));
+    }
+
+    // Print errors if any
+    if (result.errors.length > 0) {
+      console.log("\nErrors:");
+      formatErrors(result).forEach((error) => console.log(`  ${error}`));
+    }
+
+    // Print warnings if any
+    if (result.warnings.length > 0) {
+      console.log("\nWarnings:");
+      formatWarnings(result).forEach((warning) => console.log(`  ${warning}`));
+    }
+
+    console.log();
+
+    return result.valid ? 0 : 1;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show validate command help
+ */
+function showValidateHelp(): void {
+  console.log(`
+Usage: olimpus validate <config-file>
+
+Validate a configuration file for errors, circular dependencies, invalid agent references, and other common issues.
+
+Arguments:
+  <config-file>    Path to the configuration file to validate (e.g., olimpus.jsonc)
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus validate olimpus.jsonc
+  olimpus validate ./example/olimpus.jsonc
+  olimpus validate /path/to/config.jsonc
+
+Exit codes:
+  0                Configuration is valid
+  1                Configuration has errors or validation failed
+`);
+}
+
+/**
+ * Show general help
+ */
+function showHelp(): void {
+  console.log(`
+Olimpus CLI - Configuration management tool for Olimpus meta-agent orchestrator
+
+Usage: olimpus <command> [options]
+
+Commands:
+  validate          Validate configuration file
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus validate olimpus.jsonc
+  olimpus validate --help
+
+For more information on a specific command, run:
+  olimpus <command> --help
+`);
+}
+
+/**
+ * Main CLI entry point
+ */
+async function main(): Promise<number> {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showHelp();
+    return 0;
+  }
+
+  const commandName = args[0];
+  const commandArgs = args.slice(1);
+
+  const commands: Record<string, Command> = {
+    validate: {
+      name: "validate",
+      description: "Validate a configuration file",
+      execute: validateCommand,
+    },
+  };
+
+  const command = commands[commandName];
+
+  if (!command) {
+    console.error(`\n❌ Unknown command: ${commandName}\n`);
+    console.log("Run 'olimpus --help' for available commands.\n");
+    return 1;
+  }
+
+  return await command.execute(commandArgs);
+}
+
+// Run CLI if this file is executed directly
+const isMain = import.meta.url === `file://${process.argv[1]}`;
+if (isMain) {
+  const exitCode = await main();
+  process.exit(exitCode);
+}

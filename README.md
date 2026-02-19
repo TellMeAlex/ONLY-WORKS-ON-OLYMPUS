@@ -148,6 +148,126 @@ Olimpus searches for configuration in this order (first found wins):
 
 ---
 
+## Configuration Validation
+
+Olimpus provides a built-in configuration validator that checks your `olimpus.jsonc` file for errors, circular dependencies, invalid agent references, and performance issues.
+
+### Using the Validator
+
+The `olimpus validate` command checks your configuration file and reports any issues:
+
+```bash
+# Validate your configuration file
+bun run olimpus validate olimpus.jsonc
+
+# Validate an example configuration
+bun run olimpus validate ./example/olimpus.jsonc
+
+# Show help
+bun run olimpus validate --help
+
+# Or use the direct path
+bun run bin/olimpus.ts validate olimpus.jsonc
+```
+
+### What Gets Validated
+
+#### 1. Circular Dependencies
+Detects when meta-agents delegate to each other in a loop, which would cause infinite routing:
+
+```jsonc
+// ❌ INVALID - Circular dependency
+{
+  "meta_agents": {
+    "agent_a": {
+      "delegates_to": ["agent_b"],
+      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "agent_b" }]
+    },
+    "agent_b": {
+      "delegates_to": ["agent_a"],
+      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "agent_a" }]
+    }
+  }
+}
+```
+
+```
+Error: Circular dependency detected: "agent_a" can route to "agent_b" which can route back to "agent_a"
+```
+
+#### 2. Invalid Agent References
+Verifies that all referenced agents are either builtin agents or other defined meta-agents:
+
+```jsonc
+// ❌ INVALID - Unknown agent
+{
+  "meta_agents": {
+    "my_agent": {
+      "delegates_to": ["oracle", "unknown_agent"],
+      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "unknown_agent" }]
+    }
+  }
+}
+```
+
+```
+Error: Invalid agent reference: "unknown_agent" is not a recognized agent.
+Valid agents are: sisyphus, hephaestus, oracle, librarian, explore, multimodal-looker, metis, momus, atlas, prometheus
+```
+
+#### 3. Regex Performance Warnings
+Analyzes regex patterns in routing rules for potential performance anti-patterns:
+
+```jsonc
+// ⚠️ WARNING - Nested quantifiers
+{
+  "meta_agents": {
+    "my_agent": {
+      "routing_rules": [{
+        "matcher": {
+          "type": "regex",
+          "pattern": "(a+)+"  // Nested quantifier - can cause catastrophic backtracking
+        },
+        "target_agent": "oracle"
+      }]
+    }
+  }
+}
+```
+
+```
+Warning: Regex pattern may cause performance issues: Nested quantifiers can cause catastrophic backtracking
+```
+
+### Valid Configuration Output
+
+When your configuration is valid, you'll see:
+
+```
+📋 Validating: olimpus.jsonc
+
+✅ Configuration is valid. No errors or warnings found.
+```
+
+### Exit Codes
+
+- `0` - Configuration is valid
+- `1` - Configuration has errors or validation failed
+
+### Integration with Development Workflow
+
+Add validation to your development workflow to catch configuration errors early:
+
+```bash
+# Run validation before committing
+bun run olimpus validate olimpus.jsonc
+
+# Or use in CI/CD pipelines
+bun run olimpus validate olimpus.jsonc || exit 1
+```
+
+---
+
 ## Meta-Agents
 
 Each meta-agent is a routing coordinator that decides which builtin agent to delegate to.
@@ -331,6 +451,19 @@ bun run typecheck
 
 # Watch mode
 bun run watch
+```
+
+### Validate Configuration
+
+```bash
+# Validate your configuration file
+bun run olimpus validate olimpus.jsonc
+
+# Validate example configuration
+bun run olimpus validate ./example/olimpus.jsonc
+
+# Show help
+bun run olimpus validate --help
 ```
 
 ### Test
@@ -578,9 +711,24 @@ Response
 Warning: No olimpus.jsonc found. Using defaults.
 ```
 
-**Solution**: 
+**Solution**:
 - Create `olimpus.jsonc` in project root or `~/.config/opencode/`
+- Validate your configuration: `bun run olimpus validate olimpus.jsonc`
 - Check file syntax with `bun run typecheck`
+
+### Validation Errors
+
+```
+Error: Circular dependency detected: atenea → hermes → atenea
+Error: Invalid agent reference: "unknown_agent" is not a recognized agent
+Warning: Regex pattern may cause performance issues: Nested quantifiers can cause catastrophic backtracking
+```
+
+**Solution**:
+- Run `bun run olimpus validate olimpus.jsonc` to get detailed error messages
+- Fix circular dependencies by removing or re-routing delegation chains
+- Ensure all agent references are either builtin agents or defined meta-agents
+- Consider simplifying regex patterns that trigger performance warnings
 
 ### Routing Not Matching
 
