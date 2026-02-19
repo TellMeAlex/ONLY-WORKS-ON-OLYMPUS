@@ -292,8 +292,7 @@ Press Enter to continue...
    */
   skills_path: {
     id: "skills_path",
-    question: "Path to custom skills directory (optional)",
-    help: "Leave empty to skip. Skills define custom workflows for your project",
+    message: "Path to custom skills directory (optional, leave empty to skip)",
     default: "",
   },
 
