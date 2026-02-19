@@ -2304,4 +2304,348 @@ This is a complex architectural task involving:
       expect(logEntry.matched_content).toBeDefined();
     });
   });
+
+  describe("E2E: Verify log output can be configured (console, file, disabled)", () => {
+    test("console output - logs appear in console", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "This is a test prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - logs should appear in console (captured in logOutput)
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify log entry contains expected fields
+      expect(logEntry.target_agent).toBe("test-agent");
+      expect(logEntry.matcher_type).toBe("keyword");
+      expect(logEntry.timestamp).toBeDefined();
+      expect(logEntry.matched_content).toBeDefined();
+
+      // Verify no file was created for console output
+      expect(existsSync("routing.log")).toBe(false);
+    });
+
+    test("file output - logs are written to file", () => {
+      // Arrange
+      const logFile = join(tempDir, "e2e-routing.log");
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "file",
+        log_file: logFile,
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "regex",
+            pattern: "deploy",
+            flags: "i",
+          },
+          target_agent: "deploy-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Deploy this to production",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - logs should be written to file
+      expect(existsSync(logFile)).toBe(true);
+
+      // Verify console output is empty for file output
+      expect(logOutput.length).toBe(0);
+
+      // Verify file content is valid JSON with expected fields
+      const fileContent = readFileSync(logFile, "utf-8");
+      const logLines = fileContent.trim().split("\n");
+      expect(logLines.length).toBeGreaterThan(0);
+
+      const logEntry = JSON.parse(logLines[0]) as Record<string, unknown>;
+      expect(logEntry.target_agent).toBe("deploy-agent");
+      expect(logEntry.matcher_type).toBe("regex");
+      expect(logEntry.timestamp).toBeDefined();
+      expect(logEntry.matched_content).toBeDefined();
+    });
+
+    test("file output - multiple logs are appended to file", () => {
+      // Arrange
+      const logFile = join(tempDir, "e2e-multi.log");
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "file",
+        log_file: logFile,
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["debug"],
+            mode: "any",
+          },
+          target_agent: "debug-agent",
+        },
+      ];
+
+      // Act - make multiple routing decisions
+      evaluateRoutingRules(rules, {
+        prompt: "This is a test",
+        projectDir: "/test/project",
+      }, logger);
+
+      evaluateRoutingRules(rules, {
+        prompt: "This is for debugging",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - both logs should be in the file
+      expect(existsSync(logFile)).toBe(true);
+
+      const fileContent = readFileSync(logFile, "utf-8");
+      const logLines = fileContent.trim().split("\n");
+      expect(logLines.length).toBe(2);
+
+      const logEntry1 = JSON.parse(logLines[0]) as Record<string, unknown>;
+      const logEntry2 = JSON.parse(logLines[1]) as Record<string, unknown>;
+
+      expect(logEntry1.target_agent).toBe("test-agent");
+      expect(logEntry2.target_agent).toBe("debug-agent");
+    });
+
+    test("disabled logging - no logs are produced", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: false,
+        output: "console",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "This is a test prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - no console output
+      expect(logOutput.length).toBe(0);
+
+      // No file should be created
+      expect(existsSync("routing.log")).toBe(false);
+    });
+
+    test("disabled output mode - no logs are produced even with enabled: true", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "disabled",
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "This is a test prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - no console output even though enabled: true
+      expect(logOutput.length).toBe(0);
+
+      // No file should be created
+      expect(existsSync("routing.log")).toBe(false);
+    });
+
+    test("file output with custom path - logs written to specified file", () => {
+      // Arrange
+      const customLogFile = join(tempDir, "logs", "custom-routing.log");
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "file",
+        log_file: customLogFile,
+        debug_mode: false,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "complexity",
+            threshold: "low",
+          },
+          target_agent: "junior-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "Simple task",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - logs should be written to custom file
+      expect(existsSync(customLogFile)).toBe(true);
+
+      // Verify file content
+      const fileContent = readFileSync(customLogFile, "utf-8");
+      const logEntry = JSON.parse(fileContent.trim()) as Record<string, unknown>;
+      expect(logEntry.target_agent).toBe("junior-agent");
+      expect(logEntry.matcher_type).toBe("complexity");
+    });
+
+    test("console output with debug mode - logs appear in console with debug info", () => {
+      // Arrange
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "console",
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["debug"],
+            mode: "any",
+          },
+          target_agent: "debug-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "test something",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - logs should appear in console
+      expect(logOutput.length).toBeGreaterThan(0);
+      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+
+      // Verify debug_info is present
+      expect(logEntry.debug_info).toBeDefined();
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(2);
+      expect(Array.isArray(debugInfo.all_evaluated)).toBe(true);
+
+      // Verify no file was created for console output
+      expect(existsSync("routing.log")).toBe(false);
+    });
+
+    test("file output with debug mode - logs written to file with debug info", () => {
+      // Arrange
+      const logFile = join(tempDir, "e2e-debug.log");
+      const loggerConfig: RoutingLoggerConfig = {
+        enabled: true,
+        output: "file",
+        log_file: logFile,
+        debug_mode: true,
+      };
+      const logger = new RoutingLogger(loggerConfig);
+
+      const rules: RoutingRule[] = [
+        {
+          matcher: {
+            type: "always",
+          },
+          target_agent: "default-agent",
+        },
+        {
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any",
+          },
+          target_agent: "test-agent",
+        },
+      ];
+
+      // Act
+      evaluateRoutingRules(rules, {
+        prompt: "any prompt",
+        projectDir: "/test/project",
+      }, logger);
+
+      // Assert - logs should be in file with debug info
+      expect(existsSync(logFile)).toBe(true);
+
+      const fileContent = readFileSync(logFile, "utf-8");
+      const logEntry = JSON.parse(fileContent.trim()) as Record<string, unknown>;
+
+      // Verify debug_info is present in file
+      expect(logEntry.debug_info).toBeDefined();
+      const debugInfo = logEntry.debug_info as Record<string, unknown>;
+      expect(debugInfo.total_evaluated).toBe(2);
+      expect(Array.isArray(debugInfo.all_evaluated)).toBe(true);
+
+      // Verify console output is empty for file output
+      expect(logOutput.length).toBe(0);
+    });
+  });
 });
