@@ -92,22 +92,34 @@ export const META_AGENT_PRESETS = [
  */
 export const PROVIDER_MODELS = [
   {
-    id: "claude-opus-4-6",
+    id: "claude-opus-4-20250205",
     provider: "anthropic",
     name: "Claude Opus 4.6",
-    description: "Most capable model for strategic decisions",
+    description: "Most capable model, excellent for complex reasoning and coding (Feb 2026)",
+  },
+  {
+    id: "claude-sonnet-4-20250217",
+    provider: "anthropic",
+    name: "Claude Sonnet 4.6",
+    description: "Best balance of speed and intelligence, 1M tokens, default for Pro (Feb 2026)",
+  },
+  {
+    id: "claude-haiku-4-20251022",
+    provider: "anthropic",
+    name: "Claude Haiku 4.5",
+    description: "Fast and cost-effective for research and simple tasks",
+  },
+  {
+    id: "claude-opus-4-20241105",
+    provider: "anthropic",
+    name: "Claude Opus 4.5",
+    description: "Previous generation Opus, excellent for coding and agents",
   },
   {
     id: "claude-3-5-sonnet-20241022",
     provider: "anthropic",
-    name: "Claude 3.5 Sonnet",
-    description: "Balanced performance and speed",
-  },
-  {
-    id: "claude-haiku-4-5",
-    provider: "anthropic",
-    name: "Claude Haiku 4.5",
-    description: "Fast & cheap for research",
+    name: "Claude 3.5 Sonnet (Legacy)",
+    description: "Legacy model, still stable for backward compatibility",
   },
   {
     id: "gpt-5.2",

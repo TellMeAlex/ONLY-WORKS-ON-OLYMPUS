@@ -473,7 +473,7 @@ describe("runWizardNonInteractive", () => {
   test("generated config has agents with correct models", async () => {
     // Arrange
     const answers: Partial<WizardAnswers> = {
-      primary_model: "claude-3-5-sonnet-20241022",
+      primary_model: "claude-sonnet-4-20250217",
     };
 
     // Act
@@ -484,17 +484,17 @@ describe("runWizardNonInteractive", () => {
 
     // Assert: agents should use the primary model
     if (config.agents?.sisyphus) {
-      expect(config.agents.sisyphus.model).toBe("claude-3-5-sonnet-20241022");
+      expect(config.agents.sisyphus.model).toBe("claude-sonnet-4-20250217");
     }
     if (config.agents?.oracle) {
-      expect(config.agents.oracle.model).toBe("claude-3-5-sonnet-20241022");
+      expect(config.agents.oracle.model).toBe("claude-sonnet-4-20250217");
     }
   });
 
   test("generated config has providers with correct priority chain", async () => {
     // Arrange
     const answers: Partial<WizardAnswers> = {
-      primary_model: "claude-3-5-sonnet-20241022",
+      primary_model: "claude-sonnet-4-20250217",
       research_model: "claude-haiku-4-5",
     };
 
@@ -506,7 +506,7 @@ describe("runWizardNonInteractive", () => {
 
     // Assert: providers should have correct priority chain
     expect(config.providers?.priority_chain).toContain(
-      "anthropic/claude-3-5-sonnet-20241022",
+      "anthropic/claude-sonnet-4-20250217",
     );
     expect(config.providers?.priority_chain).toContain("anthropic/claude-haiku-4-5");
 
@@ -521,7 +521,7 @@ describe("runWizardNonInteractive", () => {
     const answers: Partial<WizardAnswers> = {
       project_type: "cli",
       language: "python",
-      primary_model: "claude-3-5-sonnet-20241022",
+      primary_model: "claude-sonnet-4-20250217",
       research_model: "claude-haiku-4-5",
       meta_agents: ["atenea", "hefesto"],
       settings: ["ultrawork_enabled"],
@@ -534,7 +534,7 @@ describe("runWizardNonInteractive", () => {
     // Assert
     expect(result?.answers.project_type).toBe("cli");
     expect(result?.answers.language).toBe("python");
-    expect(result?.answers.primary_model).toBe("claude-3-5-sonnet-20241022");
+    expect(result?.answers.primary_model).toBe("claude-sonnet-4-20250217");
     expect(result?.answers.research_model).toBe("claude-haiku-4-5");
     expect(result?.answers.meta_agents).toEqual(["atenea", "hefesto"]);
     expect(result?.answers.settings).toEqual(["ultrawork_enabled"]);

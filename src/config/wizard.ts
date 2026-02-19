@@ -67,12 +67,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultMetaAgents: ["atenea", "hermes", "hefesto", "frontend_specialist"],
     defaultAgents: {
       sisyphus: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
         description: "TDD-focused implementation for web apps",
       },
       oracle: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.5,
         description: "Strategic analysis for frontend architecture",
       },
@@ -80,22 +80,22 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultCategories: {
       frontend: {
         description: "Frontend development tasks",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       ui_components: {
         description: "UI component development",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       styling: {
         description: "CSS, Tailwind, and styling tasks",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       testing: {
         description: "Frontend testing with vitest/cypress",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
     },
@@ -113,12 +113,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultMetaAgents: ["atenea", "hermes", "hefesto"],
     defaultAgents: {
       sisyphus: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
         description: "TDD-focused implementation for APIs",
       },
       oracle: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.4,
         description: "Strategic analysis for API architecture",
       },
@@ -126,22 +126,22 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultCategories: {
       backend: {
         description: "Backend development and API tasks",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       database: {
         description: "Database schema and migrations",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       api: {
         description: "REST/GraphQL API endpoints",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       testing: {
         description: "API testing and integration tests",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
     },
@@ -159,12 +159,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultMetaAgents: ["atenea", "hermes", "hefesto", "frontend_specialist"],
     defaultAgents: {
       sisyphus: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
         description: "TDD-focused implementation for full-stack apps",
       },
       oracle: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.5,
         description: "Strategic analysis for full-stack architecture",
       },
@@ -172,32 +172,32 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultCategories: {
       frontend: {
         description: "Frontend development tasks",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       backend: {
         description: "Backend development and API tasks",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.4,
       },
       database: {
         description: "Database schema and migrations",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       api: {
         description: "REST/GraphQL API endpoints",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       testing: {
         description: "End-to-end and integration tests",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       deployment: {
         description: "CI/CD and deployment configuration",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
     },
@@ -215,12 +215,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultMetaAgents: ["atenea", "hermes", "hefesto"],
     defaultAgents: {
       sisyphus: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
         description: "TDD-focused implementation for CLI tools",
       },
       oracle: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.4,
         description: "Strategic analysis for CLI design",
       },
@@ -228,22 +228,22 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultCategories: {
       core: {
         description: "Core CLI logic and commands",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       ui: {
         description: "CLI interface and user experience",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       testing: {
         description: "CLI testing and integration tests",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       documentation: {
         description: "CLI help and documentation",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
     },
@@ -261,12 +261,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultMetaAgents: ["atenea", "hermes", "hefesto"],
     defaultAgents: {
       sisyphus: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
         description: "TDD-focused implementation for libraries",
       },
       oracle: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
         description: "Strategic analysis for API design",
       },
@@ -274,22 +274,22 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultCategories: {
       core: {
         description: "Core library functionality",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       api: {
         description: "Public API design and documentation",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       testing: {
         description: "Unit tests and test coverage",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
       examples: {
         description: "Example usage and documentation",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
     },
@@ -307,12 +307,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultMetaAgents: ["atenea", "hermes", "hefesto"],
     defaultAgents: {
       sisyphus: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
         description: "TDD-focused implementation agent",
       },
       oracle: {
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.5,
         description: "Strategic analysis and architecture advisor",
       },
@@ -320,12 +320,12 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
     defaultCategories: {
       general: {
         description: "General development tasks",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.3,
       },
       documentation: {
         description: "Technical writing and documentation",
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250217",
         temperature: 0.2,
       },
     },
@@ -798,7 +798,7 @@ function createSettings(
           enabled: true,
           research_model: researchModel,
           strategy_model: primaryModel,
-          default_model: "claude-3-5-sonnet-20241022",
+          default_model: "claude-sonnet-4-20250217",
         }
       : undefined,
     ultrawork_enabled: ultraworkEnabled,
@@ -1006,7 +1006,7 @@ export async function runWizardNonInteractive(
     project_type: presetAnswers.project_type ?? "web",
     language: presetAnswers.language ?? "typescript",
     meta_agents: presetAnswers.meta_agents ?? ["atenea", "hermes", "hefesto"],
-    primary_model: presetAnswers.primary_model ?? "claude-3-5-sonnet-20241022",
+    primary_model: presetAnswers.primary_model ?? "claude-sonnet-4-20250217",
     research_model: presetAnswers.research_model ?? "claude-haiku-4-5",
     settings: presetAnswers.settings ?? [
       "background_parallelization",
