@@ -829,6 +829,15 @@ const config = loadOlimpusConfig(projectDir);
 
 ---
 
+## Documentation
+
+- [API Reference](./docs/API.md) - Complete API documentation
+- [Tutorials](./docs/tutorials/) - Step-by-step guides for common tasks
+- [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
+- [Migration Guide](./docs/migration.md) - Upgrading from previous versions
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
