@@ -6,7 +6,9 @@
  * Usage:
  *   olimpus validate <config-file>    Validate a configuration file
  *   olimpus validate --help           Show help for validate command
- *   olimpus --help                     Show general help
+ *   olimpus test <config-file>        Test routing rules
+ *   olimpus test --help               Show help for test command
+ *   olimpus --help                    Show general help
  */
 
 import * as fs from "node:fs";
@@ -155,6 +157,66 @@ Exit codes:
 }
 
 /**
+ * Test command handler
+ */
+async function testCommand(args: string[]): Promise<number> {
+  // Show help if requested
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showTestHelp();
+    return 0;
+  }
+
+  const filePath = args[0];
+
+  try {
+    // Load configuration
+    const config = loadConfig(filePath);
+    const absolutePath = path.resolve(filePath);
+
+    console.log(`\n🧪 Testing routing rules: ${filePath}\n`);
+
+    // TODO: Implement routing rule testing logic in subsequent subtasks
+    console.log("⚠️  Testing functionality will be implemented in upcoming subtasks.");
+    console.log();
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show test command help
+ */
+function showTestHelp(): void {
+  console.log(`
+Usage: olimpus test <config-file>
+
+Test routing rules to verify they match the expected behavior for various user queries.
+
+Arguments:
+  <config-file>    Path to the configuration file to test (e.g., olimpus.jsonc)
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus test olimpus.jsonc
+  olimpus test ./example/olimpus.jsonc
+  olimpus test /path/to/config.jsonc
+
+Exit codes:
+  0                All tests passed
+  1                Tests failed or testing encountered an error
+`);
+}
+
+/**
  * Show general help
  */
 function showHelp(): void {
@@ -165,12 +227,14 @@ Usage: olimpus <command> [options]
 
 Commands:
   validate          Validate configuration file
+  test              Test routing rules
 
 Options:
   -h, --help       Show this help message
 
 Examples:
   olimpus validate olimpus.jsonc
+  olimpus test olimpus.jsonc
   olimpus validate --help
 
 For more information on a specific command, run:
@@ -197,6 +261,11 @@ async function main(): Promise<number> {
       name: "validate",
       description: "Validate a configuration file",
       execute: validateCommand,
+    },
+    test: {
+      name: "test",
+      description: "Test routing rules",
+      execute: testCommand,
     },
   };
 
