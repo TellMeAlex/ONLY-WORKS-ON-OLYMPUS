@@ -343,14 +343,8 @@
   // Path is relative to project directory or absolute
   
   "skills": [
-    // Example 1: Load from project docs
-    "docs/skills/custom-skill.md",
-    
-    // Example 2: Absolute path
-    "/Users/yourname/shared-skills/advanced-refactoring.md"
-    
-    // Skills will be prefixed with "olimpus:" (e.g., "olimpus:custom-skill")
-    // This prevents naming conflicts with oh-my-opencode builtin skills
+    // Add skill file paths here (relative to project root or absolute)
+    // Skills will be prefixed with "olimpus:" to avoid naming conflicts
   ],
 
   // ============================================================================
