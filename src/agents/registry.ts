@@ -1,6 +1,7 @@
-import type { MetaAgentDef } from "../config/schema.js";
+import type { MetaAgentDef, RoutingLoggerConfig } from "../config/schema.js";
 import type { RoutingContext } from "./routing.js";
 import { createMetaAgentConfig } from "./meta-agent.js";
+import { RoutingLogger } from "./logger.js";
 import type { AgentConfig } from "@opencode-ai/sdk";
 
 /**
@@ -18,9 +19,13 @@ export class MetaAgentRegistry {
   private definitions: Map<string, MetaAgentDef> = new Map();
   private delegations: DelegationTracker = {};
   private maxDepth: number;
+  private logger?: RoutingLogger;
 
-  constructor(maxDepth: number = 3) {
+  constructor(maxDepth: number = 3, loggerConfig?: RoutingLoggerConfig) {
     this.maxDepth = maxDepth;
+    if (loggerConfig) {
+      this.logger = new RoutingLogger(loggerConfig);
+    }
   }
 
   /**
@@ -51,7 +56,7 @@ export class MetaAgentRegistry {
       throw new Error(`Meta-agent "${name}" not registered`);
     }
 
-    return createMetaAgentConfig(def, context, name);
+    return createMetaAgentConfig(def, context, name, this.logger);
   }
 
   /**

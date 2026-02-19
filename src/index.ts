@@ -7,7 +7,7 @@ import {
   type PluginInterface,
 } from "./plugin/wrapper.js";
 import { MetaAgentRegistry } from "./agents/registry.js";
-import { ateneo, hermes, hefesto } from "./agents/definitions/index.js";
+import { ateneo, hermes, hades } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
 
 /**
@@ -29,7 +29,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   let config;
 
   try {
-    config = loadOlimpusConfig(input.directory);
+    config = await loadOlimpusConfig(input.directory);
   } catch (error) {
     throw new Error(
       `[Olimpus] Failed to load olimpus.jsonc: ${
@@ -39,7 +39,8 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   }
 
   const maxDepth = config.settings?.max_delegation_depth ?? 3;
-  const registry = new MetaAgentRegistry(maxDepth);
+  const loggerConfig = config.settings?.routing_logger;
+  const registry = new MetaAgentRegistry(maxDepth, loggerConfig);
 
   const configMetaAgents = extractMetaAgentDefs(config);
   for (const [name, def] of Object.entries(configMetaAgents)) {
@@ -49,7 +50,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   const builtInMetaAgents = [
     { name: "olimpus:atenea", def: ateneo },
     { name: "olimpus:hermes", def: hermes },
-    { name: "olimpus:hefesto", def: hefesto },
+    { name: "olimpus:hades", def: hades },
   ];
 
   for (const { name, def } of builtInMetaAgents) {

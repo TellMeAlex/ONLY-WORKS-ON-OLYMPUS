@@ -1,6 +1,7 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { MetaAgentDef } from "../config/schema.js";
 import { evaluateRoutingRules, type RoutingContext } from "./routing.js";
+import type { RoutingLogger } from "./logger.js";
 
 /**
  * Creates an AgentConfig for a meta-agent by evaluating its routing rules
@@ -8,15 +9,18 @@ import { evaluateRoutingRules, type RoutingContext } from "./routing.js";
  *
  * @param def - Meta-agent definition with routing rules
  * @param context - Routing context (prompt, projectDir, etc.)
+ * @param metaAgentName - Name of the meta-agent
+ * @param logger - Optional routing logger for logging routing decisions
  * @returns AgentConfig with delegation instructions, or null if no route matched
  */
 export function createMetaAgentConfig(
   def: MetaAgentDef,
   context: RoutingContext,
-  metaAgentName: string
+  metaAgentName: string,
+  logger?: RoutingLogger
 ): AgentConfig | null {
   // Evaluate routing rules to find target agent
-  const route = evaluateRoutingRules(def.routing_rules, context);
+  const route = evaluateRoutingRules(def.routing_rules, context, logger);
 
   if (!route) {
     // No route matched - caller should handle this

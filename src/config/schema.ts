@@ -137,6 +137,17 @@ export const ProviderConfigSchema = z.object({
 });
 
 /**
+ * Routing Logger Configuration Schema
+ */
+
+export const RoutingLoggerConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  output: z.enum(["console", "file", "disabled"]).optional(),
+  log_file: z.string().optional(),
+  debug_mode: z.boolean().optional(),
+});
+
+/**
  * Olimpus Settings Schema (Extended with oh-my-opencode integration)
  */
 
@@ -171,6 +182,9 @@ export const SettingsSchema = z.object({
   // Code quality
   lsp_refactoring_preferred: z.boolean().optional(),
   aggressive_comment_pruning: z.boolean().optional(),
+
+  // Routing logger
+  routing_logger: RoutingLoggerConfigSchema.optional(),
 });
 
 /**
@@ -206,6 +220,7 @@ export type MetaAgentDef = z.infer<typeof MetaAgentSchema>;
 export type AgentOverride = z.infer<typeof AgentOverrideSchema>;
 export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+export type RoutingLoggerConfig = z.infer<typeof RoutingLoggerConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 
 export type OlimpusConfig = z.infer<typeof OlimpusConfigSchema>;

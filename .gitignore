@@ -46,3 +46,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .sisyphus/boulder.json
 .sisyphus/notepads/olimpus-plugin/learnings.md
 .sisyphus/plans/olimpus-plugin.md
+
+# Auto Claude data directory
+.auto-claude/
