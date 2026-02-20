@@ -193,6 +193,151 @@ export const AnalyticsConfigSchema = z.object({
 });
 
 /**
+ * Project Override Schema
+ * Allows project-specific overrides to shared configurations
+ */
+
+export const ProjectOverrideSchema = z.object({
+  // Meta-agent overrides
+  meta_agents: z.record(z.string(), MetaAgentSchema.partial()).optional(),
+
+  // Provider configuration overrides
+  providers: ProviderConfigSchema.partial().optional(),
+
+  // Settings overrides
+  settings: SettingsSchema.partial().optional(),
+
+  // Agent overrides (passthrough for oh-my-opencode compatibility)
+  agents: AgentOverridesSchema.optional(),
+
+  // Category overrides
+  categories: CategoriesSchema.optional(),
+
+  // Skills overrides
+  skills: z.array(z.string()).optional(),
+});
+
+/**
+ * Project Configuration Schema
+ * Defines the configuration for an individual project
+ */
+
+export const ProjectConfigSchema = z.object({
+  // Unique project identifier
+  project_id: z.string().min(1),
+
+  // Optional project display name
+  name: z.string().optional(),
+
+  // Path to the project directory
+  path: z.string().optional(),
+
+  // Project-specific overrides
+  overrides: ProjectOverrideSchema.optional(),
+
+  // Project metadata
+  metadata: z
+    .object({
+      description: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      created_at: z.string().optional(),
+      updated_at: z.string().optional(),
+    })
+    .optional(),
+
+  // Analytics configuration for this project
+  analytics_enabled: z.boolean().default(true),
+});
+
+/**
+ * Shared Configuration Schema
+ * Defines shared configurations that can be inherited by projects
+ */
+
+export const SharedConfigSchema = z.object({
+  // Base configuration that all projects inherit
+  base_config: OlimpusConfigSchema.optional(),
+
+  // Default project configuration template
+  default_project: ProjectConfigSchema.partial().optional(),
+
+  // Global routing rules that apply to all projects
+  global_routing_rules: z.array(RoutingRuleSchema).optional(),
+
+  // Shared meta-agents available to all projects
+  shared_meta_agents: z.record(z.string(), MetaAgentSchema).optional(),
+});
+
+/**
+ * Portfolio Configuration Schema
+ * Portfolio-level settings for cross-project orchestration
+ */
+
+export const PortfolioConfigSchema = z.object({
+  // Enable cross-project analytics aggregation
+  enable_aggregation: z.boolean().default(true),
+
+  // Enable cross-project agent delegation
+  enable_cross_project_delegation: z.boolean().default(true),
+
+  // Agent namespace format for cross-project delegation
+  agent_namespace_format: z.string().default("{project_id}:{agent_name}"),
+
+  // Default project to use when no project is specified
+  default_project_id: z.string().optional(),
+
+  // Maximum delegation depth across projects
+  max_cross_project_depth: z.number().int().positive().default(5),
+
+  // Analytics aggregation settings
+  aggregation_settings: z
+    .object({
+      // Minimum confidence threshold for portfolio-wide metrics
+      min_confidence_threshold: z.number().min(0).max(1).default(0.8),
+
+      // Window for rolling aggregation (in days)
+      aggregation_window_days: z.number().int().positive().default(30),
+
+      // Include anonymized project-level data in portfolio stats
+      include_project_anonymization: z.boolean().default(true),
+    })
+    .optional(),
+});
+
+/**
+ * Project Registry Configuration Schema
+ * Top-level schema for managing multiple project configurations
+ */
+
+export const ProjectRegistryConfigSchema = z.object({
+  // Portfolio-wide settings
+  portfolio: PortfolioConfigSchema.optional(),
+
+  // Shared configurations available to all projects
+  shared_config: SharedConfigSchema.optional(),
+
+  // Individual project configurations
+  projects: z.record(z.string(), ProjectConfigSchema).default({}),
+
+  // Registry metadata
+  registry: z
+    .object({
+      // Registry version
+      version: z.string().default("1.0.0"),
+
+      // Registry identifier
+      registry_id: z.string().optional(),
+
+      // Timestamp when registry was created
+      created_at: z.string().optional(),
+
+      // Timestamp when registry was last updated
+      updated_at: z.string().optional(),
+    })
+    .optional(),
+});
+
+/**
  * Olimpus Settings Schema (Extended with oh-my-opencode integration)
  */
 
@@ -272,5 +417,11 @@ export type RoutingAnalyticsConfig = z.infer<typeof RoutingAnalyticsConfigSchema
 export type RoutingLoggerConfig = z.infer<typeof RoutingLoggerConfigSchema>;
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
+
+export type ProjectOverride = z.infer<typeof ProjectOverrideSchema>;
+export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
+export type SharedConfig = z.infer<typeof SharedConfigSchema>;
+export type PortfolioConfig = z.infer<typeof PortfolioConfigSchema>;
+export type ProjectRegistryConfig = z.infer<typeof ProjectRegistryConfigSchema>;
 
 export type OlimpusConfig = z.infer<typeof OlimpusConfigSchema>;
