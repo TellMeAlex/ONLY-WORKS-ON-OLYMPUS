@@ -228,6 +228,84 @@ export const AnalyticsConfigSchema = z.object({
 });
 
 /**
+ * Performance Metrics Schema
+ */
+
+export const RoutingLatencyMetricsSchema = z.object({
+  min_ms: z.number().nonnegative(),
+  max_ms: z.number().nonnegative(),
+  avg_ms: z.number().nonnegative(),
+  p50_ms: z.number().nonnegative(),
+  p95_ms: z.number().nonnegative(),
+  p99_ms: z.number().nonnegative(),
+  total_samples: z.number().int().nonnegative(),
+});
+
+export const ThroughputMetricsSchema = z.object({
+  requests_per_second: z.number().nonnegative(),
+  requests_per_minute: z.number().nonnegative(),
+  requests_per_hour: z.number().nonnegative(),
+  total_requests: z.number().int().nonnegative(),
+});
+
+export const ErrorMetricsSchema = z.object({
+  total_errors: z.number().int().nonnegative(),
+  error_rate: z.number().min(0).max(1),
+  errors_by_type: z.record(z.string(), z.number().int().nonnegative()),
+});
+
+export const MemoryMetricsSchema = z.object({
+  current_usage_bytes: z.number().nonnegative(),
+  peak_usage_bytes: z.number().nonnegative(),
+  heap_usage_bytes: z.number().nonnegative().optional(),
+  external_usage_bytes: z.number().nonnegative().optional(),
+  array_buffers_bytes: z.number().nonnegative().optional(),
+  leak_detected: z.boolean().default(false),
+  leak_trend: z.enum(["stable", "increasing", "decreasing"]).default("stable"),
+});
+
+export const MatchRateMetricsSchema = z.object({
+  total_evaluations: z.number().int().nonnegative(),
+  successful_matches: z.number().int().nonnegative(),
+  match_rate: z.number().min(0).max(1),
+  unmatched_requests: z.number().int().nonnegative(),
+});
+
+export const PerformanceMetricsSchema = z.object({
+  timestamp: z.string().datetime(),
+  routing_latency: RoutingLatencyMetricsSchema,
+  throughput: ThroughputMetricsSchema,
+  errors: ErrorMetricsSchema,
+  memory: MemoryMetricsSchema,
+  match_rates: MatchRateMetricsSchema,
+  collection_window_seconds: z.number().int().positive(),
+});
+
+/**
+ * Performance Metrics Aggregation Schema
+ */
+
+export const PerformanceAggregationWindowSchema = z.enum([
+  "1m",
+  "5m",
+  "15m",
+  "1h",
+  "6h",
+  "24h",
+]);
+
+export const PerformanceAggregationOptionsSchema = z.object({
+  start_time: z.string().datetime().optional(),
+  end_time: z.string().datetime().optional(),
+  window: PerformanceAggregationWindowSchema.optional(),
+  include_latency: z.boolean().default(true),
+  include_throughput: z.boolean().default(true),
+  include_errors: z.boolean().default(true),
+  include_memory: z.boolean().default(true),
+  include_match_rates: z.boolean().default(true),
+});
+
+/**
  * Inferred TypeScript types from schemas
  */
 
@@ -254,3 +332,20 @@ export type ExportFormat = z.infer<typeof ExportFormatSchema>;
 export type ExportOptions = z.infer<typeof ExportOptionsSchema>;
 export type DisplayOptions = z.infer<typeof DisplayOptionsSchema>;
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
+
+/**
+ * Performance Metrics Types
+ */
+
+export type RoutingLatencyMetrics = z.infer<typeof RoutingLatencyMetricsSchema>;
+export type ThroughputMetrics = z.infer<typeof ThroughputMetricsSchema>;
+export type ErrorMetrics = z.infer<typeof ErrorMetricsSchema>;
+export type MemoryMetrics = z.infer<typeof MemoryMetricsSchema>;
+export type MatchRateMetrics = z.infer<typeof MatchRateMetricsSchema>;
+export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>;
+export type PerformanceAggregationWindow = z.infer<
+  typeof PerformanceAggregationWindowSchema
+>;
+export type PerformanceAggregationOptions = z.infer<
+  typeof PerformanceAggregationOptionsSchema
+>;
