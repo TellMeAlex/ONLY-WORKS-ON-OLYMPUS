@@ -1,0 +1,260 @@
+{
+  // ============================================================================
+  // Small Team Meta-Agent Template
+  // ============================================================================
+  // This template is designed for small development teams (2-10 people).
+  // It balances individual productivity with team collaboration, providing
+  // role-based specialization while maintaining flexibility. Ideal for
+  // startups, small companies, or growing teams that need structure
+  // without excessive process.
+
+  "name": "small-team",
+  "description": "Meta-agent template optimized for small teams (2-10 people) with role-based specialization, collaborative workflows, and balanced structure",
+  "category": "team",
+  "tags": ["team", "small", "startup", "collaboration", "agile", "scrum"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "metis", "atlas", "prometheus", "explore", "librarian"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Frontend Development Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["frontend", "ui", "component", "interface", "user interface", "react", "vue", "angular"],
+          "mode": "any"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are part of a small team's frontend development. Build UI components that are reusable and maintainable. Consider code review processes - your teammates will be reading this code. Follow the team's existing design system and patterns if available.",
+          "variant": "frontend-component"
+        }
+      },
+
+      // ========================================================================
+      // Backend Development Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["backend", "api", "endpoint", "service", "database", "server", "controller"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are part of a small team's backend development. Build APIs and services that integrate well with the frontend. Consider data consistency and performance. Write code that teammates can understand and maintain. Follow team conventions for API design.",
+          "variant": "backend-api"
+        }
+      },
+
+      // ========================================================================
+      // Code Reviews and Quality
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["review", "code review", "pr review", "pull request", "merge request"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are reviewing code for a small team. Provide constructive, helpful feedback. Focus on correctness, readability, and maintainability. Be mindful that your teammates are working under time constraints. Suggest improvements but avoid nitpicking."
+        }
+      },
+
+      // ========================================================================
+      // Testing and Quality Assurance
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "testing", "coverage", "qa", "quality"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are handling testing for a small team. Write tests that provide confidence to the whole team. Focus on preventing regressions that would affect other teammates. Consider the trade-off between test coverage and development velocity.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Documentation and Knowledge Sharing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["docs", "document", "readme", "wiki", "guide", "onboard"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are documenting for a small team. Write clear, practical documentation that helps teammates work effectively. Focus on onboarding, setup, and common workflows. Update documentation as the team evolves."
+        }
+      },
+
+      // ========================================================================
+      // Planning and Architecture (Team Coordination)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["plan", "sprint", "architecture", "design", "roadmap", "technical decision"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are planning for a small team. Consider team capabilities, workload distribution, and coordination overhead. Propose solutions that multiple team members can work on in parallel. Document technical decisions for the whole team."
+        }
+      },
+
+      // ========================================================================
+      // Debugging and Troubleshooting (Collaborative)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["debug", "fix", "bug", "error", "broken", "issue"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are helping a small team debug an issue. Provide systematic debugging guidance that the team can follow together. Consider that different team members may have expertise in different parts of the system."
+        }
+      },
+
+      // ========================================================================
+      // DevOps and Infrastructure (Team Scale)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["deploy", "ci", "cd", "pipeline", "docker", "infrastructure", "staging", "production"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are handling DevOps for a small team. Set up CI/CD that supports the team's workflow. Ensure deployments are reliable and can be rolled back. Consider that multiple developers may be deploying simultaneously."
+        }
+      },
+
+      // ========================================================================
+      // Database and Data Management
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["database", "migration", "schema", "sql", "query", "data"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are handling database work for a small team. Design schemas that support the team's needs. Write migrations that can be applied safely in production. Consider how database changes will affect other team members' work."
+        }
+      },
+
+      // ========================================================================
+      // Code Search and Knowledge Discovery
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["find", "search", "where", "locate", "understand", "explain"],
+          "mode": "any"
+        },
+        "target_agent": "explore",
+        "config_overrides": {
+          "prompt": "You are helping a small team navigate their codebase. Provide context that helps teammates understand code written by others. Explain the intent behind design decisions. Highlight areas where coordination may be needed."
+        }
+      },
+
+      // ========================================================================
+      // Project Context: Team Projects with Multiple Contributors
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json", "git"],
+          "has_deps": ["vitest", "jest", "eslint", "prettier"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are working on a team project. Follow team conventions and coding standards. Write code that is readable and maintainable by teammates. Consider how your changes might affect other team members' work.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Refactoring and Technical Debt
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["refactor", "cleanup", "technical debt", "improve", "simplify"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are refactoring for a small team. Suggest improvements that benefit the whole team. Consider the impact on other team members' work. Propose refactoring that can be done incrementally without blocking feature development."
+        }
+      },
+
+      // ========================================================================
+      // Performance Optimization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "slow", "optimize", "latency", "throughput", "cache"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are optimizing performance for a small team. Identify bottlenecks that affect the team's productivity and user experience. Propose solutions that balance improvement with implementation effort. Document optimization decisions for the team."
+        }
+      },
+
+      // ========================================================================
+      // Security and Compliance
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["security", "auth", "authorization", "vulnerability", "compliance"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are addressing security for a small team. Provide practical security guidance that the team can implement. Prioritize high-impact security improvements. Help the team understand security best practices without overwhelming them."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Small Team Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are working with a small team. Write code that is readable and maintainable by teammates. Consider team coordination and collaboration. Follow team conventions when available. Provide solutions that can be reviewed and merged efficiently."
+        }
+      }
+    ],
+
+    "prompt_template": "Small Team Development Task: {input}\n\nApproach:\n- Write maintainable code for teammates\n- Follow team conventions\n- Consider coordination overhead\n- Balance quality with velocity\n- Document decisions for the team\n- Enable parallel work when possible"
+  },
+
+  "documentation": "This meta-agent template is optimized for small development teams (2-10 people). It provides role-based specialization across frontend, backend, DevOps, and quality assurance while maintaining the flexibility that small teams need. The configuration supports collaborative workflows, code reviews, and efficient coordination without excessive process overhead.",
+  "examples": [
+    "Build a React component following our design system",
+    "Create a REST API endpoint with proper validation",
+    "Set up CI/CD pipeline for our team",
+    "Review this pull request and provide feedback",
+    "Add integration tests for the checkout flow"
+  ]
+}
