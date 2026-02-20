@@ -10,6 +10,8 @@
  *   olimpus test --help               Show help for test command
  *   olimpus templates list             List available templates
  *   olimpus templates list --help      Show help for templates list command
+ *   olimpus templates preview <name>   Preview a template
+ *   olimpus templates preview --help   Show help for templates preview command
  *   olimpus --help                    Show general help
  */
 
@@ -742,6 +744,8 @@ async function templatesCommand(args: string[]): Promise<number> {
 
   if (subcommand === "list") {
     return templatesListCommand(subcommandArgs);
+  } else if (subcommand === "preview") {
+    return templatesPreviewCommand(subcommandArgs);
   } else {
     console.error(`\n❌ Unknown templates subcommand: ${subcommand}\n`);
     console.log("Run 'olimpus templates --help' for available subcommands.\n");
@@ -832,14 +836,16 @@ Manage and explore meta-agent templates.
 
 Subcommands:
   list              List all available templates
+  preview           Preview a specific template
 
 Options:
   -h, --help       Show this help message
 
 Examples:
   olimpus templates list
-  olimpus templates list --help
+  olimpus templates preview python-dev
   olimpus templates list --config ./custom/templates
+  olimpus templates preview python-dev --verbose
 
 For more information on a specific subcommand, run:
   olimpus templates <subcommand> --help
@@ -870,6 +876,120 @@ Examples:
   olimpus templates list
   olimpus templates list --verbose
   olimpus templates list --config ./my-templates
+`);
+}
+
+/**
+ * Templates preview subcommand handler
+ */
+function templatesPreviewCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesPreviewHelp();
+    return 0;
+  }
+
+  try {
+    // Get template name from positional arguments
+    let templateName: string | undefined;
+    if (options.positional.length > 0) {
+      templateName = options.positional[0];
+    } else {
+      console.error(`\n❌ Template name is required\n`);
+      showTemplatesPreviewHelp();
+      return 1;
+    }
+
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+
+    if (!templates[templateName]) {
+      console.error(`\n❌ Template not found: ${templateName}\n`);
+      console.log("Run 'olimpus templates list' to see available templates.\n");
+      return 1;
+    }
+
+    const template = templates[templateName];
+
+    console.log(`\n📋 Template: ${template.name}\n`);
+    console.log(`Category: ${template.category}`);
+    console.log(`Description: ${template.description}`);
+
+    if (template.tags && template.tags.length > 0) {
+      console.log(`Tags: ${template.tags.join(", ")}`);
+    }
+
+    if (template.documentation) {
+      console.log(`\nDocumentation:`);
+      console.log(`  ${template.documentation}`);
+    }
+
+    if (template.examples && template.examples.length > 0) {
+      console.log(`\nExamples:`);
+      for (const example of template.examples) {
+        console.log(`  • ${example}`);
+      }
+    }
+
+    if (options.verbose && template.meta_agent) {
+      console.log(`\nMeta-Agent Configuration:`);
+      console.log(`  Base Model: ${template.meta_agent.base_model}`);
+
+      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
+        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      }
+
+      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
+        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+      }
+
+      if (template.meta_agent.prompt_template) {
+        const preview = template.meta_agent.prompt_template.slice(0, 100);
+        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+      }
+    }
+
+    console.log();
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates preview help
+ */
+function showTemplatesPreviewHelp(): void {
+  console.log(`
+Usage: olimpus templates preview <template-name> [options]
+
+Display detailed information about a specific meta-agent template.
+
+Arguments:
+  <template-name>  Name of the template to preview
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  -v, --verbose     Show additional template details including meta-agent configuration
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates preview python-dev
+  olimpus templates preview solo-developer --verbose
+  olimpus templates preview data-pipeline --config ./my-templates
 `);
 }
 
