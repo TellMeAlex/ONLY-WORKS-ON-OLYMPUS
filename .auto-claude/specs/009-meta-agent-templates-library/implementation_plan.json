@@ -376,7 +376,9 @@
             "command": "bun run olimpus templates list",
             "expected": "List of templates displayed"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added templates command to bin/olimpus.ts with the following implementations:\n\n1. Added imports: loadTemplates, LoadTemplatesOptions from ../src/templates/loader.js and Template type from ../src/templates/types.js\n\n2. Created templatesCommand() - Main command handler that routes to subcommands (list, preview, apply)\n\n3. Created templatesListCommand() - Lists all available templates grouped by category (language, workflow, team, domain). Shows template name, description, tags (if any), and documentation preview (in verbose mode). Supports --config option for custom templates directory and --verbose for additional details.\n\n4. Created showTemplatesHelp() - Help for templates command showing available subcommands\n\n5. Created showTemplatesListHelp() - Detailed help for templates list subcommand\n\n6. Registered 'templates' command in main()'s commands object\n\n7. Updated showHelp() to include templates in the command list\n\n8. Updated file header JSDoc to document templates list command\n\nImplementation follows existing CLI patterns from validate and test commands. Uses existing parseOptions() for argument parsing. Error handling matches existing patterns with try/catch blocks.",
+          "updated_at": "2026-02-20T17:02:18.121924+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -394,7 +396,9 @@
             "command": "bun run olimpus templates preview python-dev",
             "expected": "Template preview displayed"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added templates preview subcommand to bin/olimpus.ts with following implementations:\n\n1. Updated templatesCommand() to handle 'preview' subcommand\n\n2. Created templatesPreviewCommand() - Displays detailed template information including:\n   - Template name, category, and description\n   - Tags (if present)\n   - Full documentation\n   - Usage examples\n   - In verbose mode: meta_agent configuration details (base_model, delegates_to, routing_rules count, prompt_template preview)\n\n3. Created showTemplatesPreviewHelp() - Help documentation for preview subcommand\n\n4. Updated showTemplatesHelp() to include preview in subcommands list\n\n5. Updated file header JSDoc to document templates preview command\n\nImplementation includes:\n- Template name validation (required argument)\n- Template not found error handling\n- Supports --config option for custom templates directory\n- Supports --verbose flag for additional details\n- Follows same patterns as templatesListCommand with proper error handling",
+          "updated_at": "2026-02-20T18:05:00.000Z"
         },
         {
           "id": "subtask-4-3",
@@ -588,7 +592,7 @@
   "planStatus": "in_progress",
   "xstateState": "backlog",
   "executionPhase": "coding",
-  "updated_at": "2026-02-20T16:56:28.140Z",
+  "updated_at": "2026-02-20T17:02:51.635Z",
   "recoveryNote": "Task recovered from stuck state at 2026-02-20T16:01:02.206Z",
-  "last_updated": "2026-02-20T16:55:59.223760+00:00"
+  "last_updated": "2026-02-20T17:02:18.121929+00:00"
 }
