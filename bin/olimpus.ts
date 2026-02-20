@@ -8,6 +8,12 @@
  *   olimpus validate --help           Show help for validate command
  *   olimpus test <config-file>        Test routing rules
  *   olimpus test --help               Show help for test command
+ *   olimpus templates list             List available templates
+ *   olimpus templates list --help      Show help for templates list command
+ *   olimpus templates preview <name>   Preview a template
+ *   olimpus templates preview --help   Show help for templates preview command
+ *   olimpus templates apply <name>    Apply a template to your config
+ *   olimpus templates apply --help    Show help for templates apply command
  *   olimpus --help                    Show general help
  */
 
@@ -28,6 +34,8 @@ import {
   type RoutingResult,
   type MatcherEvaluation,
 } from "../src/agents/routing.js";
+import { loadTemplates, type LoadTemplatesOptions } from "../src/templates/loader.js";
+import { type Template } from "../src/templates/types.js";
 
 /**
  * Parsed command options
@@ -724,6 +732,415 @@ Exit codes:
 }
 
 /**
+ * Templates command handler
+ */
+async function templatesCommand(args: string[]): Promise<number> {
+  // Check for subcommand
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showTemplatesHelp();
+    return 0;
+  }
+
+  const subcommand = args[0];
+  const subcommandArgs = args.slice(1);
+
+  if (subcommand === "list") {
+    return templatesListCommand(subcommandArgs);
+  } else if (subcommand === "preview") {
+    return templatesPreviewCommand(subcommandArgs);
+  } else if (subcommand === "apply") {
+    return templatesApplyCommand(subcommandArgs);
+  } else {
+    console.error(`\n❌ Unknown templates subcommand: ${subcommand}\n`);
+    console.log("Run 'olimpus templates --help' for available subcommands.\n");
+    return 1;
+  }
+}
+
+/**
+ * Templates list subcommand handler
+ */
+function templatesListCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesListHelp();
+    return 0;
+  }
+
+  try {
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+    const templateNames = Object.keys(templates).sort();
+
+    if (templateNames.length === 0) {
+      console.log(`\n📋 No templates found in: ${templatesDir}\n`);
+      return 0;
+    }
+
+    console.log(`\n📋 Templates (${templateNames.length} found):\n`);
+
+    // Group templates by category
+    const templatesByCategory: Record<string, Template[]> = {};
+
+    for (const name of templateNames) {
+      const template = templates[name];
+      if (!templatesByCategory[template.category]) {
+        templatesByCategory[template.category] = [];
+      }
+      templatesByCategory[template.category].push(template);
+    }
+
+    // Display templates grouped by category
+    const categoryOrder = ["language", "workflow", "team", "domain"];
+
+    for (const category of categoryOrder) {
+      if (templatesByCategory[category]) {
+        console.log(`${category.toUpperCase()}`);
+        for (const template of templatesByCategory[category]) {
+          console.log(`  ${template.name}`);
+          console.log(`    ${template.description}`);
+          if (template.tags && template.tags.length > 0) {
+            console.log(`    Tags: ${template.tags.join(", ")}`);
+          }
+          if (options.verbose && template.documentation) {
+            console.log(`    ${template.documentation.slice(0, 100)}${template.documentation.length > 100 ? "..." : ""}`);
+          }
+        }
+        console.log();
+      }
+    }
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates command help
+ */
+function showTemplatesHelp(): void {
+  console.log(`
+Usage: olimpus templates <subcommand> [options]
+
+Manage and explore meta-agent templates.
+
+Subcommands:
+  list              List all available templates
+  preview           Preview a specific template
+  apply             Apply a template to your configuration
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus templates list
+  olimpus templates preview python-dev
+  olimpus templates apply python-dev --dry-run
+  olimpus templates list --config ./custom/templates
+
+For more information on a specific subcommand, run:
+  olimpus templates <subcommand> --help
+`);
+}
+
+/**
+ * Show templates list help
+ */
+function showTemplatesListHelp(): void {
+  console.log(`
+Usage: olimpus templates list [options]
+
+List all available meta-agent templates, grouped by category.
+
+Templates are organized into categories:
+  language          Language-specific routing patterns
+  workflow          Team workflows and processes
+  team              Team size and structure
+  domain            Domain-specific use cases
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  -v, --verbose     Show additional template details
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates list
+  olimpus templates list --verbose
+  olimpus templates list --config ./my-templates
+`);
+}
+
+/**
+ * Templates preview subcommand handler
+ */
+function templatesPreviewCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesPreviewHelp();
+    return 0;
+  }
+
+  try {
+    // Get template name from positional arguments
+    let templateName: string | undefined;
+    if (options.positional.length > 0) {
+      templateName = options.positional[0];
+    } else {
+      console.error(`\n❌ Template name is required\n`);
+      showTemplatesPreviewHelp();
+      return 1;
+    }
+
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+
+    if (!templates[templateName]) {
+      console.error(`\n❌ Template not found: ${templateName}\n`);
+      console.log("Run 'olimpus templates list' to see available templates.\n");
+      return 1;
+    }
+
+    const template = templates[templateName];
+
+    console.log(`\n📋 Template: ${template.name}\n`);
+    console.log(`Category: ${template.category}`);
+    console.log(`Description: ${template.description}`);
+
+    if (template.tags && template.tags.length > 0) {
+      console.log(`Tags: ${template.tags.join(", ")}`);
+    }
+
+    if (template.documentation) {
+      console.log(`\nDocumentation:`);
+      console.log(`  ${template.documentation}`);
+    }
+
+    if (template.examples && template.examples.length > 0) {
+      console.log(`\nExamples:`);
+      for (const example of template.examples) {
+        console.log(`  • ${example}`);
+      }
+    }
+
+    if (options.verbose && template.meta_agent) {
+      console.log(`\nMeta-Agent Configuration:`);
+      console.log(`  Base Model: ${template.meta_agent.base_model}`);
+
+      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
+        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      }
+
+      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
+        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+      }
+
+      if (template.meta_agent.prompt_template) {
+        const preview = template.meta_agent.prompt_template.slice(0, 100);
+        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+      }
+    }
+
+    console.log();
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates preview help
+ */
+function showTemplatesPreviewHelp(): void {
+  console.log(`
+Usage: olimpus templates preview <template-name> [options]
+
+Display detailed information about a specific meta-agent template.
+
+Arguments:
+  <template-name>  Name of the template to preview
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  -v, --verbose     Show additional template details including meta-agent configuration
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates preview python-dev
+  olimpus templates preview solo-developer --verbose
+  olimpus templates preview data-pipeline --config ./my-templates
+`);
+}
+
+/**
+ * Templates apply subcommand handler
+ */
+function templatesApplyCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesApplyHelp();
+    return 0;
+  }
+
+  try {
+    // Get template name from positional arguments
+    let templateName: string | undefined;
+    if (options.positional.length > 0) {
+      templateName = options.positional[0];
+    } else {
+      console.error(`\n❌ Template name is required\n`);
+      showTemplatesApplyHelp();
+      return 1;
+    }
+
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+
+    if (!templates[templateName]) {
+      console.error(`\n❌ Template not found: ${templateName}\n`);
+      console.log("Run 'olimpus templates list' to see available templates.\n");
+      return 1;
+    }
+
+    const template = templates[templateName];
+
+    console.log(`\n📋 Applying template: ${template.name}\n`);
+    console.log(`Category: ${template.category}`);
+    console.log(`Description: ${template.description}`);
+    console.log();
+
+    if (template.meta_agent) {
+      console.log(`Meta-Agent Configuration:\n`);
+      console.log(`  Base Model: ${template.meta_agent.base_model}`);
+
+      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
+        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      }
+
+      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
+        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+        console.log();
+        console.log(`  Summary of routing rules:`);
+        for (let i = 0; i < template.meta_agent.routing_rules.length; i++) {
+          const rule = template.meta_agent.routing_rules[i];
+          console.log(`    ${i + 1}. ${rule.matcher.type} → ${rule.target_agent}`);
+        }
+      }
+
+      if (template.meta_agent.prompt_template) {
+        const preview = template.meta_agent.prompt_template.slice(0, 100);
+        console.log();
+        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+      }
+
+      console.log();
+    }
+
+    if (options.dryRun) {
+      console.log(`🔍 Dry-run mode - no changes made\n`);
+      console.log(`To apply this template to your configuration:\n`);
+      console.log(`  1. Create or open your olimpus.jsonc file`);
+      console.log(`  2. Add the meta_agent configuration from this template`);
+      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log();
+    } else {
+      console.log(`✅ Template ready to apply\n`);
+      console.log(`To apply this template to your configuration:\n`);
+      console.log(`  1. Create or open your olimpus.jsonc file`);
+      console.log(`  2. Add the meta_agent configuration from this template`);
+      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log(`  4. Run 'olimpus validate olimpus.jsonc' to verify your configuration`);
+      console.log();
+    }
+
+    if (template.documentation) {
+      console.log(`Documentation:\n  ${template.documentation}\n`);
+    }
+
+    if (template.examples && template.examples.length > 0) {
+      console.log(`Examples:`);
+      for (const example of template.examples) {
+        console.log(`  • ${example}`);
+      }
+      console.log();
+    }
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates apply help
+ */
+function showTemplatesApplyHelp(): void {
+  console.log(`
+Usage: olimpus templates apply <template-name> [options]
+
+Apply a meta-agent template to your configuration. Shows what configuration
+would be added without making any changes to your files.
+
+Arguments:
+  <template-name>  Name of the template to apply
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  --dry-run         Show what would be applied without making changes
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates apply python-dev
+  olimpus templates apply python-dev --dry-run
+  olimpus templates apply small-team --config ./my-templates
+
+Note:
+  This command only shows what would be applied. You must manually add the
+  configuration to your olimpus.jsonc file. See the preview output for the
+  exact meta_agent configuration to add.
+`);
+}
+
+/**
  * Show general help
  */
 function showHelp(): void {
@@ -735,6 +1152,7 @@ Usage: olimpus <command> [options]
 Commands:
   validate          Validate configuration file
   test              Test routing rules
+  templates         Manage and explore meta-agent templates
 
 Options:
   -h, --help       Show this help message
@@ -742,6 +1160,7 @@ Options:
 Examples:
   olimpus validate olimpus.jsonc
   olimpus test olimpus.jsonc
+  olimpus templates list
   olimpus validate --help
 
 For more information on a specific command, run:
@@ -773,6 +1192,11 @@ async function main(): Promise<number> {
       name: "test",
       description: "Test routing rules",
       execute: testCommand,
+    },
+    templates: {
+      name: "templates",
+      description: "Manage and explore meta-agent templates",
+      execute: templatesCommand,
     },
   };
 

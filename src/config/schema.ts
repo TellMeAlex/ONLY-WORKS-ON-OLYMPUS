@@ -193,6 +193,20 @@ export const AnalyticsConfigSchema = z.object({
 });
 
 /**
+ * Template Schema - Reusable meta-agent configuration templates
+ */
+
+export const TemplateSchema = z.object({
+  name: z.string().min(1),
+  description: z.string(),
+  category: z.enum(["language", "workflow", "team", "domain"]),
+  tags: z.array(z.string()).optional(),
+  meta_agent: MetaAgentSchema,
+  documentation: z.string().optional(),
+  examples: z.array(z.string()).optional(),
+});
+
+/**
  * Olimpus Settings Schema (Extended with oh-my-opencode integration)
  */
 
@@ -245,6 +259,7 @@ export const OlimpusConfigSchema = z.object({
   providers: ProviderConfigSchema.optional(),
   settings: SettingsSchema.optional(),
   skills: z.array(z.string()).optional(),
+  templates: z.record(z.string(), TemplateSchema).optional(),
 
   // oh-my-opencode passthrough sections
   agents: AgentOverridesSchema,
@@ -272,5 +287,6 @@ export type RoutingAnalyticsConfig = z.infer<typeof RoutingAnalyticsConfigSchema
 export type RoutingLoggerConfig = z.infer<typeof RoutingLoggerConfigSchema>;
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
+export type Template = z.infer<typeof TemplateSchema>;
 
 export type OlimpusConfig = z.infer<typeof OlimpusConfigSchema>;

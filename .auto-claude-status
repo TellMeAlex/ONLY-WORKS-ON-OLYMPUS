@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "008-cli-routing-tester",
+  "spec": "009-meta-agent-templates-library",
   "state": "building",
   "subtasks": {
     "completed": 12,
-    "total": 13,
+    "total": 21,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Testing",
+    "current": "Template Loader",
     "id": null,
-    "total": 2
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 14,
-    "started_at": "2026-02-19T23:59:55.053771"
+    "number": 10,
+    "started_at": "2026-02-20T17:01:04.999901"
   },
-  "last_update": "2026-02-20T00:35:54.302591"
+  "last_update": "2026-02-20T17:48:55.268784"
 }
