@@ -1,0 +1,103 @@
+name: Publish to npm (GitHub Packages)
+
+on:
+  release:
+    types: [created, published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to npm?'
+        required: false
+        default: 'false'
+
+jobs:
+  publish:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.event.inputs.publish == 'true'
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: 'https://npm.pkg.github.com'
+          cache: 'npm'
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Verify builds exist
+        run: |
+          [ -f dist-node/index.js ] || (echo "dist-node/index.js missing"; exit 1)
+          [ -f dist-bun/index.js ] || (echo "dist-bun/index.js missing"; exit 1)
+          echo "✅ All builds present"
+
+      - name: Get version from package.json
+        id: version
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release comment
+        if: github.event_name == 'release'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            const comment = `Published **@TellMeAlex/only-works-on-olympus@${version}** to GitHub Packages npm registry
+
+### Package Details
+- **Package**: @TellMeAlex/only-works-on-olympus
+- **Version**: ${version}
+- **Registry**: npm.pkg.github.com
+- **Main Entry**: dist-node/index.js (Node.js)
+- **Bun Export**: dist-bun/index.js (Bun)
+
+### Installation
+\`\`\`bash
+npm install @TellMeAlex/only-works-on-olympus@${version}
+\`\`\`
+
+Or add to .npmrc:
+\`\`\`
+@TellMeAlex:registry=https://npm.pkg.github.com
+\`\`\``;
+            
+            if (context.payload.release) {
+              github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: context.payload.release.id,
+                body: context.payload.release.body + '\n\n' + comment
+              });
+            }
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "=== Publish Summary ==="
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Registry: npm.pkg.github.com"
+          echo "Status: ${{ job.status }}"
