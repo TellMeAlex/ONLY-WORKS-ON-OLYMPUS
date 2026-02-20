@@ -115,5 +115,3 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
 };
 
 export default OlimpusPlugin;
-Testing auto-build workflow
-// Workflow test 1771589099
