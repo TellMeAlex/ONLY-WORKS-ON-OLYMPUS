@@ -752,14 +752,13 @@ describe("circular dependency", () => {
       });
 
       test("detects nested quantifiers - (.*)*", () => {
-        // Arrange
         const metaAgents: Record<string, MetaAgentDef> = {
           router: {
             base_model: "claude-3-5-sonnet",
             delegates_to: [],
             routing_rules: [
               {
-                matcher: { type: "regex", pattern: "(.*)" },
+                matcher: { type: "regex", pattern: "(.*)*" },
                 target_agent: "sisyphus",
               },
             ],

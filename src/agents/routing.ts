@@ -58,11 +58,11 @@ export function evaluateRoutingRules(
   const isDebugMode = logger?.isDebugMode() ?? false;
   const shouldCapture = captureEvaluations || isDebugMode;
   const evaluations: MatcherEvaluation[] = [];
+  let firstMatch: ResolvedRoute | null = null;
 
   for (const rule of rules) {
     const matched = evaluateMatcher(rule.matcher, context);
 
-    // Track evaluation for debug mode or when capturing evaluations
     if (shouldCapture) {
       evaluations.push({
         matcher_type: rule.matcher.type,
@@ -71,39 +71,47 @@ export function evaluateRoutingRules(
       });
     }
 
-    if (matched) {
+    if (matched && !firstMatch) {
       const matchedContent = getMatchedContent(rule.matcher, context);
-      const result: ResolvedRoute = {
+      firstMatch = {
         target_agent: rule.target_agent,
         matcher_type: rule.matcher.type,
         matched_content: matchedContent,
         config_overrides: rule.config_overrides,
       };
 
-      // Log the routing decision if logger is provided
-      if (logger && logger.isEnabled()) {
-        logger.logRoutingDecision(
-          result.target_agent,
-          rule.matcher.type,
-          matchedContent,
-          result.config_overrides,
-          isDebugMode ? evaluations : undefined
-        );
+      if (!isDebugMode) {
+        if (logger && logger.isEnabled()) {
+          logger.logRoutingDecision(
+            firstMatch.target_agent,
+            rule.matcher.type,
+            matchedContent,
+            firstMatch.config_overrides,
+            undefined
+          );
+        }
+        if (shouldCapture) {
+          return { route: firstMatch, evaluations };
+        }
+        return firstMatch;
       }
-
-      // Return just the route if not capturing evaluations, otherwise return full result
-      if (shouldCapture) {
-        return { route: result, evaluations };
-      }
-      return result;
     }
   }
 
-  // Return null or the result object based on captureEvaluations flag
-  if (shouldCapture) {
-    return { route: null, evaluations };
+  if (firstMatch && logger && logger.isEnabled()) {
+    logger.logRoutingDecision(
+      firstMatch.target_agent,
+      firstMatch.matcher_type!,
+      firstMatch.matched_content!,
+      firstMatch.config_overrides,
+      isDebugMode ? evaluations : undefined
+    );
   }
-  return null;
+
+  if (shouldCapture) {
+    return { route: firstMatch, evaluations };
+  }
+  return firstMatch;
 }
 
 /**

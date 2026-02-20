@@ -2536,7 +2536,7 @@ This is a complex architectural task involving:
 
       // Act
       evaluateRoutingRules(rules, {
-        prompt: "Simple task",
+        prompt: "Simple testing task",
         projectDir: "/test/project",
       }, logger);
 
@@ -2878,7 +2878,7 @@ Design a comprehensive system architecture involving:
 - High-performance database integration
 - Concurrency and async handling patterns
 - Security and encryption implementation
-- API integration strategies
+- API integration with authentication strategies
       `.trim();
 
       // Act

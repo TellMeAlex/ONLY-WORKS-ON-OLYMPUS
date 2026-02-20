@@ -1,19 +1,25 @@
-import { test, expect, describe, beforeEach } from "bun:test";
+import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
 import { loadOlimpusConfig, type LoadOlimpusConfigOptions } from "./loader.js";
 import type { MetaAgentDef, OlimpusConfig } from "./schema.js";
 
-// Mock file system
 const tempDir = path.join(process.cwd(), ".test-temp");
 
 describe("loadOlimpusConfig", () => {
+  let savedHome: string | undefined;
+
   beforeEach(() => {
-    // Clean up temp directory before each test
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
     fs.mkdirSync(tempDir, { recursive: true });
+    savedHome = process.env.HOME;
+    process.env.HOME = tempDir;
+  });
+
+  afterEach(() => {
+    process.env.HOME = savedHome;
   });
 
   test("loads config without validation when validate option is false", async () => {
