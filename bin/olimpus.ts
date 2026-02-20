@@ -8,6 +8,8 @@
  *   olimpus validate --help           Show help for validate command
  *   olimpus test <config-file>        Test routing rules
  *   olimpus test --help               Show help for test command
+ *   olimpus templates list             List available templates
+ *   olimpus templates list --help      Show help for templates list command
  *   olimpus --help                    Show general help
  */
 
@@ -28,6 +30,8 @@ import {
   type RoutingResult,
   type MatcherEvaluation,
 } from "../src/agents/routing.js";
+import { loadTemplates, type LoadTemplatesOptions } from "../src/templates/loader.js";
+import { type Template } from "../src/templates/types.js";
 
 /**
  * Parsed command options
@@ -724,6 +728,152 @@ Exit codes:
 }
 
 /**
+ * Templates command handler
+ */
+async function templatesCommand(args: string[]): Promise<number> {
+  // Check for subcommand
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showTemplatesHelp();
+    return 0;
+  }
+
+  const subcommand = args[0];
+  const subcommandArgs = args.slice(1);
+
+  if (subcommand === "list") {
+    return templatesListCommand(subcommandArgs);
+  } else {
+    console.error(`\n❌ Unknown templates subcommand: ${subcommand}\n`);
+    console.log("Run 'olimpus templates --help' for available subcommands.\n");
+    return 1;
+  }
+}
+
+/**
+ * Templates list subcommand handler
+ */
+function templatesListCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesListHelp();
+    return 0;
+  }
+
+  try {
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+    const templateNames = Object.keys(templates).sort();
+
+    if (templateNames.length === 0) {
+      console.log(`\n📋 No templates found in: ${templatesDir}\n`);
+      return 0;
+    }
+
+    console.log(`\n📋 Templates (${templateNames.length} found):\n`);
+
+    // Group templates by category
+    const templatesByCategory: Record<string, Template[]> = {};
+
+    for (const name of templateNames) {
+      const template = templates[name];
+      if (!templatesByCategory[template.category]) {
+        templatesByCategory[template.category] = [];
+      }
+      templatesByCategory[template.category].push(template);
+    }
+
+    // Display templates grouped by category
+    const categoryOrder = ["language", "workflow", "team", "domain"];
+
+    for (const category of categoryOrder) {
+      if (templatesByCategory[category]) {
+        console.log(`${category.toUpperCase()}`);
+        for (const template of templatesByCategory[category]) {
+          console.log(`  ${template.name}`);
+          console.log(`    ${template.description}`);
+          if (template.tags && template.tags.length > 0) {
+            console.log(`    Tags: ${template.tags.join(", ")}`);
+          }
+          if (options.verbose && template.documentation) {
+            console.log(`    ${template.documentation.slice(0, 100)}${template.documentation.length > 100 ? "..." : ""}`);
+          }
+        }
+        console.log();
+      }
+    }
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates command help
+ */
+function showTemplatesHelp(): void {
+  console.log(`
+Usage: olimpus templates <subcommand> [options]
+
+Manage and explore meta-agent templates.
+
+Subcommands:
+  list              List all available templates
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus templates list
+  olimpus templates list --help
+  olimpus templates list --config ./custom/templates
+
+For more information on a specific subcommand, run:
+  olimpus templates <subcommand> --help
+`);
+}
+
+/**
+ * Show templates list help
+ */
+function showTemplatesListHelp(): void {
+  console.log(`
+Usage: olimpus templates list [options]
+
+List all available meta-agent templates, grouped by category.
+
+Templates are organized into categories:
+  language          Language-specific routing patterns
+  workflow          Team workflows and processes
+  team              Team size and structure
+  domain            Domain-specific use cases
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  -v, --verbose     Show additional template details
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates list
+  olimpus templates list --verbose
+  olimpus templates list --config ./my-templates
+`);
+}
+
+/**
  * Show general help
  */
 function showHelp(): void {
@@ -735,6 +885,7 @@ Usage: olimpus <command> [options]
 Commands:
   validate          Validate configuration file
   test              Test routing rules
+  templates         Manage and explore meta-agent templates
 
 Options:
   -h, --help       Show this help message
@@ -742,6 +893,7 @@ Options:
 Examples:
   olimpus validate olimpus.jsonc
   olimpus test olimpus.jsonc
+  olimpus templates list
   olimpus validate --help
 
 For more information on a specific command, run:
@@ -773,6 +925,11 @@ async function main(): Promise<number> {
       name: "test",
       description: "Test routing rules",
       execute: testCommand,
+    },
+    templates: {
+      name: "templates",
+      description: "Manage and explore meta-agent templates",
+      execute: templatesCommand,
     },
   };
 
