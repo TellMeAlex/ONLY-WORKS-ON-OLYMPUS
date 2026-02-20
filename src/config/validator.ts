@@ -439,7 +439,7 @@ class DelegationGraph {
     visited.add(current);
 
     // Check all known delegations from current agent
-    for (const [delegation] of Object.keys(this.delegations)) {
+    for (const delegation of Object.keys(this.delegations)) {
       const [from, next] = delegation.split(":");
       if (from === current && next) {
         if (this.hasCircle(next, target, depth - 1, new Set(visited))) {

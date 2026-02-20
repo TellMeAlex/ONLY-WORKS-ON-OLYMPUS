@@ -2,7 +2,7 @@ import type { MetaAgentDef, RoutingLoggerConfig } from "../config/schema.js";
 import type { RoutingContext } from "./routing.js";
 import { createMetaAgentConfig } from "./meta-agent.js";
 import { RoutingLogger } from "./logger.js";
-import type { AgentConfig } from "@opencode-ai/sdk";
+type AgentConfig = { model?: string; prompt?: string; temperature?: number; variant?: string };
 
 /**
  * Tracks delegation chains to detect circular dependencies

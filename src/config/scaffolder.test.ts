@@ -65,7 +65,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
 
     // Assert
     expect(result).not.toBeNull();
@@ -84,7 +84,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
 
     // Assert
     expect(result?.created).toBe(true);
@@ -105,7 +105,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result?.created).toBe(true);
 
     // Read and parse generated config
@@ -126,7 +126,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result?.created).toBe(true);
 
     // Read and parse generated config
@@ -159,7 +159,7 @@ describe("scaffoldOlimpusConfig", () => {
       projectConfigExists: false,
       userConfigExists: true,
     };
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
 
     // Assert: Should NOT have created (or should return false)
     expect(result?.created).toBe(false);
@@ -177,7 +177,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
 
     // Assert: Should skip generation and return null or created=false
     if (result !== null) {
@@ -198,7 +198,7 @@ describe("scaffoldOlimpusConfig", () => {
       const options: ScaffoldOptions = {
         projectConfigExists: false,
       };
-      const result = scaffoldOlimpusConfig(options);
+      const result = await scaffoldOlimpusConfig(options);
 
       // Should either return null or created=false
       if (result !== null) {
@@ -227,7 +227,7 @@ describe("scaffoldOlimpusConfig", () => {
       const options: ScaffoldOptions = {
         projectConfigExists: false,
       };
-      result = scaffoldOlimpusConfig(options);
+      result = await scaffoldOlimpusConfig(options);
     } catch (e) {
       error = e;
     }
@@ -253,7 +253,7 @@ describe("scaffoldOlimpusConfig", () => {
     logOutput = [];
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
 
     // Assert
     if (result?.created) {
@@ -271,7 +271,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result?.created).toBe(true);
 
     // Read generated config
@@ -299,7 +299,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result?.created).toBe(true);
 
     // Read and parse generated config
@@ -321,7 +321,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result?.created).toBe(true);
 
     // Read and parse generated config
@@ -341,7 +341,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result).not.toBeNull();
 
     // Assert: path should be absolute and end with .jsonc
@@ -359,8 +359,8 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act: Call twice
-    const result1 = scaffoldOlimpusConfig(options);
-    const result2 = scaffoldOlimpusConfig(options);
+    const result1 = await scaffoldOlimpusConfig(options);
+    const result2 = await scaffoldOlimpusConfig(options);
 
     // Assert: First call should create, second should not
     expect(result1?.created).toBe(true);
@@ -374,7 +374,7 @@ describe("scaffoldOlimpusConfig", () => {
     };
 
     // Act
-    const result = scaffoldOlimpusConfig(options);
+    const result = await scaffoldOlimpusConfig(options);
     expect(result?.created).toBe(true);
 
     // Read and parse generated config

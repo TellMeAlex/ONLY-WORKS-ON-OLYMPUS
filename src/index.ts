@@ -1,5 +1,5 @@
 import type { Plugin, PluginInput } from "@opencode-ai/plugin";
-import type { Config } from "@opencode-ai/sdk";
+type Config = Record<string, unknown>;
 import { loadOlimpusConfig } from "./config/loader.js";
 import { extractMetaAgentDefs } from "./config/translator.js";
 import {
@@ -89,7 +89,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
     for (const [agentName] of Object.entries(allMetaAgents)) {
       const agentConfig = registry.resolve(agentName, routingContext);
       if (agentConfig && configInput.agent) {
-        configInput.agent[agentName] = agentConfig;
+        (configInput.agent as Record<string, unknown>)[agentName] = agentConfig;
       }
     }
   };
