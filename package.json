@@ -3,10 +3,17 @@
   "version": "0.2.1",
   "description": "A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules",
   "license": "SUL-1.0",
-  "module": "dist/index.js",
+  "module": "dist-node/index.js",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist-node/index.js",
+  "types": "dist-node/index.d.ts",
+  "exports": {
+    ".": {
+      "bun": "./dist-bun/index.js",
+      "import": "./dist-node/index.js",
+      "default": "./dist-node/index.js"
+    }
+  },
   "keywords": [
     "opencode",
     "plugin",
