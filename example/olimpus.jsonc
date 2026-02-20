@@ -332,7 +332,53 @@
 
     // LSP/AST surgical refactoring (no string replacement)
     "lsp_refactoring_preferred": true,
-    "aggressive_comment_pruning": true      // No AI slop in comments
+    "aggressive_comment_pruning": true,      // No AI slop in comments
+
+    // ========================================================================
+    // EXTENSION: Analytics (NEW)
+    // ========================================================================
+    // Analytics system that tracks routing effectiveness, agent usage patterns,
+    // and matcher performance. All data is stored locally (privacy-focused).
+
+    "analytics": {
+      // Enable/disable analytics tracking
+      "enabled": true,
+
+      // Storage configuration for analytics data
+      "storage": {
+        "type": "file",                       // "memory", "file", or "database"
+        "path": ".olimpus/analytics.json",    // File path for storage
+        "retention_days": 90                  // Days to keep old data
+      },
+
+      // Metrics to track (all optional, defaults shown)
+      "metrics": {
+        "track_routing_decisions": true,      // Track which agents get selected
+        "track_execution_time": true,          // Track time taken per request
+        "track_agent_usage": true,            // Track usage patterns per agent
+        "track_model_costs": true,            // Track token/cost metrics
+        "track_success_rates": true           // Track success/failure rates
+      },
+
+      // Aggregation settings for computing summary metrics
+      "aggregation": {
+        "enabled": true,                      // Enable time-based aggregation
+        "window_minutes": 60,                 // Time window for aggregation
+        "include_percentiles": true           // Include p50/p75/p95/p99
+      }
+    },
+
+    // ========================================================================
+    // EXTENSION: Routing Logger
+    // ========================================================================
+    // Optional routing logger for debugging routing decisions
+
+    "routing_logger": {
+      "enabled": false,                       // Enable routing log output
+      "output": "console",                    // "console", "file", or "disabled"
+      "log_file": ".olimpus/routing.log",     // Path for log file (if output=file)
+      "debug_mode": false                     // Show detailed matcher evaluations
+    }
   },
 
   // ============================================================================

@@ -2,7 +2,8 @@ import type { MetaAgentDef, RoutingLoggerConfig } from "../config/schema.js";
 import type { RoutingContext } from "./routing.js";
 import { createMetaAgentConfig } from "./meta-agent.js";
 import { RoutingLogger } from "./logger.js";
-type AgentConfig = { model?: string; prompt?: string; temperature?: number; variant?: string };
+import type { AgentConfig } from "@opencode-ai/sdk";
+import type { AnalyticsStorage } from "../analytics/storage.js";
 
 /**
  * Tracks delegation chains to detect circular dependencies
@@ -20,9 +21,15 @@ export class MetaAgentRegistry {
   private delegations: DelegationTracker = {};
   private maxDepth: number;
   private logger?: RoutingLogger;
+  private analyticsStorage?: AnalyticsStorage;
 
-  constructor(maxDepth: number = 3, loggerConfig?: RoutingLoggerConfig) {
+  constructor(
+    maxDepth: number = 3,
+    loggerConfig?: RoutingLoggerConfig,
+    analyticsStorage?: AnalyticsStorage,
+  ) {
     this.maxDepth = maxDepth;
+    this.analyticsStorage = analyticsStorage;
     if (loggerConfig) {
       this.logger = new RoutingLogger(loggerConfig);
     }
@@ -75,7 +82,7 @@ export class MetaAgentRegistry {
   checkCircular(
     from: string,
     to: string,
-    maxDepth: number = this.maxDepth
+    maxDepth: number = this.maxDepth,
   ): boolean {
     return this.hasCircle(from, to, maxDepth, new Set());
   }
@@ -92,7 +99,7 @@ export class MetaAgentRegistry {
     current: string,
     target: string,
     depth: number,
-    visited: Set<string>
+    visited: Set<string>,
   ): boolean {
     if (depth <= 0) {
       return false;

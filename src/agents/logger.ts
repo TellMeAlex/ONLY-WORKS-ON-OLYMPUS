@@ -1,7 +1,4 @@
-import type {
-  Matcher,
-  RoutingLoggerConfig,
-} from "../config/schema.js";
+import type { Matcher, RoutingLoggerConfig } from "../config/schema.js";
 import { dirname } from "path";
 import { mkdirSync, appendFileSync } from "fs";
 
@@ -34,7 +31,12 @@ export interface RoutingLogEntry {
  * Includes debug mode for comprehensive evaluation tracking
  */
 export class RoutingLogger {
-  private config: Required<RoutingLoggerConfig>;
+  private config: {
+    enabled: boolean;
+    output: "console" | "file" | "disabled";
+    log_file: string;
+    debug_mode: boolean;
+  };
   private enabled: boolean;
 
   constructor(config: RoutingLoggerConfig = {}) {
@@ -64,7 +66,7 @@ export class RoutingLogger {
       prompt?: string;
       variant?: string;
     },
-    allEvaluations?: MatcherEvaluation[]
+    allEvaluations?: MatcherEvaluation[],
   ): void {
     if (!this.enabled) {
       return;

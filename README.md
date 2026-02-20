@@ -99,93 +99,6 @@ In your project root, create `olimpus.jsonc`:
 
 Full example available in [example/olimpus.jsonc](./example/olimpus.jsonc).
 
-### 4. Build & Development
-
-This package uses a **dual build system** to support both Node.js and Bun runtimes:
-
-- **dist-node/** - Node.js compatible build (via esbuild, main entry point)
-- **dist-bun/** - Bun-optimized build (via Bun bundler)
-
-#### Build Commands
-
-```bash
-# Build everything (Node.js + Bun + schema)
-bun run build
-
-# Build only for Node.js
-bun run build:node
-
-# Build only for Bun
-bun run build:bun
-
-# Type checking
-bun run typecheck
-
-# Regenerate JSON schema
-bun run schema:generate
-
-# Clean rebuild
-bun run rebuild
-```
-
-#### Why Dual Builds?
-
-Bun and Node.js have different runtime capabilities:
-- **Bun**: Direct access to `Bun.*` APIs, better bundling for dependencies like `jsonc-parser`
-- **Node.js**: Standard CommonJS/ESM modules, but Bun's bundling can break require() chains
-
-The esbuild build (dist-node) marks common dependencies as external, letting Node.js module resolution handle them properly. The Bun build keeps everything bundled for maximum performance.
-
-### 5. Continuous Integration / Deployment
-
-This repository uses **GitHub Actions** for automated building, testing, and publishing.
-
-#### Available Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| **build.yml** | Push/PR | Build (Node.js 18.x, 20.x), validate schema |
-| **quality.yml** | Push/PR | TypeScript checks, import validation |
-| **test.yml** | Push/PR | Run test suite |
-| **auto-build-commit.yml** | Push (feature/*) | Auto-compile & commit builds |
-| **publish.yml** | Release/Manual | Publish to GitHub Packages npm |
-
-#### Workflow Status
-
-[![Build & Validate](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/build.yml/badge.svg)](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/build.yml)
-[![Code Quality](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/quality.yml/badge.svg)](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/quality.yml)
-
-#### Local Development Workflow
-
-```bash
-1. Clone and install
-   git clone https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS.git
-   cd ONLY-WORKS-ON-OLYMPUS
-   bun install
-
-2. Make changes
-   # Edit src/**/*.ts
-
-3. Build locally
-   bun run build
-
-4. Commit & push to feature branch
-   git push origin feature/your-feature
-
-5. CI/CD automatically:
-   ✅ Builds (Node.js + Bun)
-   ✅ Type checks
-   ✅ Validates schema
-   ✅ Comments on PR with results
-   ✅ Auto-commits builds (if feature/*)
-
-6. Create PR when ready
-   - CI results will be visible in PR
-   - Merge when green
-```
-
-For more details, see [.github/workflows/README.md](.github/workflows/README.md)
-
 ---
 
 ## Configuration
@@ -232,6 +145,315 @@ Olimpus searches for configuration in this order (first found wins):
   "disabled_hooks": []
 }
 ```
+
+---
+
+## Configuration Validation
+
+Olimpus provides a built-in configuration validator that checks your `olimpus.jsonc` file for errors, circular dependencies, invalid agent references, and performance issues.
+
+### Using the Validator
+
+The `olimpus validate` command checks your configuration file and reports any issues:
+
+```bash
+# Validate your configuration file
+bun run olimpus validate olimpus.jsonc
+
+# Validate an example configuration
+bun run olimpus validate ./example/olimpus.jsonc
+
+# Show help
+bun run olimpus validate --help
+
+# Or use the direct path
+bun run bin/olimpus.ts validate olimpus.jsonc
+```
+
+### What Gets Validated
+
+#### 1. Circular Dependencies
+Detects when meta-agents delegate to each other in a loop, which would cause infinite routing:
+
+```jsonc
+// ❌ INVALID - Circular dependency
+{
+  "meta_agents": {
+    "agent_a": {
+      "delegates_to": ["agent_b"],
+      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "agent_b" }]
+    },
+    "agent_b": {
+      "delegates_to": ["agent_a"],
+      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "agent_a" }]
+    }
+  }
+}
+```
+
+```
+Error: Circular dependency detected: "agent_a" can route to "agent_b" which can route back to "agent_a"
+```
+
+#### 2. Invalid Agent References
+Verifies that all referenced agents are either builtin agents or other defined meta-agents:
+
+```jsonc
+// ❌ INVALID - Unknown agent
+{
+  "meta_agents": {
+    "my_agent": {
+      "delegates_to": ["oracle", "unknown_agent"],
+      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "unknown_agent" }]
+    }
+  }
+}
+```
+
+```
+Error: Invalid agent reference: "unknown_agent" is not a recognized agent.
+Valid agents are: sisyphus, hephaestus, oracle, librarian, explore, multimodal-looker, metis, momus, atlas, prometheus
+```
+
+#### 3. Regex Performance Warnings
+Analyzes regex patterns in routing rules for potential performance anti-patterns:
+
+```jsonc
+// ⚠️ WARNING - Nested quantifiers
+{
+  "meta_agents": {
+    "my_agent": {
+      "routing_rules": [{
+        "matcher": {
+          "type": "regex",
+          "pattern": "(a+)+"  // Nested quantifier - can cause catastrophic backtracking
+        },
+        "target_agent": "oracle"
+      }]
+    }
+  }
+}
+```
+
+```
+Warning: Regex pattern may cause performance issues: Nested quantifiers can cause catastrophic backtracking
+```
+
+### Valid Configuration Output
+
+When your configuration is valid, you'll see:
+
+```
+📋 Validating: olimpus.jsonc
+
+✅ Configuration is valid. No errors or warnings found.
+```
+
+### Exit Codes
+
+- `0` - Configuration is valid
+- `1` - Configuration has errors or validation failed
+
+### Integration with Development Workflow
+
+Add validation to your development workflow to catch configuration errors early:
+
+```bash
+# Run validation before committing
+bun run olimpus validate olimpus.jsonc
+
+# Or use in CI/CD pipelines
+bun run olimpus validate olimpus.jsonc || exit 1
+```
+
+---
+
+## Analytics
+
+Olimpus provides a built-in analytics system that tracks routing effectiveness, agent usage patterns, and matcher performance. All data is stored locally with no external telemetry.
+
+### What Analytics Tracks
+
+- **Routing decisions**: Which agents get selected for each request
+- **Agent usage patterns**: How frequently each agent is used
+- **Matcher effectiveness**: Which matchers are firing and their success rates
+- **Unmatched requests**: Requests that don't match any routing rule
+- **Execution metrics**: Time taken per request and success/failure rates
+
+### Enabling Analytics
+
+Add the analytics configuration to your `olimpus.jsonc`:
+
+```jsonc
+{
+  "settings": {
+    "analytics": {
+      "enabled": true,
+
+      "storage": {
+        "type": "file",
+        "path": ".olimpus/analytics.json",
+        "retention_days": 90
+      },
+
+      "metrics": {
+        "track_routing_decisions": true,
+        "track_execution_time": true,
+        "track_agent_usage": true,
+        "track_model_costs": true,
+        "track_success_rates": true
+      },
+
+      "aggregation": {
+        "enabled": true,
+        "window_minutes": 60,
+        "include_percentiles": true
+      }
+    }
+  }
+}
+```
+
+### Configuration Options
+
+#### Storage
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `type` | `"memory"` \| `"file"` | `"file"` | Storage backend type |
+| `path` | `string` | `".olimpus/analytics.json"` | File path for JSON storage |
+| `retention_days` | `number` | `90` | Days to keep old data |
+
+#### Metrics
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `track_routing_decisions` | `boolean` | `true` | Track agent selection |
+| `track_execution_time` | `boolean` | `true` | Track request duration |
+| `track_agent_usage` | `boolean` | `true` | Track usage patterns per agent |
+| `track_model_costs` | `boolean` | `true` | Track token/cost metrics |
+| `track_success_rates` | `boolean` | `true` | Track success/failure rates |
+
+#### Aggregation
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `enabled` | `boolean` | `true` | Enable time-based aggregation |
+| `window_minutes` | `number` | `60` | Time window for aggregation |
+| `include_percentiles` | `boolean` | `true` | Include p50/p75/p95/p99 |
+
+### CLI Commands
+
+Olimpus provides CLI commands for managing analytics data:
+
+#### Show Analytics Dashboard
+
+Display analytics metrics and routing statistics:
+
+```bash
+# Show analytics dashboard
+bun run olimpus analytics show
+
+# Or using the direct path
+./bin/olimpus.ts analytics show
+```
+
+This displays:
+- Total events and routing decisions
+- Unmatched requests count
+- Top agents by usage
+- Top matchers by effectiveness
+- Date range of collected data
+
+#### Export Analytics Data
+
+Export analytics data in JSON or CSV format:
+
+```bash
+# Export as JSON to stdout
+bun run olimpus analytics export json
+
+# Save to file
+bun run olimpus analytics export json > analytics.json
+
+# Export as CSV to stdout
+bun run olimpus analytics export csv
+
+# Save to file
+bun run olimpus analytics export csv > analytics.csv
+```
+
+##### JSON Export Format
+
+```json
+{
+  "routing_decisions": [
+    {
+      "timestamp": "2024-01-20T10:30:00.000Z",
+      "type": "routing_decision",
+      "target_agent": "oracle",
+      "matcher_type": "complexity",
+      "matched_content": "high",
+      "user_request": "Analyze the system architecture",
+      "meta_agent": "atenea"
+    }
+  ],
+  "unmatched_requests": [
+    {
+      "timestamp": "2024-01-20T11:00:00.000Z",
+      "type": "unmatched_request",
+      "user_request": "Some request that didn't match",
+      "meta_agent": "atenea"
+    }
+  ],
+  "aggregated_metrics": {
+    "total_events": 150,
+    "agent_usage": { "oracle": 75, "sisyphus": 50, "librarian": 25 },
+    "matcher_effectiveness": {
+      "complexity": { "evaluations": 100, "matches": 80 },
+      "keyword": { "evaluations": 50, "matches": 35 }
+    }
+  }
+}
+```
+
+##### CSV Export Format
+
+```csv
+timestamp,type,target_agent,matcher_type,matched_content,user_request,meta_agent
+2024-01-20T10:30:00.000Z,routing_decision,oracle,complexity,high,"Analyze the system architecture",atenea
+2024-01-20T11:00:00.000Z,unmatched_request,,,,,"Some request that didn't match",atenea
+```
+
+#### Clear Analytics Data
+
+Clear all analytics data from storage:
+
+```bash
+# Clear analytics
+bun run olimpus analytics clear
+
+# Or using the direct path
+./bin/olimpus.ts analytics clear
+```
+
+**Warning**: This permanently deletes all collected analytics data.
+
+### Using Analytics Data
+
+Analytics data helps optimize your routing configuration:
+
+1. **Identify top agents**: See which agents are used most frequently
+2. **Find unmatched requests**: Add new matchers for requests that fall through
+3. **Evaluate matcher effectiveness**: Remove or adjust underperforming matchers
+4. **Track success rates**: Identify agents that may need configuration tweaks
+
+### Privacy
+
+- All analytics data is stored **locally** on your machine
+- No data is sent to external services or servers
+- Storage location is configurable (default: `.olimpus/analytics.json`)
+- Data retention can be configured with automatic pruning
 
 ---
 
@@ -418,6 +640,19 @@ bun run typecheck
 
 # Watch mode
 bun run watch
+```
+
+### Validate Configuration
+
+```bash
+# Validate your configuration file
+bun run olimpus validate olimpus.jsonc
+
+# Validate example configuration
+bun run olimpus validate ./example/olimpus.jsonc
+
+# Show help
+bun run olimpus validate --help
 ```
 
 ### Test
@@ -665,9 +900,24 @@ Response
 Warning: No olimpus.jsonc found. Using defaults.
 ```
 
-**Solution**: 
+**Solution**:
 - Create `olimpus.jsonc` in project root or `~/.config/opencode/`
+- Validate your configuration: `bun run olimpus validate olimpus.jsonc`
 - Check file syntax with `bun run typecheck`
+
+### Validation Errors
+
+```
+Error: Circular dependency detected: atenea → hermes → atenea
+Error: Invalid agent reference: "unknown_agent" is not a recognized agent
+Warning: Regex pattern may cause performance issues: Nested quantifiers can cause catastrophic backtracking
+```
+
+**Solution**:
+- Run `bun run olimpus validate olimpus.jsonc` to get detailed error messages
+- Fix circular dependencies by removing or re-routing delegation chains
+- Ensure all agent references are either builtin agents or defined meta-agents
+- Consider simplifying regex patterns that trigger performance warnings
 
 ### Routing Not Matching
 
@@ -765,6 +1015,15 @@ import { loadOlimpusConfig } from "olimpus-plugin/config/loader";
 
 const config = loadOlimpusConfig(projectDir);
 ```
+
+---
+
+## Documentation
+
+- [API Reference](./docs/API.md) - Complete API documentation
+- [Tutorials](./docs/tutorials/) - Step-by-step guides for common tasks
+- [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
+- [Migration Guide](./docs/migration.md) - Upgrading from previous versions
 
 ---
 
