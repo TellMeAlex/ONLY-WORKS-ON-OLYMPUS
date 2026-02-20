@@ -3,13 +3,13 @@
   "spec": "012-performance-metrics-export",
   "state": "building",
   "subtasks": {
-    "completed": 3,
+    "completed": 6,
     "total": 9,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Prometheus Export",
+    "current": "Metrics Server",
     "id": null,
     "total": 2
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 5,
+    "number": 8,
     "started_at": "2026-02-20T17:00:26.989244"
   },
-  "last_update": "2026-02-20T17:34:05.602799"
+  "last_update": "2026-02-20T17:47:46.655424"
 }
