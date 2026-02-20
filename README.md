@@ -136,6 +136,56 @@ Bun and Node.js have different runtime capabilities:
 
 The esbuild build (dist-node) marks common dependencies as external, letting Node.js module resolution handle them properly. The Bun build keeps everything bundled for maximum performance.
 
+### 5. Continuous Integration / Deployment
+
+This repository uses **GitHub Actions** for automated building, testing, and publishing.
+
+#### Available Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **build.yml** | Push/PR | Build (Node.js 18.x, 20.x), validate schema |
+| **quality.yml** | Push/PR | TypeScript checks, import validation |
+| **test.yml** | Push/PR | Run test suite |
+| **auto-build-commit.yml** | Push (feature/*) | Auto-compile & commit builds |
+| **publish.yml** | Release/Manual | Publish to GitHub Packages npm |
+
+#### Workflow Status
+
+[![Build & Validate](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/build.yml/badge.svg)](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/build.yml)
+[![Code Quality](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/quality.yml/badge.svg)](https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/actions/workflows/quality.yml)
+
+#### Local Development Workflow
+
+```bash
+1. Clone and install
+   git clone https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS.git
+   cd ONLY-WORKS-ON-OLYMPUS
+   bun install
+
+2. Make changes
+   # Edit src/**/*.ts
+
+3. Build locally
+   bun run build
+
+4. Commit & push to feature branch
+   git push origin feature/your-feature
+
+5. CI/CD automatically:
+   ✅ Builds (Node.js + Bun)
+   ✅ Type checks
+   ✅ Validates schema
+   ✅ Comments on PR with results
+   ✅ Auto-commits builds (if feature/*)
+
+6. Create PR when ready
+   - CI results will be visible in PR
+   - Merge when green
+```
+
+For more details, see [.github/workflows/README.md](.github/workflows/README.md)
+
 ---
 
 ## Configuration
