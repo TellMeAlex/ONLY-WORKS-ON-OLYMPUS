@@ -12,6 +12,8 @@
  *   olimpus templates list --help      Show help for templates list command
  *   olimpus templates preview <name>   Preview a template
  *   olimpus templates preview --help   Show help for templates preview command
+ *   olimpus templates apply <name>    Apply a template to your config
+ *   olimpus templates apply --help    Show help for templates apply command
  *   olimpus --help                    Show general help
  */
 
@@ -746,6 +748,8 @@ async function templatesCommand(args: string[]): Promise<number> {
     return templatesListCommand(subcommandArgs);
   } else if (subcommand === "preview") {
     return templatesPreviewCommand(subcommandArgs);
+  } else if (subcommand === "apply") {
+    return templatesApplyCommand(subcommandArgs);
   } else {
     console.error(`\n❌ Unknown templates subcommand: ${subcommand}\n`);
     console.log("Run 'olimpus templates --help' for available subcommands.\n");
@@ -837,6 +841,7 @@ Manage and explore meta-agent templates.
 Subcommands:
   list              List all available templates
   preview           Preview a specific template
+  apply             Apply a template to your configuration
 
 Options:
   -h, --help       Show this help message
@@ -844,8 +849,8 @@ Options:
 Examples:
   olimpus templates list
   olimpus templates preview python-dev
+  olimpus templates apply python-dev --dry-run
   olimpus templates list --config ./custom/templates
-  olimpus templates preview python-dev --verbose
 
 For more information on a specific subcommand, run:
   olimpus templates <subcommand> --help
@@ -990,6 +995,148 @@ Examples:
   olimpus templates preview python-dev
   olimpus templates preview solo-developer --verbose
   olimpus templates preview data-pipeline --config ./my-templates
+`);
+}
+
+/**
+ * Templates apply subcommand handler
+ */
+function templatesApplyCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesApplyHelp();
+    return 0;
+  }
+
+  try {
+    // Get template name from positional arguments
+    let templateName: string | undefined;
+    if (options.positional.length > 0) {
+      templateName = options.positional[0];
+    } else {
+      console.error(`\n❌ Template name is required\n`);
+      showTemplatesApplyHelp();
+      return 1;
+    }
+
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+
+    if (!templates[templateName]) {
+      console.error(`\n❌ Template not found: ${templateName}\n`);
+      console.log("Run 'olimpus templates list' to see available templates.\n");
+      return 1;
+    }
+
+    const template = templates[templateName];
+
+    console.log(`\n📋 Applying template: ${template.name}\n`);
+    console.log(`Category: ${template.category}`);
+    console.log(`Description: ${template.description}`);
+    console.log();
+
+    if (template.meta_agent) {
+      console.log(`Meta-Agent Configuration:\n`);
+      console.log(`  Base Model: ${template.meta_agent.base_model}`);
+
+      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
+        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      }
+
+      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
+        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+        console.log();
+        console.log(`  Summary of routing rules:`);
+        for (let i = 0; i < template.meta_agent.routing_rules.length; i++) {
+          const rule = template.meta_agent.routing_rules[i];
+          console.log(`    ${i + 1}. ${rule.matcher.type} → ${rule.target_agent}`);
+        }
+      }
+
+      if (template.meta_agent.prompt_template) {
+        const preview = template.meta_agent.prompt_template.slice(0, 100);
+        console.log();
+        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+      }
+
+      console.log();
+    }
+
+    if (options.dryRun) {
+      console.log(`🔍 Dry-run mode - no changes made\n`);
+      console.log(`To apply this template to your configuration:\n`);
+      console.log(`  1. Create or open your olimpus.jsonc file`);
+      console.log(`  2. Add the meta_agent configuration from this template`);
+      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log();
+    } else {
+      console.log(`✅ Template ready to apply\n`);
+      console.log(`To apply this template to your configuration:\n`);
+      console.log(`  1. Create or open your olimpus.jsonc file`);
+      console.log(`  2. Add the meta_agent configuration from this template`);
+      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log(`  4. Run 'olimpus validate olimpus.jsonc' to verify your configuration`);
+      console.log();
+    }
+
+    if (template.documentation) {
+      console.log(`Documentation:\n  ${template.documentation}\n`);
+    }
+
+    if (template.examples && template.examples.length > 0) {
+      console.log(`Examples:`);
+      for (const example of template.examples) {
+        console.log(`  • ${example}`);
+      }
+      console.log();
+    }
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates apply help
+ */
+function showTemplatesApplyHelp(): void {
+  console.log(`
+Usage: olimpus templates apply <template-name> [options]
+
+Apply a meta-agent template to your configuration. Shows what configuration
+would be added without making any changes to your files.
+
+Arguments:
+  <template-name>  Name of the template to apply
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  --dry-run         Show what would be applied without making changes
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates apply python-dev
+  olimpus templates apply python-dev --dry-run
+  olimpus templates apply small-team --config ./my-templates
+
+Note:
+  This command only shows what would be applied. You must manually add the
+  configuration to your olimpus.jsonc file. See the preview output for the
+  exact meta_agent configuration to add.
 `);
 }
 
