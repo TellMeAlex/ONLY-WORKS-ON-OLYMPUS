@@ -23,7 +23,7 @@
   // For Olimpo, include only "olimpus" plugin.
   
   "plugin": [
-    "olimpus"
+    "@TellMeAlex/only-works-on-olympus"
   ],
 
   // ============================================================================
