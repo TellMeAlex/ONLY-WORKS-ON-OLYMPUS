@@ -1,1 +1,0 @@
-{"meta_agents":{"router":{"base_model":"claude-3-5-sonnet","delegates_to":["sisyphus"],"routing_rules":[{"matcher":{"type":"always"},"target_agent":"sisyphus"}]}}}
