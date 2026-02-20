@@ -1,0 +1,307 @@
+{
+  // ============================================================================
+  // Refactor Workflow Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for refactoring tasks.
+  // It handles code cleanup, architectural improvements, design pattern
+  // implementation, and systematic refactoring strategies while maintaining
+  // functionality.
+
+  "name": "refactor",
+  "description": "Specialized meta-agent for refactoring workflows including code cleanup, architectural improvements, design pattern implementation, and systematic refactoring strategies",
+  "category": "workflow",
+  "tags": ["refactor", "refactoring", "cleanup", "improve", "restructure", "reorganize", "optimize", "design pattern", "architecture"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "oracle", "atlas", "prometheus", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Code Cleanup and Modernization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["cleanup", "clean up", "modernize", "update", "upgrade", "deprecate", "replace"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a code cleanup specialist. Clean up the code by removing deprecated patterns, updating to modern syntax, eliminating dead code, removing unused imports, and improving overall code hygiene while preserving functionality.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Design Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pattern", "design pattern", "factory", "singleton", "observer", "strategy", "decorator", "adapter", "builder", "iterator", "state", "command"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a design pattern expert. Apply appropriate design patterns to improve code structure. Explain why the pattern is suitable, show the refactored implementation, and ensure the pattern is used correctly (not forced where inappropriate)."
+        }
+      },
+
+      // ========================================================================
+      // SOLID Principles
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["solid", "single responsibility", "open closed", "liskov", "interface segregation", "dependency inversion"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a SOLID principles expert. Refactor the code to follow SOLID principles:\n- Single Responsibility: Each class/function has one reason to change\n- Open/Closed: Open for extension, closed for modification\n- Liskov Substitution: Subtypes must be substitutable\n- Interface Segregation: Many specific interfaces, not one general\n- Dependency Inversion: Depend on abstractions, not concretions"
+        }
+      },
+
+      // ========================================================================
+      // Extract and Organize
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["extract", "extract function", "extract class", "extract variable", "inline", "simplify", "reduce complexity"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a code organization specialist. Extract functions, classes, or variables to improve code organization. Apply Extract Method, Extract Class, Inline Method, and other Fowler refactoring patterns. Reduce cyclomatic complexity and improve readability."
+        }
+      },
+
+      // ========================================================================
+      // Type Safety Improvements
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["typescript", "type safety", "add types", "strict", "type definition", "interface", "type"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TypeScript refactoring specialist. Improve type safety by adding proper types, interfaces, and type guards. Remove 'any' types, leverage type inference, and ensure strict TypeScript compliance. Use utility types where appropriate.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Performance Optimization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "optimize", "speed", "faster", "bottleneck", "inefficient", "algorithm"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a performance optimization specialist. Identify and fix performance bottlenecks. Optimize algorithms, reduce time complexity, improve data structure choices, minimize unnecessary computations, and apply caching where appropriate. Profile before and after to measure improvement."
+        }
+      },
+
+      // ========================================================================
+      // DRY (Don't Repeat Yourself)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["duplicate", "duplication", "dry", "repeated", "repetitive", "copy paste"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a DRY principle specialist. Identify and eliminate code duplication. Extract common logic into reusable functions, classes, or modules. Ensure each piece of logic exists in exactly one place."
+        }
+      },
+
+      // ========================================================================
+      // Architectural Refactoring
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["architecture", "architectural", "structure", "module", "layer", "separation", "coupling", "cohesion"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are an architectural refactoring specialist. Improve code architecture by reducing coupling, increasing cohesion, separating concerns, and organizing modules properly. Apply layered architecture, clean architecture, or hexagonal architecture patterns as appropriate."
+        }
+      },
+
+      // ========================================================================
+      // Testing and Testability Improvements
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["testable", "mock", "stub", "dependency injection", "test coverage", "unit test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a testability refactoring specialist. Refactor code to improve testability. Apply dependency injection to enable mocking, separate pure functions from side effects, extract pure logic, and structure code for easy unit testing.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Error Handling Improvements
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["error handling", "exception", "try catch", "error propagation", "graceful", "robust"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an error handling specialist. Refactor error handling to be consistent, comprehensive, and graceful. Use proper exception hierarchies, meaningful error messages, appropriate error recovery strategies, and avoid silent failures.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Naming and Readability
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["rename", "naming", "readable", "readability", "confusing", "unclear", "meaningful names"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a code readability specialist. Improve code through better naming. Rename variables, functions, and classes to be descriptive and self-documenting. Remove magic numbers and strings, use named constants, and make the code intent clear.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Function Composition and Functional Programming
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["functional", "pure", "immutable", "compose", "map", "filter", "reduce", "pipeline"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a functional programming specialist. Refactor code toward functional programming principles: pure functions, immutability, function composition, and pipelines. Use map/filter/reduce instead of loops where appropriate, and avoid side effects."
+        }
+      },
+
+      // ========================================================================
+      // API/Interface Refactoring
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["api", "interface", "endpoint", "rest", "graphql", "contract", "schema"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are an API refactoring specialist. Improve API design by applying REST principles, proper HTTP semantics, consistent naming, proper pagination, filtering, and sorting. Ensure backward compatibility when changing public APIs."
+        }
+      },
+
+      // ========================================================================
+      // Project Context-Based Refactoring
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["vitest", "jest", "bun:test", "mocha"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a test-driven refactoring specialist. Refactor code using a test-driven approach:\n1. Ensure existing tests pass\n2. Add tests for behavior being preserved\n3. Make small, verified refactorings\n4. Run tests after each change\n5. Ensure no regression\nUse tests as a safety net for confident refactoring.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Complexity Reduction
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["complex", "complicated", "complexity", "simplify", "reduce", "simplification"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a complexity reduction specialist. Reduce code complexity by:\n- Extracting smaller, focused functions\n- Reducing nesting levels\n- Simplifying conditionals\n- Eliminating deep branches\n- Reducing parameter counts\n- Breaking down large functions\nMeasure complexity before and after refactoring."
+        }
+      },
+
+      // ========================================================================
+      // Documentation Improvements
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["document", "documentation", "comment", "javadoc", "docstring", "readme"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a code documentation specialist. Improve code documentation by adding clear, concise comments for complex logic, documenting function contracts (parameters, return values, exceptions), and updating README/API docs. Focus on 'why' not 'what' - code should be self-documenting.",
+          "variant": "refactor"
+        }
+      },
+
+      // ========================================================================
+      // Database/Data Layer Refactoring
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["database", "query", "sql", "orm", "migration", "schema", "data access"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a data layer refactoring specialist. Optimize database queries, improve schema design, apply proper indexing, use transactions correctly, separate data access logic, and consider N+1 query problems. Balance normalization with performance."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Refactoring
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a refactoring specialist. Analyze the code for improvement opportunities and propose refactoring strategies. Focus on maintainability, readability, performance, and adherence to best practices. Always ensure refactored code preserves existing functionality."
+        }
+      }
+    ],
+
+    "prompt_template": "Refactoring Task: {input}\n\nProvide:\n- Current code analysis\n- Refactoring opportunities\n- Proposed improvements\n- Step-by-step refactoring plan\n- Preserved functionality verification\n\nApproach:\n1. Analyze current code structure\n2. Identify improvement opportunities\n3. Plan incremental refactoring steps\n4. Implement changes carefully\n5. Verify functionality is preserved"
+  },
+
+  "documentation": "This meta-agent template is designed for systematic refactoring workflows. It automatically detects refactoring needs (cleanup, design patterns, SOLID principles, performance optimization, complexity reduction) and routes to appropriate specialized agents. It emphasizes test-driven refactoring, incremental improvements, and preservation of functionality while improving code quality.",
+  "examples": [
+    "Refactor this function to follow SOLID principles",
+    "Extract common logic into reusable functions",
+    "Improve type safety by adding TypeScript types",
+    "Reduce complexity in this large function",
+    "Apply the Strategy pattern to these conditional statements"
+  ]
+}

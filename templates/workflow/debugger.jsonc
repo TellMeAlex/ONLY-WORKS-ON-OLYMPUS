@@ -1,0 +1,226 @@
+{
+  // ============================================================================
+  // Debugger Workflow Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for debugging tasks.
+  // It handles error analysis, root cause investigation, log analysis, and
+  // systematic debugging strategies across various programming languages and
+  // environments.
+
+  "name": "debugger",
+  "description": "Specialized meta-agent for debugging workflows including error analysis, root cause investigation, log analysis, and systematic debugging strategies",
+  "category": "workflow",
+  "tags": ["debug", "debugging", "error", "bug", "fix", "troubleshoot", "trace", "log", "stacktrace"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "oracle", "explore", "librarian", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Error Type Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["null pointer", "nullpointer", "undefined", "nullreference", "npe"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a null reference debugging expert. Analyze the code for null/undefined access patterns. Identify where null checks are missing, explain proper null handling patterns (optional chaining, nullish coalescing, explicit checks), and provide defensive programming strategies."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["race condition", "deadlock", "concurrency", "thread", "mutex", "lock", "async", "await", "promise"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a concurrency debugging expert. Analyze the code for race conditions, deadlocks, or async/await issues. Identify shared state access, explain proper synchronization patterns, and provide thread-safe implementations."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["type error", "typeerror", "typescript", "type mismatch", "any type"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a type error debugging expert. Analyze TypeScript type errors. Explain why the type system is complaining, provide correct type definitions, and suggest strict type checking improvements."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["network", "http", "api", "fetch", "request", "response", "connection", "timeout"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a network debugging expert. Analyze HTTP requests, API responses, connection issues, timeouts, and network-related errors. Provide guidance on retry strategies, error handling, and request debugging techniques."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["memory", "leak", "heap", "garbage", "oom", "out of memory"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a memory debugging expert. Analyze code for memory leaks, excessive allocations, or GC issues. Identify retained references, explain memory management patterns, and provide optimization strategies."
+        }
+      },
+
+      // ========================================================================
+      // Stack Trace Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["stack trace", "stacktrace", "traceback", "call stack", "frame"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are a stack trace analysis expert. Parse and interpret the stack trace. Identify the root cause location, explain the call sequence, and pinpoint the exact line and function causing the error."
+        }
+      },
+
+      // ========================================================================
+      // Log Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["log", "logging", "console", "error log", "debug log", "stdout", "stderr"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are a log analysis expert. Analyze logs to identify error patterns, trace execution flow, and correlate events. Extract relevant information, identify sequences, and spot anomalies."
+        }
+      },
+
+      // ========================================================================
+      // Debug Strategy - Systematic Approaches
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["debug", "debugging", "fix", "bug", "issue", "problem", "not working"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a systematic debugger. Follow a methodical debugging approach:\n1. Reproduce the issue consistently\n2. Isolate the problem area\n3. Add targeted logging/debugging\n4. Formulate hypotheses\n5. Test hypotheses\n6. Verify the fix\n7. Add tests to prevent regression",
+          "variant": "debugging"
+        }
+      },
+
+      // ========================================================================
+      // Code Search for Debugging Context
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["find where", "locate", "search for", "where is defined", "implementation"],
+          "mode": "any"
+        },
+        "target_agent": "explore",
+        "config_overrides": {
+          "prompt": "You are a code search specialist for debugging. Search the codebase to find function definitions, variable declarations, implementation details, and related code that may be causing the issue. Provide context about how the code is used."
+        }
+      },
+
+      // ========================================================================
+      // Documentation/Reference for Debugging
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["docs", "documentation", "guide", "how to debug", "best practice"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are a debugging documentation specialist. Search for debugging guides, best practices, tool documentation, and troubleshooting resources related to the issue at hand."
+        }
+      },
+
+      // ========================================================================
+      // Project Context-Based Debugging
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["vitest", "jest", "bun:test", "mocha", "cypress", "playwright"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a test-driven debugger. Use existing tests to reproduce the issue, write failing tests for the bug, then implement the fix. Ensure the fix passes all tests and doesn't break existing functionality.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Performance Debugging
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["slow", "performance", "lag", "timeout", "optimize", "bottleneck"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a performance debugging expert. Analyze code for performance bottlenecks, inefficient algorithms, unnecessary computations, slow I/O, or expensive operations. Profile the code and provide optimization strategies."
+        }
+      },
+
+      // ========================================================================
+      // Regression/Breakage Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["regression", "broke", "used to work", "stopped working", "after change"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are a regression analysis expert. Identify what changed that caused the breakage. Compare before/after states, analyze git history, examine recent changes, and pinpoint the commit or code change that introduced the bug."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Debugging
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a debugging assistant. Help diagnose and resolve issues by analyzing the problem, examining relevant code, identifying root causes, and providing fix suggestions. Be methodical and explain your reasoning clearly."
+        }
+      }
+    ],
+
+    "prompt_template": "Debugging Task: {input}\n\nProvide:\n- Root cause analysis\n- Systematic debugging approach\n- Code examination and diagnosis\n- Fix implementation\n- Prevention strategies\n\nApproach:\n1. Understand the problem\n2. Examine relevant code\n3. Identify the root cause\n4. Propose and implement a fix\n5. Verify the solution"
+  },
+
+  "documentation": "This meta-agent template is designed for systematic debugging workflows. It automatically detects error types (null references, race conditions, type errors, network issues, memory leaks), analyzes stack traces and logs, and routes to appropriate specialized agents. It emphasizes methodical debugging strategies, root cause analysis, and regression prevention.",
+  "examples": [
+    "Debug this null pointer error in the user service",
+    "Analyze this stack trace and find the root cause",
+    "Fix the race condition in the payment processing",
+    "Why is this API request timing out?",
+    "Debug the memory leak in the dashboard component"
+  ]
+}
