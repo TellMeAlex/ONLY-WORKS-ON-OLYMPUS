@@ -1,5 +1,5 @@
 import type { PluginInput, Hooks } from "@opencode-ai/plugin";
-import type { Config } from "@opencode-ai/sdk";
+type Config = Record<string, unknown>;
 import OhMyOpenCodePlugin from "oh-my-opencode";
 import {
   translateToOMOConfig,

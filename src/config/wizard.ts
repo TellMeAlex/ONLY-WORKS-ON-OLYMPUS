@@ -14,6 +14,7 @@ import {
   type PromptOption,
   type OptionsPrompt,
   type SimplePrompt,
+  type WizardPrompt,
   WIZARD_PROMPTS,
   PROJECT_TYPES,
   META_AGENT_PRESETS,
@@ -25,6 +26,8 @@ import {
   getProviderModel,
   type ProjectTypeId,
 } from "./prompts.js";
+
+export type { WizardAnswers };
 
 /**
  * Config template for a specific project type
@@ -502,7 +505,7 @@ async function selectOption(
       continue;
     }
 
-    return options[num - 1];
+    return options[num - 1]!;
   }
 }
 
@@ -569,7 +572,7 @@ async function selectMultipleOptions(
     }
   }
 
-  return Array.from(selected).map<number, PromptOption>((i) => options[i]);
+  return Array.from(selected).map<PromptOption>((i) => options[i]!);
 }
 
 /**
@@ -581,7 +584,7 @@ async function askText(
   defaultValue?: string,
 ): Promise<string> {
   const promptObj: WizardPrompt =
-    WIZARD_PROMPTS[promptId as keyof typeof WIZARD_PROMPTS];
+    WIZARD_PROMPTS[promptId as keyof typeof WIZARD_PROMPTS] as WizardPrompt;
   if (!isSimplePrompt(promptObj) || typeof promptObj.message === "function") {
     throw new Error(`Prompt "${promptId}" is not a simple text prompt`);
   }
@@ -603,7 +606,7 @@ async function showMessage(
   ...args: unknown[]
 ): Promise<void> {
   const promptObj: WizardPrompt =
-    WIZARD_PROMPTS[promptId as keyof typeof WIZARD_PROMPTS];
+    WIZARD_PROMPTS[promptId as keyof typeof WIZARD_PROMPTS] as WizardPrompt;
   if (!isSimplePrompt(promptObj)) {
     throw new Error(`Prompt "${promptId}" is not a simple prompt`);
   }
@@ -834,12 +837,14 @@ function buildConfig(answers: WizardAnswers): OlimpusConfig {
 
   // Build agents configuration: start with template defaults, then merge with models
   const agents: NonNullable<OlimpusConfig["agents"]> = {
-    ...projectTemplate.defaultAgents,
+    ...(projectTemplate.defaultAgents as NonNullable<OlimpusConfig["agents"]>),
   };
 
   // Update all agents to use the selected primary model
   for (const agentId in agents) {
-    agents[agentId].model = primaryModel;
+    if (agents[agentId]) {
+      agents[agentId]!.model = primaryModel;
+    }
   }
 
   // Build categories: apply primary model if not specified in template

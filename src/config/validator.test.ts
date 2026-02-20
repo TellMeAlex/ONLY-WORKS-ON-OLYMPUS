@@ -318,6 +318,7 @@ describe("circular dependency", () => {
           },
         },
         settings: {
+          namespace_prefix: "test",
           max_delegation_depth: 2,
         },
         agents: {},
@@ -751,14 +752,13 @@ describe("circular dependency", () => {
       });
 
       test("detects nested quantifiers - (.*)*", () => {
-        // Arrange
         const metaAgents: Record<string, MetaAgentDef> = {
           router: {
             base_model: "claude-3-5-sonnet",
             delegates_to: [],
             routing_rules: [
               {
-                matcher: { type: "regex", pattern: "(.*)" },
+                matcher: { type: "regex", pattern: "(.*)*" },
                 target_agent: "sisyphus",
               },
             ],
@@ -1143,7 +1143,7 @@ describe("circular dependency", () => {
                 target_agent: "sisyphus",
               },
               {
-                matcher: { type: "contains", value: "test" },
+                matcher: { type: "contains", value: "test" } as any,
                 target_agent: "hephaestus",
               },
             ],
@@ -1173,7 +1173,7 @@ describe("circular dependency", () => {
                 target_agent: "hephaestus",
               },
               {
-                matcher: { type: "contains", value: "test" },
+                matcher: { type: "contains", value: "test" } as any,
                 target_agent: "oracle",
               },
             ],
@@ -1185,7 +1185,7 @@ describe("circular dependency", () => {
 
         // Assert
         expect(warnings.length).toBe(1);
-        expect(warnings[0].pattern).toBe("(a+)+");
+        expect(warnings[0]!.pattern).toBe("(a+)+");
       });
     });
 
@@ -1309,7 +1309,7 @@ describe("circular dependency", () => {
         // Assert
         expect(result.passed).toBe(true);
         expect(result.warnings.length).toBe(1);
-        expect(result.warnings[0].pattern).toBe("(a+)+");
+        expect(result.warnings[0]!.pattern).toBe("(a+)+");
       });
     });
 
@@ -1480,7 +1480,7 @@ describe("circular dependency", () => {
                   target_agent: "sisyphus",
                 },
                 {
-                  matcher: { type: "contains", value: "test" },
+                  matcher: { type: "contains", value: "test" } as any,
                   target_agent: "hephaestus",
                 },
                 {
@@ -1569,6 +1569,7 @@ describe("circular dependency", () => {
             },
           },
           settings: {
+            namespace_prefix: "test",
             max_delegation_depth: 10,
           },
           agents: {},
@@ -1593,7 +1594,7 @@ describe("circular dependency", () => {
               delegates_to: ["sisyphus", "hephaestus"],
               routing_rules: [
                 {
-                  matcher: { type: "contains", value: "build" },
+                  matcher: { type: "contains", value: "build" } as any,
                   target_agent: "hephaestus",
                 },
                 {
@@ -1607,7 +1608,7 @@ describe("circular dependency", () => {
               delegates_to: ["oracle", "librarian"],
               routing_rules: [
                 {
-                  matcher: { type: "contains", value: "search" },
+                  matcher: { type: "contains", value: "search" } as any,
                   target_agent: "librarian",
                 },
                 {

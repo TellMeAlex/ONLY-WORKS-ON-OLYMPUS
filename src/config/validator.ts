@@ -439,7 +439,7 @@ class DelegationGraph {
     visited.add(current);
 
     // Check all known delegations from current agent
-    for (const [delegation] of Object.keys(this.delegations)) {
+    for (const delegation of Object.keys(this.delegations)) {
       const [from, next] = delegation.split(":");
       if (from === current && next) {
         if (this.hasCircle(next, target, depth - 1, new Set(visited))) {
@@ -664,8 +664,14 @@ interface RegexAnalysisResult {
  * @returns RegexAnalysisResult indicating if there are performance issues
  */
 function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
-  // Nested quantifiers - can cause catastrophic backtracking
-  // Examples: (a+)+, (.*)*, (a+)*, (.+)+
+  const complexLookaround = /\(\?[=!][^)]*[+*?]\)|\(\?<[=!][^)]*[+*?]\)/.test(pattern);
+  if (complexLookaround) {
+    return {
+      hasIssue: true,
+      reason: "Complex lookaheads/lookbehinds with quantifiers can be slow",
+    };
+  }
+
   const nestedQuantifiers = /(\([^)]*[+*?][^)]*\)[+*?]|([+*?][+*?]))/.test(pattern);
   if (nestedQuantifiers) {
     return {
@@ -674,8 +680,6 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
     };
   }
 
-  // Overlapping alternation - patterns that start the same way
-  // Example: a|ab, .*|.*a
   const overlappingAlternation = /(\w+)\|\1/.test(pattern);
   if (overlappingAlternation) {
     return {
@@ -684,9 +688,7 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
     };
   }
 
-  // Unescaped dot with repetition - can match too broadly
-  // Examples: ^.* at start, .*$ at end, .*.* consecutive
-  const unboundedDot = /(^|\s)\.\*|\.\*$|\.\*\.\*/.test(pattern);
+  const unboundedDot = /\^\.\*|\.\*\$|\.\*$|\.\*\.\*/.test(pattern);
   if (unboundedDot) {
     return {
       hasIssue: true,
@@ -694,9 +696,7 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
     };
   }
 
-  // Repeated character class with quantifier
-  // Example: [\d]+{5,}, [a-z]{100,}
-  const largeRepetition = /\[[^\]]+\][{]\d{3,}/.test(pattern);
+  const largeRepetition = /\[[^\]]+\][+*?]*\{\d{2,}/.test(pattern);
   if (largeRepetition) {
     return {
       hasIssue: true,
@@ -704,18 +704,6 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
     };
   }
 
-  // Lookahead/lookbehind with repetition - can be slow
-  // Example: (?=.*)*, (?<=a+)b
-  const complexLookaround = /(\(\?=[^)]*\*[)]|\(\?<=[^)]*[+*][)]|\(\?!.*\*)/.test(pattern);
-  if (complexLookaround) {
-    return {
-      hasIssue: true,
-      reason: "Complex lookaheads/lookbehinds with quantifiers can be slow",
-    };
-  }
-
-  // Backreferences - generally slower than captured groups
-  // Example: (\w+).*\1, (a|b).*\1
   const backreferences = /\\\d/.test(pattern);
   if (backreferences) {
     return {
@@ -724,8 +712,6 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
     };
   }
 
-  // Excessive alternations (many OR operations)
-  // Example: a|b|c|d|e|f|g|h|i|j
   const excessiveAlternations = (pattern.match(/\|/g) || []).length > 8;
   if (excessiveAlternations) {
     return {

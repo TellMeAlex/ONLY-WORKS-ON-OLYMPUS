@@ -283,7 +283,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       expect(logLine).toContain("agent-a");
       expect(logLine).toContain("keyword");
       expect(logLine).toContain("matched: test");
@@ -298,7 +298,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       let parseError: unknown = null;
       let parsed: unknown = null;
       try {
@@ -321,7 +321,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.timestamp).toBeDefined();
@@ -349,7 +349,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.config_overrides).toBeDefined();
@@ -369,7 +369,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.config_overrides).toBeUndefined();
@@ -392,7 +392,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.config_overrides).toBeDefined();
@@ -412,7 +412,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.timestamp).toBeDefined();
@@ -431,7 +431,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.matched_content).toBe(specialContent);
@@ -447,7 +447,7 @@ describe("RoutingLogger", () => {
         logOutput = []; // Reset for each call
         logger.logRoutingDecision(`agent-${type}`, type, `matched: ${type}`);
         expect(logOutput.length).toBe(1);
-        const logLine = logOutput[0];
+        const logLine = logOutput[0]!;
         const parsed = JSON.parse(logLine) as Record<string, unknown>;
         expect(parsed.matcher_type).toBe(type);
       }
@@ -464,7 +464,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: true,
         },
       ];
@@ -480,7 +480,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.debug_info).toBeDefined();
@@ -508,7 +508,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const timestamp = parsed.timestamp as string;
@@ -526,7 +526,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.target_agent).toBe("agent-empty");
@@ -547,7 +547,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: false,
         },
         {
@@ -568,7 +568,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.debug_info).toBeDefined();
@@ -589,7 +589,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: true,
         },
       ];
@@ -605,7 +605,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.debug_info).toBeUndefined();
@@ -624,7 +624,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.debug_info).toBeUndefined();
@@ -641,7 +641,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["api", "test"] },
+          matcher: { type: "keyword", keywords: ["api", "test"], mode: "any" },
           matched: true,
         },
       ];
@@ -657,7 +657,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const debugInfo = parsed.debug_info as Record<string, unknown>;
@@ -680,7 +680,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["api", "test"] },
+          matcher: { type: "keyword", keywords: ["api", "test"], mode: "any" },
           matched: false,
         },
         {
@@ -716,7 +716,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const debugInfo = parsed.debug_info as Record<string, unknown>;
@@ -745,7 +745,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["first"] },
+          matcher: { type: "keyword", keywords: ["first"], mode: "any" },
           matched: true,
         },
         {
@@ -771,7 +771,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const debugInfo = parsed.debug_info as Record<string, unknown>;
@@ -793,7 +793,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["wrong"] },
+          matcher: { type: "keyword", keywords: ["wrong"], mode: "any" },
           matched: false,
         },
         {
@@ -819,7 +819,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const debugInfo = parsed.debug_info as Record<string, unknown>;
@@ -841,7 +841,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test", "api"] },
+          matcher: { type: "keyword", keywords: ["test", "api"], mode: "any" },
           matched: false,
         },
         {
@@ -866,7 +866,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       // Check config_overrides is present
@@ -895,7 +895,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: false,
         },
         {
@@ -969,7 +969,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       // Empty evaluations should still include debug_info
@@ -1006,7 +1006,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const debugInfo = parsed.debug_info as Record<string, unknown>;
@@ -1063,7 +1063,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       const debugInfo = parsed.debug_info as Record<string, unknown>;
@@ -1240,7 +1240,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: true,
         },
       ];
@@ -1373,7 +1373,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: true,
         },
       ];
@@ -1521,7 +1521,7 @@ describe("RoutingLogger", () => {
     test("handles unknown output mode gracefully", () => {
       // Arrange: cast to unknown output mode (invalid)
       const config = {
-        output: "unknown" as const,
+        output: "unknown" as any,
       };
       const logger = new RoutingLogger(config);
 
@@ -1569,7 +1569,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       // Check required fields
@@ -1605,7 +1605,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.config_overrides).toBeDefined();
@@ -1636,7 +1636,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["a"] },
+          matcher: { type: "keyword", keywords: ["a"], mode: "any" },
           matched: false,
         },
         {
@@ -1657,7 +1657,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.debug_info).toBeDefined();
@@ -1685,7 +1685,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["api"] },
+          matcher: { type: "keyword", keywords: ["api"], mode: "any" },
           matched: false,
         },
         {
@@ -1709,7 +1709,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      const logLine = logOutput[0];
+      const logLine = logOutput[0]!;
       const parsed = JSON.parse(logLine) as Record<string, unknown>;
 
       expect(parsed.target_agent).toBe("default-agent");
@@ -1777,7 +1777,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBe(1);
-      expect(logOutput[0]).toContain("agent-console");
+      expect(logOutput[0]!).toContain("agent-console");
       expect(existsSync(logFile)).toBe(true);
 
       const fileContent = readFileSync(logFile, "utf-8");
@@ -1812,7 +1812,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test", "api"] },
+          matcher: { type: "keyword", keywords: ["test", "api"], mode: "any" },
           matched: true,
         },
         {
@@ -1875,7 +1875,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["test"] },
+          matcher: { type: "keyword", keywords: ["test"], mode: "any" },
           matched: false,
         },
         {
@@ -1996,7 +1996,7 @@ describe("RoutingLogger", () => {
       const evaluations: MatcherEvaluation[] = [
         {
           matcher_type: "keyword",
-          matcher: { type: "keyword", keywords: ["api", "test"] },
+          matcher: { type: "keyword", keywords: ["api", "test"], mode: "any" },
           matched: true,
         },
       ];
@@ -2051,7 +2051,7 @@ describe("RoutingLogger", () => {
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify all required fields are present
       expect(logEntry.timestamp).toBeDefined();
@@ -2100,10 +2100,10 @@ describe("RoutingLogger", () => {
       // Verify log is valid JSON
       let logEntry: Record<string, unknown>;
       expect(() => {
-        logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+        logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
       }).not.toThrow();
 
-      logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify all required fields
       expect(logEntry.timestamp).toBeDefined();
@@ -2154,7 +2154,7 @@ This is a complex architectural task involving:
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify all required fields
       expect(logEntry.timestamp).toBeDefined();
@@ -2188,7 +2188,7 @@ This is a complex architectural task involving:
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify all required fields
       expect(logEntry.timestamp).toBeDefined();
@@ -2248,7 +2248,7 @@ This is a complex architectural task involving:
 
       // Verify each log entry has all required fields
       for (let i = 0; i < logOutput.length; i++) {
-        const logEntry = JSON.parse(logOutput[i]) as Record<string, unknown>;
+        const logEntry = JSON.parse(logOutput[i]!) as Record<string, unknown>;
         expect(logEntry.timestamp).toBeDefined();
         expect(typeof logEntry.timestamp).toBe("string");
         expect(logEntry.target_agent).toBeDefined();
@@ -2292,10 +2292,10 @@ This is a complex architectural task involving:
       // Verify JSON is parseable even with special characters
       let logEntry: Record<string, unknown>;
       expect(() => {
-        logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+        logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
       }).not.toThrow();
 
-      logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify all required fields
       expect(logEntry.timestamp).toBeDefined();
@@ -2334,7 +2334,7 @@ This is a complex architectural task involving:
 
       // Assert - logs should appear in console (captured in logOutput)
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify log entry contains expected fields
       expect(logEntry.target_agent).toBe("test-agent");
@@ -2385,7 +2385,7 @@ This is a complex architectural task involving:
       const logLines = fileContent.trim().split("\n");
       expect(logLines.length).toBeGreaterThan(0);
 
-      const logEntry = JSON.parse(logLines[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logLines[0]!) as Record<string, unknown>;
       expect(logEntry.target_agent).toBe("deploy-agent");
       expect(logEntry.matcher_type).toBe("regex");
       expect(logEntry.timestamp).toBeDefined();
@@ -2440,8 +2440,8 @@ This is a complex architectural task involving:
       const logLines = fileContent.trim().split("\n");
       expect(logLines.length).toBe(2);
 
-      const logEntry1 = JSON.parse(logLines[0]) as Record<string, unknown>;
-      const logEntry2 = JSON.parse(logLines[1]) as Record<string, unknown>;
+      const logEntry1 = JSON.parse(logLines[0]!) as Record<string, unknown>;
+      const logEntry2 = JSON.parse(logLines[1]!) as Record<string, unknown>;
 
       expect(logEntry1.target_agent).toBe("test-agent");
       expect(logEntry2.target_agent).toBe("debug-agent");
@@ -2536,7 +2536,7 @@ This is a complex architectural task involving:
 
       // Act
       evaluateRoutingRules(rules, {
-        prompt: "Simple task",
+        prompt: "Simple testing task",
         projectDir: "/test/project",
       }, logger);
 
@@ -2586,7 +2586,7 @@ This is a complex architectural task involving:
 
       // Assert - logs should appear in console
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify debug_info is present
       expect(logEntry.debug_info).toBeDefined();
@@ -2697,7 +2697,7 @@ This is a complex architectural task involving:
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       // Verify debug_info is present
       expect(logEntry.debug_info).toBeDefined();
@@ -2761,7 +2761,7 @@ This is a complex architectural task involving:
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       const debugInfo = logEntry.debug_info as Record<string, unknown>;
       const allEvaluated = debugInfo.all_evaluated as unknown[];
@@ -2878,7 +2878,7 @@ Design a comprehensive system architecture involving:
 - High-performance database integration
 - Concurrency and async handling patterns
 - Security and encryption implementation
-- API integration strategies
+- API integration with authentication strategies
       `.trim();
 
       // Act
@@ -2889,7 +2889,7 @@ Design a comprehensive system architecture involving:
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       const debugInfo = logEntry.debug_info as Record<string, unknown>;
       const allEvaluated = debugInfo.all_evaluated as unknown[];
@@ -2935,7 +2935,7 @@ Design a comprehensive system architecture involving:
 
       // Assert
       expect(logOutput.length).toBeGreaterThan(0);
-      const logEntry = JSON.parse(logOutput[0]) as Record<string, unknown>;
+      const logEntry = JSON.parse(logOutput[0]!) as Record<string, unknown>;
 
       const debugInfo = logEntry.debug_info as Record<string, unknown>;
       expect(debugInfo.total_evaluated).toBeDefined();
@@ -2943,7 +2943,7 @@ Design a comprehensive system architecture involving:
       expect(debugInfo.total_evaluated).toBe(1);
 
       const allEvaluated = debugInfo.all_evaluated as unknown[];
-      expect(allEvaluated.length).toBe(debugInfo.total_evaluated);
+      expect(allEvaluated.length).toBe(debugInfo.total_evaluated as number);
     });
   });
 });

@@ -1,22 +1,28 @@
-import { test, expect, describe, beforeEach } from "bun:test";
+import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
 import { loadOlimpusConfig, type LoadOlimpusConfigOptions } from "./loader.js";
 import type { MetaAgentDef, OlimpusConfig } from "./schema.js";
 
-// Mock file system
 const tempDir = path.join(process.cwd(), ".test-temp");
 
 describe("loadOlimpusConfig", () => {
+  let savedHome: string | undefined;
+
   beforeEach(() => {
-    // Clean up temp directory before each test
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
     fs.mkdirSync(tempDir, { recursive: true });
+    savedHome = process.env.HOME;
+    process.env.HOME = tempDir;
   });
 
-  test("loads config without validation when validate option is false", () => {
+  afterEach(() => {
+    process.env.HOME = savedHome;
+  });
+
+  test("loads config without validation when validate option is false", async () => {
     // Arrange: Create a config with circular dependency
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -46,14 +52,14 @@ describe("loadOlimpusConfig", () => {
 
     // Act: Load config with validation disabled
     const options: LoadOlimpusConfigOptions = { validate: false };
-    const config = loadOlimpusConfig(tempDir, options);
+    const config = await loadOlimpusConfig(tempDir, options);
 
     // Assert: Config loads successfully (circular dependency not checked)
     expect(config.meta_agents).toBeDefined();
     expect(Object.keys(config.meta_agents!)).toHaveLength(2);
   });
 
-  test("throws error when circular dependency detected with validation enabled", () => {
+  test("throws error when circular dependency detected with validation enabled", async () => {
     // Arrange: Create a config with circular dependency
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -87,7 +93,7 @@ describe("loadOlimpusConfig", () => {
     );
   });
 
-  test("skips circular dependency check when checkCircularDependencies is false", () => {
+  test("skips circular dependency check when checkCircularDependencies is false", async () => {
     // Arrange: Create a config with circular dependency
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -120,14 +126,14 @@ describe("loadOlimpusConfig", () => {
       validate: true,
       checkCircularDependencies: false,
     };
-    const config = loadOlimpusConfig(tempDir, options);
+    const config = await loadOlimpusConfig(tempDir, options);
 
     // Assert: Config loads successfully
     expect(config.meta_agents).toBeDefined();
     expect(Object.keys(config.meta_agents!)).toHaveLength(2);
   });
 
-  test("throws error when invalid agent reference detected", () => {
+  test("throws error when invalid agent reference detected", async () => {
     // Arrange: Create a config with invalid agent reference
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -151,7 +157,7 @@ describe("loadOlimpusConfig", () => {
     );
   });
 
-  test("skips agent reference check when checkAgentReferences is false", () => {
+  test("skips agent reference check when checkAgentReferences is false", async () => {
     // Arrange: Create a config with invalid agent reference
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -174,13 +180,13 @@ describe("loadOlimpusConfig", () => {
       validate: true,
       checkAgentReferences: false,
     };
-    const config = loadOlimpusConfig(tempDir, options);
+    const config = await loadOlimpusConfig(tempDir, options);
 
     // Assert: Config loads successfully
     expect(config.meta_agents).toBeDefined();
   });
 
-  test("loads valid config with validation enabled", () => {
+  test("loads valid config with validation enabled", async () => {
     // Arrange: Create a valid config
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -199,14 +205,14 @@ describe("loadOlimpusConfig", () => {
     fs.writeFileSync(configPath, configContent, "utf-8");
 
     // Act: Load config with validation enabled (default)
-    const config = loadOlimpusConfig(tempDir);
+    const config = await loadOlimpusConfig(tempDir);
 
     // Assert: Config loads successfully
     expect(config.meta_agents).toBeDefined();
     expect(Object.keys(config.meta_agents!)).toHaveLength(1);
   });
 
-  test("enables all validation checks by default", () => {
+  test("enables all validation checks by default", async () => {
     // Arrange: Create a valid config
     const configPath = path.join(tempDir, "olimpus.jsonc");
     const metaAgents: Record<string, MetaAgentDef> = {
@@ -225,7 +231,7 @@ describe("loadOlimpusConfig", () => {
     fs.writeFileSync(configPath, configContent, "utf-8");
 
     // Act: Load config without any options (use defaults)
-    const config = loadOlimpusConfig(tempDir);
+    const config = await loadOlimpusConfig(tempDir);
 
     // Assert: Config loads successfully (all checks pass)
     expect(config.meta_agents).toBeDefined();

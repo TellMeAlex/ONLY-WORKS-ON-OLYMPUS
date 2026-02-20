@@ -19,12 +19,19 @@ export interface RoutingContext {
 
 export interface ResolvedRoute {
   target_agent: string;
+  matcher_type?: string;
+  matched_content?: string;
   config_overrides?: {
     model?: string;
     temperature?: number;
     prompt?: string;
     variant?: string;
   };
+}
+
+export interface RoutingResult {
+  route: ResolvedRoute | null;
+  evaluations: MatcherEvaluation[];
 }
 
 /**
@@ -35,15 +42,28 @@ export function evaluateRoutingRules(
   rules: RoutingRule[],
   context: RoutingContext,
   logger?: RoutingLogger
-): ResolvedRoute | null {
+): ResolvedRoute | null;
+export function evaluateRoutingRules(
+  rules: RoutingRule[],
+  context: RoutingContext,
+  logger?: RoutingLogger,
+  captureEvaluations?: true
+): RoutingResult;
+export function evaluateRoutingRules(
+  rules: RoutingRule[],
+  context: RoutingContext,
+  logger?: RoutingLogger,
+  captureEvaluations?: boolean
+): ResolvedRoute | RoutingResult | null {
   const isDebugMode = logger?.isDebugMode() ?? false;
+  const shouldCapture = captureEvaluations || isDebugMode;
   const evaluations: MatcherEvaluation[] = [];
+  let firstMatch: ResolvedRoute | null = null;
 
   for (const rule of rules) {
     const matched = evaluateMatcher(rule.matcher, context);
 
-    // Track evaluation for debug mode
-    if (isDebugMode) {
+    if (shouldCapture) {
       evaluations.push({
         matcher_type: rule.matcher.type,
         matcher: rule.matcher,
@@ -51,28 +71,47 @@ export function evaluateRoutingRules(
       });
     }
 
-    if (matched) {
+    if (matched && !firstMatch) {
       const matchedContent = getMatchedContent(rule.matcher, context);
-      const result: ResolvedRoute = {
+      firstMatch = {
         target_agent: rule.target_agent,
+        matcher_type: rule.matcher.type,
+        matched_content: matchedContent,
         config_overrides: rule.config_overrides,
       };
 
-      // Log the routing decision if logger is provided
-      if (logger && logger.isEnabled()) {
-        logger.logRoutingDecision(
-          result.target_agent,
-          rule.matcher.type,
-          matchedContent,
-          result.config_overrides,
-          isDebugMode ? evaluations : undefined
-        );
+      if (!isDebugMode) {
+        if (logger && logger.isEnabled()) {
+          logger.logRoutingDecision(
+            firstMatch.target_agent,
+            rule.matcher.type,
+            matchedContent,
+            firstMatch.config_overrides,
+            undefined
+          );
+        }
+        if (shouldCapture) {
+          return { route: firstMatch, evaluations };
+        }
+        return firstMatch;
       }
-
-      return result;
     }
   }
-  return null;
+
+  if (firstMatch && logger && logger.isEnabled()) {
+    logger.logRoutingDecision(
+      firstMatch.target_agent,
+      firstMatch.matcher_type!,
+      firstMatch.matched_content!,
+      firstMatch.config_overrides,
+      isDebugMode ? evaluations : undefined
+    );
+  }
+
+  if (shouldCapture) {
+    return { route: firstMatch, evaluations };
+  }
+  return firstMatch;
 }
 
 /**
