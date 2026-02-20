@@ -1,0 +1,785 @@
+{
+  // ============================================================================
+  // Security-Audit Meta-Agent Template
+  // ============================================================================
+  // This template provides intelligent routing for security auditing tasks.
+  // It handles static code analysis, dependency scanning, vulnerability assessments,
+  // penetration testing, compliance checks, secret detection, container security,
+  // infrastructure security, and security policy enforcement. Ideal for DevSecOps
+  // workflows, CI/CD security pipelines, and comprehensive security reviews.
+
+  "name": "security-audit",
+  "description": "Meta-agent template for security auditing with static analysis, dependency scanning, vulnerability detection, compliance checks, and security policy enforcement",
+  "category": "domain",
+  "tags": ["security", "audit", "sast", "dast", "vulnerability", "compliance", "penetration-test", "secret-scan", "security-policy", "devsecops"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["atlas", "oracle", "sisyphus", "metis", "prometheus"],
+
+    "routing_rules": [
+      // ========================================================================
+      // SAST Tools - Semgrep
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["semgrep.yaml", ".semgrep.yml", "semgrep.yml", ".semgrepignore"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Semgrep SAST specialist. Configure Semgrep rules for static code analysis. Write custom rules for security patterns, use community rules, and integrate with CI/CD.",
+          "variant": "semgrep"
+        }
+      },
+
+      // ========================================================================
+      // SAST Tools - ESLint Security
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["eslint-plugin-security", "eslint-plugin-xss", "eslint-plugin-react-hooks-exhaustive-deps"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "ESLint security specialist. Configure ESLint with security plugins for JavaScript/TypeScript. Detect security vulnerabilities, XSS, and unsafe patterns.",
+          "variant": "eslint-security"
+        }
+      },
+
+      // ========================================================================
+      // SAST Tools - SonarQube
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["sonar-project.properties", "sonar-scanner.properties"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "SonarQube SAST specialist. Configure SonarQube for static code analysis. Set quality gates, security hotspots, and vulnerability rules.",
+          "variant": "sonarqube"
+        }
+      },
+
+      // ========================================================================
+      // SAST Tools - CodeQL
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".github/codeql/*.yml", ".codeql/*.ql", "codeql-config.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "CodeQL specialist. Configure CodeQL for GitHub Actions security scanning. Write custom queries for security vulnerabilities and integrate with CI.",
+          "variant": "codeql"
+        }
+      },
+
+      // ========================================================================
+      // Dependency Scanning - Snyk
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".snyk", "snyk.yaml", "snyk-policy.yaml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Snyk dependency specialist. Configure Snyk for vulnerability scanning. Set severity thresholds, ignore rules, and integrate with CI/CD pipelines.",
+          "variant": "snyk"
+        }
+      },
+
+      // ========================================================================
+      // Dependency Scanning - Trivy
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["trivy.yaml", ".trivyignore"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Trivy security specialist. Configure Trivy for vulnerability scanning of containers, filesystems, and dependencies. Set severity thresholds and ignore rules.",
+          "variant": "trivy"
+        }
+      },
+
+      // ========================================================================
+      // Dependency Scanning - OWASP Dependency-Check
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["dependency-check-report.xml", "dependency-check.properties"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "OWASP Dependency-Check specialist. Configure dependency checking for known CVEs. Set suppression rules and generate reports.",
+          "variant": "dependency-check"
+        }
+      },
+
+      // ========================================================================
+      // Dependency Scanning - npm audit
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "npm audit specialist. Run npm audit, review vulnerabilities, and recommend fixes. Configure overrides if necessary.",
+          "variant": "npm-audit"
+        }
+      },
+
+      // ========================================================================
+      // Secret Detection - Gitleaks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["gitleaks.toml", ".gitleaks.toml", ".gitleaksignore"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Gitleaks secret detection specialist. Configure Gitleaks to detect secrets, API keys, and credentials. Write custom rules and set exceptions.",
+          "variant": "gitleaks"
+        }
+      },
+
+      // ========================================================================
+      // Secret Detection - truffleHog
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".trufflehog.yaml", "trufflehog-config.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "truffleHog secret detection specialist. Configure truffleHog to scan for secrets and credentials in code and git history.",
+          "variant": "trufflehog"
+        }
+      },
+
+      // ========================================================================
+      // Secret Detection - GitGuardian
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".gitguardian.yaml", "gitguardian.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "GitGuardian secret detection specialist. Configure GitGuardian for pre-commit and CI/CD secret scanning. Set policies and exclusions.",
+          "variant": "gitguardian"
+        }
+      },
+
+      // ========================================================================
+      // Container Security - Dockerfile Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["dockerfile", "docker image", "container security", "docker best practices"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Docker security architect. Review Dockerfiles for security best practices: use minimal base images, run as non-root, scan for vulnerabilities, and follow multi-stage patterns.",
+          "variant": "dockerfile-security"
+        }
+      },
+
+      // ========================================================================
+      // Container Security - Hadolint
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".hadolint.yaml", "hadolint.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Hadolint Dockerfile linter specialist. Configure Hadolint for Dockerfile best practices and security checks.",
+          "variant": "hadolint"
+        }
+      },
+
+      // ========================================================================
+      // Kubernetes Security
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["kubernetes", "k8s", "pod security", "rbac", "network policy", "kube security"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Kubernetes security architect. Review Kubernetes manifests for security: Pod Security Standards, RBAC, network policies, secrets management, and admission controllers.",
+          "variant": "kubernetes-security"
+        }
+      },
+
+      // ========================================================================
+      // Kubernetes Security - kube-bench
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["kube-bench", "cis benchmark", "kubernetes compliance"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "kube-bench CIS benchmark specialist. Configure kube-bench for Kubernetes CIS compliance checks.",
+          "variant": "kube-bench"
+        }
+      },
+
+      // ========================================================================
+      // IaC Security - Terraform
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["*.tf", "terraform/**/*.tf", "infrastructure/**/*.tf"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Terraform security architect. Review Terraform code for security: least-privilege IAM, secure state storage, encryption, and validated modules.",
+          "variant": "terraform-security"
+        }
+      },
+
+      // ========================================================================
+      // IaC Security - tfsec
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["tfsec.yaml", ".tfsec.json"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "tfsec IaC security specialist. Configure tfsec for Terraform security scanning. Set severity thresholds and ignore rules.",
+          "variant": "tfsec"
+        }
+      },
+
+      // ========================================================================
+      // IaC Security - Checkov
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".checkov.yaml", "checkov-config.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Checkov IaC security specialist. Configure Checkov for multi-cloud IaC security scanning (Terraform, CloudFormation, Kubernetes, etc.).",
+          "variant": "checkov"
+        }
+      },
+
+      // ========================================================================
+      // Cloud Security - AWS
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["aws security", "s3 bucket", "iam policy", "security group", "aws audit"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "AWS security architect. Review AWS infrastructure for security: S3 bucket policies, IAM least privilege, security groups, encryption, logging, and compliance.",
+          "variant": "aws-security"
+        }
+      },
+
+      // ========================================================================
+      // Cloud Security - Prowler (AWS)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["prowler", "aws prowler", "aws security assessment"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Prowler AWS security specialist. Configure Prowler for AWS security assessments and CIS benchmark compliance.",
+          "variant": "prowler"
+        }
+      },
+
+      // ========================================================================
+      // Cloud Security - Azure
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["azure security", "azure policy", "azure defender", "azure security center"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Azure security architect. Review Azure infrastructure for security: Azure Policy, RBAC, Defender, Key Vault, and security best practices.",
+          "variant": "azure-security"
+        }
+      },
+
+      // ========================================================================
+      // Cloud Security - GCP
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["gcp security", "google cloud security", "iam", "gcp audit"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "GCP security architect. Review Google Cloud infrastructure for security: IAM policies, VPC, Service Account security, Cloud Security Command Center.",
+          "variant": "gcp-security"
+        }
+      },
+
+      // ========================================================================
+      // Static Code Analysis - SAST Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["sast", "static analysis", "code analysis", "security scan", "vulnerability scan"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Static code analysis specialist. Review code for security vulnerabilities using SAST tools. Check for injection attacks, insecure functions, and security anti-patterns.",
+          "variant": "sast"
+        }
+      },
+
+      // ========================================================================
+      // Dynamic Security Testing - DAST
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["dast", "dynamic analysis", "penetration test", "pentest", "security test"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Dynamic security testing architect. Design DAST strategy for running security tests on deployed applications. Use OWASP ZAP, Burp Suite, or similar tools.",
+          "variant": "dast"
+        }
+      },
+
+      // ========================================================================
+      // DAST Tools - OWASP ZAP
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["zap", "owasp zap", "zap scan"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "OWASP ZAP DAST specialist. Configure ZAP for automated security scanning. Set scan policies, authentication, and exclusions.",
+          "variant": "zap"
+        }
+      },
+
+      // ========================================================================
+      // Security Policy Enforcement - OPA/Rego
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["*.rego", "policy/**/*.rego", "main.rego"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "OPA/Rego policy specialist. Write Open Policy Agent policies for security enforcement. Define rules for authorization, resource access, and compliance.",
+          "variant": "opa"
+        }
+      },
+
+      // ========================================================================
+      // Security Policy - Bandit (Python)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".bandit", "bandit.yaml", ".banditignore"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Bandit Python security specialist. Configure Bandit for Python code security scanning. Detect common security issues and unsafe functions.",
+          "variant": "bandit"
+        }
+      },
+
+      // ========================================================================
+      // Security Policy - Brakeman (Ruby)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["brakeman", "ruby security", "rails security"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Brakeman Ruby/Rails security specialist. Configure Brakeman for detecting security vulnerabilities in Ruby on Rails applications.",
+          "variant": "brakeman"
+        }
+      },
+
+      // ========================================================================
+      // Security Policy - Safety (Python)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["safety", "python dependency security", "pip safety"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Safety Python dependency specialist. Configure Safety for scanning Python dependencies for known security vulnerabilities.",
+          "variant": "safety"
+        }
+      },
+
+      // ========================================================================
+      // Compliance - OWASP Top 10
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["owasp", "owasp top 10", "owasp compliance", "a01", "a02"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "OWASP Top 10 compliance specialist. Audit code and infrastructure against OWASP Top 10 risks: injection, broken authentication, XSS, etc.",
+          "variant": "owasp-top10"
+        }
+      },
+
+      // ========================================================================
+      // Compliance - PCI DSS
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pci dss", "pci compliance", "payment security", "cardholder data"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "PCI DSS compliance specialist. Audit code and infrastructure for PCI DSS requirements. Focus on encryption, access control, and logging.",
+          "variant": "pci-dss"
+        }
+      },
+
+      // ========================================================================
+      // Compliance - HIPAA
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["hipaa", "phi", "healthcare", "medical data", "patient data"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "HIPAA compliance specialist. Audit code and infrastructure for HIPAA requirements. Focus on PHI protection, encryption, access controls, and audit logging.",
+          "variant": "hipaa"
+        }
+      },
+
+      // ========================================================================
+      // Compliance - SOC 2
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["soc 2", "soc2", "compliance audit", "security audit"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "SOC 2 compliance specialist. Audit code and infrastructure for SOC 2 Trust Services Criteria. Focus on security, availability, and confidentiality.",
+          "variant": "soc2"
+        }
+      },
+
+      // ========================================================================
+      // Compliance - GDPR
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["gdpr", "privacy", "personal data", "data protection"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "GDPR compliance specialist. Audit code and infrastructure for GDPR requirements. Focus on data protection, consent management, and right to erasure.",
+          "variant": "gdpr"
+        }
+      },
+
+      // ========================================================================
+      // Code Review - Security Focused
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["security review", "security code review", "audit code", "security pr review"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Security code reviewer. Review code specifically for security vulnerabilities. Check for injection flaws, authentication issues, authorization problems, and data exposure.",
+          "variant": "security-review"
+        }
+      },
+
+      // ========================================================================
+      // Threat Modeling
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["threat modeling", "threat model", "stride", "security threat"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Threat modeling specialist. Analyze system design for security threats using STRIDE or other frameworks. Identify attack vectors and recommend mitigations.",
+          "variant": "threat-modeling"
+        }
+      },
+
+      // ========================================================================
+      // Security Testing - Fuzzing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["fuzzing", "fuzz test", "fuzzer"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Fuzz testing specialist. Set up fuzz testing for finding input validation and boundary condition vulnerabilities.",
+          "variant": "fuzzing"
+        }
+      },
+
+      // ========================================================================
+      // Supply Chain Security - SBOM
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["sbom", "software bill of materials", "supply chain security", "cyclonedx", "spdx"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "SBOM specialist. Generate and manage Software Bill of Materials. Use CycloneDX or SPDX formats. Integrate with CI/CD for supply chain transparency.",
+          "variant": "sbom"
+        }
+      },
+
+      // ========================================================================
+      // Supply Chain Security - Provenance
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["provenance", "sigstore", "cosign", "slsa", "supply chain"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Supply chain provenance specialist. Configure Sigstore, Cosign, or SLSA for verifying build provenance and signing artifacts.",
+          "variant": "provenance"
+        }
+      },
+
+      // ========================================================================
+      // Authentication Security Review
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["authentication security", "auth review", "session security", "jwt security"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Authentication security reviewer. Review authentication implementation: token handling, session management, MFA, password policies, and OAuth flows.",
+          "variant": "auth-security"
+        }
+      },
+
+      // ========================================================================
+      // Authorization Security Review
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["authorization security", "access control", "permission review", "rbac review"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Authorization security reviewer. Review authorization implementation: RBAC/ABAC, permission checks, privilege escalation risks, and admin interfaces.",
+          "variant": "authz-security"
+        }
+      },
+
+      // ========================================================================
+      // Input Validation Security
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["input validation", "sql injection", "xss", "csrf", "injection"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Input validation security specialist. Review and implement input validation to prevent injection attacks: SQLi, XSS, CSRF, command injection, path traversal.",
+          "variant": "input-validation"
+        }
+      },
+
+      // ========================================================================
+      // Cryptography Review
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["cryptography", "encryption", "crypto review", "hash", "crypto security"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Cryptography security specialist. Review cryptographic implementation: algorithms, key management, IVs/nonce handling, padding, and random number generation.",
+          "variant": "cryptography"
+        }
+      },
+
+      // ========================================================================
+      // Security Monitoring & Logging
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["security logging", "audit log", "security monitoring", "security event"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Security logging and monitoring specialist. Design security monitoring: audit logging, security event detection, alerting, and SIEM integration.",
+          "variant": "security-monitoring"
+        }
+      },
+
+      // ========================================================================
+      // Incident Response Planning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["incident response", "security incident", "breach response", "security playbook"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Incident response specialist. Design incident response plans, security playbooks, and runbooks. Define detection, containment, eradication, and recovery procedures.",
+          "variant": "incident-response"
+        }
+      },
+
+      // ========================================================================
+      // High Complexity Security Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "high"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Security architect: This is a high-complexity security task. Analyze from first principles, considering attack vectors, defense in depth, compliance requirements, and long-term security posture.",
+          "variant": "complex"
+        }
+      },
+
+      // ========================================================================
+      // Medium Complexity Security Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "medium"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Security strategist: Plan the security implementation considering best practices, OWASP guidelines, and trade-offs between security and usability.",
+          "variant": "medium"
+        }
+      },
+
+      // ========================================================================
+      // Fallback - General Security
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "Security generalist. Analyze the security task and provide appropriate guidance. Identify which type of security audit is needed and recommend tools and approaches.",
+        }
+      }
+    ],
+
+    "prompt_template": "Security-Audit Task: {input}\n\nContext:\n- Security auditing: Identify vulnerabilities, enforce policies, ensure compliance\n- SAST: Static code analysis (Semgrep, CodeQL, SonarQube, ESLint security)\n- Dependency scanning: Snyk, Trivy, npm audit, OWASP Dependency-Check\n- Secret detection: Gitleaks, truffleHog, GitGuardian\n- Container security: Dockerfile review, Hadolint, Kubernetes security\n- IaC security: Terraform (tfsec), Checkov, cloud security reviews\n- DAST: OWASP ZAP, penetration testing\n- Compliance: OWASP Top 10, PCI DSS, HIPAA, SOC 2, GDPR"
+  },
+
+  "documentation": "This meta-agent template provides intelligent routing for security auditing tasks across the entire DevSecOps lifecycle. It covers static application security testing (SAST) with tools like Semgrep, CodeQL, SonarQube, and ESLint security plugins. It handles dependency scanning using Snyk, Trivy, npm audit, and OWASP Dependency-Check. Secret detection is supported via Gitleaks, truffleHog, and GitGuardian. Container security reviews include Dockerfile analysis, Hadolint, and Kubernetes security assessments. Infrastructure as Code security covers Terraform with tfsec and Checkov, plus cloud security for AWS, Azure, and GCP. Dynamic application security testing (DAST) uses OWASP ZAP. Compliance auditing supports OWASP Top 10, PCI DSS, HIPAA, SOC 2, and GDPR. Additional features include security code reviews, threat modeling, fuzz testing, supply chain security (SBOM, Sigstore), authentication/authorization reviews, input validation, cryptography reviews, security monitoring, and incident response planning.",
+  "examples": [
+    "Run a Semgrep scan and configure rules for SQL injection detection",
+    "Set up Snyk for dependency scanning in CI/CD pipeline",
+    "Configure Gitleaks to detect secrets and API keys",
+    "Review Dockerfile for security best practices and vulnerabilities",
+    "Run tfsec on Terraform code for infrastructure security",
+    "Configure OWASP ZAP for dynamic security testing",
+    "Perform a security code review focusing on authentication and authorization",
+    "Audit Kubernetes manifests for Pod Security Standards and RBAC",
+    "Generate an SBOM using CycloneDX format",
+    "Configure SLSA provenance verification for artifacts"
+  ]
+}
