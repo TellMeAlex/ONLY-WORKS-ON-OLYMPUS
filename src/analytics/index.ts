@@ -12,6 +12,17 @@ export type {
   ExportOptions,
   DisplayOptions,
   AnalyticsConfig,
+  PerformanceMetrics,
+  RoutingLatencyMetrics,
+  ThroughputMetrics,
+  ErrorMetrics,
+  MemoryMetrics,
+  MatchRateMetrics,
+  PerformanceAggregationWindow,
+  PerformanceAggregationOptions,
+  MetricsExportFormat,
+  MetricsExportProtocol,
+  MetricsExportConfig,
 } from "./types.js";
 
 // Schemas
@@ -28,6 +39,17 @@ export {
   ExportOptionsSchema,
   DisplayOptionsSchema,
   AnalyticsConfigSchema,
+  RoutingLatencyMetricsSchema,
+  ThroughputMetricsSchema,
+  ErrorMetricsSchema,
+  MemoryMetricsSchema,
+  MatchRateMetricsSchema,
+  PerformanceMetricsSchema,
+  PerformanceAggregationWindowSchema,
+  PerformanceAggregationOptionsSchema,
+  MetricsExportFormatSchema,
+  MetricsExportProtocolSchema,
+  MetricsExportConfigSchema,
 } from "./types.js";
 
 // Storage
@@ -70,3 +92,29 @@ export {
   displayAnalytics,
   getFormattedAnalytics,
 } from "./dashboard.js";
+
+// Metrics
+export {
+  PerformanceMetricsCollector,
+  createPerformanceMetricsCollector,
+} from "./metrics.js";
+
+// Prometheus
+export type { PrometheusMetricType } from "./prometheus.js";
+export {
+  PrometheusMetricsFormatter,
+  type PrometheusFormatterOptions,
+  formatToPrometheus,
+  formatManyToPrometheus,
+} from "./prometheus.js";
+
+// Metrics Export Server
+export type {
+  MetricsExportServerConfig,
+  ServerStatus,
+} from "./exporter-server.js";
+export {
+  MetricsExportServer,
+  createMetricsExportServer,
+  createMetricsExportServerStopped,
+} from "./exporter-server.js";
