@@ -482,3 +482,172 @@ All CI/CD workflows are **now functioning correctly and production-ready**. The 
 **Report Version**: 1.0  
 **Test Environment**: GitHub Actions (Ubuntu Latest)  
 **Package Tested**: @TellMeAlex/only-works-on-olympus@0.2.1
+
+---
+
+## CRITICAL ISSUE DISCOVERED DURING INTEGRATION TEST (Post-v0.2.1)
+
+### Issue #6: Incorrect package.json Entry Points
+
+**Severity**: 🔴 **CRITICAL**  
+**Impact**: npm module cannot be imported - breaks all integrations  
+**Discovered**: During oh-my-opencode plugin loading test
+
+#### Root Cause
+While testing the plugin with `opencode web`, the server failed with:
+```
+error: Cannot find module '@TellMeAlex/only-works-on-olympus' from '/$bunfs/root/src/index.js'
+```
+
+Investigation revealed:
+- `package.json` specified `main: "dist/index.js"`
+- Actual builds generated: `dist-node/` and `dist-bun/` directories
+- **Result**: No `dist/` directory exists → module resolution fails
+
+#### Why Testing Missed This
+Our workflow testing validated that the **build system works** (artifacts generated), but didn't validate that the **npm package entry points are correct**. The published npm package was unusable despite passing all CI/CD tests.
+
+#### Solution Applied (v0.2.2)
+✅ **Fixed package.json with proper exports field**
+
+```json
+{
+  "main": "dist-node/index.js",
+  "module": "dist-node/index.js",
+  "types": "dist-node/index.d.ts",
+  "exports": {
+    ".": {
+      "bun": "./dist-bun/index.js",
+      "import": "./dist-node/index.js",
+      "default": "./dist-node/index.js"
+    }
+  }
+}
+```
+
+#### Key Improvements
+1. **Runtime-specific exports**: Bun gets the 3MB optimized build, Node.js gets the 40KB esbuild version
+2. **TypeScript support**: Types point to the actual built files
+3. **Fallback strategy**: Default export ensures compatibility with older resolvers
+
+#### Verification
+- ✅ v0.2.2 published to npm.pkg.github.com
+- ✅ Package can now be imported via `import olympus from '@TellMeAlex/only-works-on-olympus'`
+- ✅ oh-my-opencode plugin integration confirmed working
+
+---
+
+## LESSON LEARNED
+
+**Testing Gap**: Unit-level workflow tests ≠ Integration tests
+
+While our CI/CD workflows passed all checks:
+- ✅ Code builds successfully
+- ✅ Tests pass
+- ✅ npm publish executes
+
+We missed:
+- ❌ **Integration test**: Can the package actually be imported?
+- ❌ **Real-world scenario**: Does it work as an oh-my-opencode plugin?
+
+**Recommendation**: Add post-publish smoke tests that:
+1. Install from npm registry
+2. Import and execute the plugin
+3. Verify functionality in the target environment
+
+---
+
+## Updated Status
+
+| Version | Status | Notes |
+|---------|--------|-------|
+| v0.2.0 | ✅ Released | Initial CI/CD setup |
+| v0.2.1 | ⚠️ Released | Had package.json bug (unusable) |
+| **v0.2.2** | ✅ **PRODUCTION READY** | Critical fix applied |
+
+**FINAL STATUS**: All workflows tested and verified. Package integration confirmed working.
+
+
+---
+
+## CRITICAL ISSUE DISCOVERED DURING INTEGRATION TEST (Post-v0.2.1)
+
+### Issue #6: Incorrect package.json Entry Points
+
+**Severity**: 🔴 **CRITICAL**  
+**Impact**: npm module cannot be imported - breaks all integrations  
+**Discovered**: During oh-my-opencode plugin loading test
+
+#### Root Cause
+While testing the plugin with `opencode web`, the server failed with:
+```
+error: Cannot find module '@TellMeAlex/only-works-on-olympus' from '/$bunfs/root/src/index.js'
+```
+
+Investigation revealed:
+- `package.json` specified `main: "dist/index.js"`
+- Actual builds generated: `dist-node/` and `dist-bun/` directories
+- **Result**: No `dist/` directory exists → module resolution fails
+
+#### Why Testing Missed This
+Our workflow testing validated that the **build system works** (artifacts generated), but didn't validate that the **npm package entry points are correct**. The published npm package was unusable despite passing all CI/CD tests.
+
+#### Solution Applied (v0.2.2)
+✅ **Fixed package.json with proper exports field**
+
+```json
+{
+  "main": "dist-node/index.js",
+  "module": "dist-node/index.js",
+  "types": "dist-node/index.d.ts",
+  "exports": {
+    ".": {
+      "bun": "./dist-bun/index.js",
+      "import": "./dist-node/index.js",
+      "default": "./dist-node/index.js"
+    }
+  }
+}
+```
+
+#### Key Improvements
+1. **Runtime-specific exports**: Bun gets the 3MB optimized build, Node.js gets the 40KB esbuild version
+2. **TypeScript support**: Types point to the actual built files
+3. **Fallback strategy**: Default export ensures compatibility with older resolvers
+
+#### Verification
+- ✅ v0.2.2 published to npm.pkg.github.com
+- ✅ Package can now be imported via `import olympus from '@TellMeAlex/only-works-on-olympus'`
+- ✅ oh-my-opencode plugin integration confirmed working
+
+---
+
+## LESSON LEARNED
+
+**Testing Gap**: Unit-level workflow tests ≠ Integration tests
+
+While our CI/CD workflows passed all checks:
+- ✅ Code builds successfully
+- ✅ Tests pass
+- ✅ npm publish executes
+
+We missed:
+- ❌ **Integration test**: Can the package actually be imported?
+- ❌ **Real-world scenario**: Does it work as an oh-my-opencode plugin?
+
+**Recommendation**: Add post-publish smoke tests that:
+1. Install from npm registry
+2. Import and execute the plugin
+3. Verify functionality in the target environment
+
+---
+
+## Updated Status
+
+| Version | Status | Notes |
+|---------|--------|-------|
+| v0.2.0 | ✅ Released | Initial CI/CD setup |
+| v0.2.1 | ⚠️ Released | Had package.json bug (unusable) |
+| **v0.2.2** | ✅ **PRODUCTION READY** | Critical fix applied |
+
+**FINAL STATUS**: All workflows tested and verified. Package integration confirmed working.
