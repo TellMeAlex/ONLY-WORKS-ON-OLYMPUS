@@ -7,9 +7,15 @@ await esbuild.build({
   platform: 'node',
   target: 'node18',
   format: 'esm',
+  packages: 'external',
   external: ['jsonc-parser', 'oh-my-opencode', '@opencode-ai/plugin', '@opencode-ai/sdk', 'zod'],
   sourcemap: true,
   minify: false,
+  loader: {
+    '.ts': 'ts',
+    '.tsx': 'tsx',
+    '.js': 'js'
+  }
 });
 
 console.log('✅ Build complete: dist-node/index.js');
