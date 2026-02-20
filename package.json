@@ -48,7 +48,9 @@
     "schema:validate": "bun scripts/validate-schema.ts",
     "olimpus": "bun bin/olimpus.ts",
     "test": "bun test",
-    "publish:github": "npm publish"
+    "publish:github": "npm publish",
+    "serve:web": "bun bin/serve-web.ts",
+    "build:web": "cd web && bun install && bunx vite build"
   },
   "dependencies": {
     "oh-my-opencode": "^3.4.0",
