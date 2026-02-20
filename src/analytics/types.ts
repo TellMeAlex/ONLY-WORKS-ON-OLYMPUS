@@ -306,6 +306,36 @@ export const PerformanceAggregationOptionsSchema = z.object({
 });
 
 /**
+ * Metrics Export Configuration Schema
+ */
+
+export const MetricsExportFormatSchema = z.enum(["json", "csv", "prometheus"]);
+
+export const MetricsExportProtocolSchema = z.enum(["http", "https", "file"]);
+
+export const MetricsExportConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  format: MetricsExportFormatSchema.default("json"),
+  protocol: MetricsExportProtocolSchema.default("http"),
+  endpoint: z.string().url().optional(),
+  file_path: z.string().optional(),
+  export_interval_seconds: z.number().int().positive().default(60),
+  include_metadata: z.boolean().default(true),
+  batch_size: z.number().int().positive().default(100),
+  retry_attempts: z.number().int().nonnegative().default(3),
+  timeout_ms: z.number().int().positive().default(5000),
+  headers: z.record(z.string(), z.string()).optional(),
+  authentication: z
+    .object({
+      type: z.enum(["none", "bearer", "basic"]).default("none"),
+      token: z.string().optional(),
+      username: z.string().optional(),
+      password: z.string().optional(),
+    })
+    .optional(),
+});
+
+/**
  * Inferred TypeScript types from schemas
  */
 
@@ -349,3 +379,7 @@ export type PerformanceAggregationWindow = z.infer<
 export type PerformanceAggregationOptions = z.infer<
   typeof PerformanceAggregationOptionsSchema
 >;
+
+export type MetricsExportFormat = z.infer<typeof MetricsExportFormatSchema>;
+export type MetricsExportProtocol = z.infer<typeof MetricsExportProtocolSchema>;
+export type MetricsExportConfig = z.infer<typeof MetricsExportConfigSchema>;
