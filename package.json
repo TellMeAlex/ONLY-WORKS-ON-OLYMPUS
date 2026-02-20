@@ -3,10 +3,20 @@
   "version": "0.1.0",
   "description": "A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules",
   "license": "SUL-1.0",
-  "module": "dist/index.js",
+  "module": "dist-node/index.js",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist-node/index.js",
+  "types": "dist-node/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist-node/index.js",
+      "types": "./dist-node/index.d.ts"
+    },
+    "./bun": {
+      "import": "./dist-bun/index.js",
+      "types": "./dist-bun/index.d.ts"
+    }
+  },
   "keywords": [
     "opencode",
     "plugin",
@@ -24,20 +34,24 @@
     "url": "https://github.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/issues"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun && bun scripts/generate-schema.ts",
+    "build": "npm run build:node && npm run build:bun && npm run schema:generate",
+    "build:node": "node build-node.mjs",
+    "build:bun": "bun build src/index.ts --outdir dist-bun --target bun",
     "typecheck": "bunx tsc --noEmit",
     "schema:generate": "bun scripts/generate-schema.ts",
-    "schema:validate": "bun scripts/validate-schema.ts"
+    "schema:validate": "bun scripts/validate-schema.ts",
+    "rebuild": "rm -rf dist-node dist-bun && npm run build"
   },
   "dependencies": {
-    "oh-my-opencode": "^3.4.0",
     "@opencode-ai/plugin": "^1.1.19",
     "@opencode-ai/sdk": "^1.1.19",
-    "zod": "^4.1.8",
-    "jsonc-parser": "^3.3.1"
+    "jsonc-parser": "^3.3.1",
+    "oh-my-opencode": "^3.4.0",
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "esbuild": "^0.27.3",
     "typescript": "^5"
   },
   "peerDependencies": {
