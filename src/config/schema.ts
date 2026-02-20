@@ -259,6 +259,7 @@ export const OlimpusConfigSchema = z.object({
   providers: ProviderConfigSchema.optional(),
   settings: SettingsSchema.optional(),
   skills: z.array(z.string()).optional(),
+  templates: z.record(z.string(), TemplateSchema).optional(),
 
   // oh-my-opencode passthrough sections
   agents: AgentOverridesSchema,
