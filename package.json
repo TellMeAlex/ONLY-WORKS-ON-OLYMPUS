@@ -27,7 +27,9 @@
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun && bun scripts/generate-schema.ts",
+    "build": "bun run build:node && bun run build:bun && bun run schema:generate",
+    "build:node": "bun build-node.mjs",
+    "build:bun": "bun build src/index.ts --outdir dist-bun --target bun",
     "typecheck": "bunx tsc --noEmit",
     "schema:generate": "bun scripts/generate-schema.ts",
     "schema:validate": "bun scripts/validate-schema.ts",
