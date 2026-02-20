@@ -99,6 +99,43 @@ In your project root, create `olimpus.jsonc`:
 
 Full example available in [example/olimpus.jsonc](./example/olimpus.jsonc).
 
+### 4. Build & Development
+
+This package uses a **dual build system** to support both Node.js and Bun runtimes:
+
+- **dist-node/** - Node.js compatible build (via esbuild, main entry point)
+- **dist-bun/** - Bun-optimized build (via Bun bundler)
+
+#### Build Commands
+
+```bash
+# Build everything (Node.js + Bun + schema)
+bun run build
+
+# Build only for Node.js
+bun run build:node
+
+# Build only for Bun
+bun run build:bun
+
+# Type checking
+bun run typecheck
+
+# Regenerate JSON schema
+bun run schema:generate
+
+# Clean rebuild
+bun run rebuild
+```
+
+#### Why Dual Builds?
+
+Bun and Node.js have different runtime capabilities:
+- **Bun**: Direct access to `Bun.*` APIs, better bundling for dependencies like `jsonc-parser`
+- **Node.js**: Standard CommonJS/ESM modules, but Bun's bundling can break require() chains
+
+The esbuild build (dist-node) marks common dependencies as external, letting Node.js module resolution handle them properly. The Bun build keeps everything bundled for maximum performance.
+
 ---
 
 ## Configuration
