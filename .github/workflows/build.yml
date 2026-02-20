@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,17 +59,17 @@ jobs:
 
       - name: Verify Builds
         run: |
-          [ -f dist-node/index.js ] && echo "✅ dist-node/index.js exists" || (echo "❌ dist-node/index.js missing"; exit 1)
-          [ -f dist-bun/index.js ] && echo "✅ dist-bun/index.js exists" || (echo "❌ dist-bun/index.js missing"; exit 1)
-          [ -f assets/olimpus.schema.json ] && echo "✅ olimpus.schema.json exists" || (echo "❌ olimpus.schema.json missing"; exit 1)
+          [ -f dist-node/index.js ] && echo "✅ dist-node" || exit 1
+          [ -f dist-bun/index.js ] && echo "✅ dist-bun" || exit 1
+          [ -f assets/olimpus.schema.json ] && echo "✅ schema" || exit 1
 
       - name: Check file sizes
         run: |
           echo "=== Build Artifacts Size ==="
           ls -lh dist-node/index.js dist-bun/index.js assets/olimpus.schema.json
           echo ""
-          echo "Node.js build: $(du -h dist-node/index.js | cut -f1)"
-          echo "Bun build: $(du -h dist-bun/index.js | cut -f1)"
+          echo "Node.js: $(du -h dist-node/index.js | cut -f1)"
+          echo "Bun: $(du -h dist-bun/index.js | cut -f1)"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -85,7 +85,7 @@ jobs:
     name: Validate JSON Schema
     runs-on: ubuntu-latest
     needs: build
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -96,71 +96,18 @@ jobs:
           node-version: 20.x
           cache: 'npm'
 
-      - name: Install ajv-cli for schema validation
-        run: npm install -g ajv-cli
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: builds-node-20.x
 
-      - name: Validate schema structure
+      - name: Validate schema JSON
         run: |
-          if [ -f assets/olimpus.schema.json ]; then
-            echo "Schema file found, checking JSON validity..."
-            node -e "JSON.parse(require('fs').readFileSync('assets/olimpus.schema.json', 'utf8')); console.log('✅ Valid JSON')"
+          FILE=assets/olimpus.schema.json
+          if [ -f "$FILE" ]; then
+            node -e "JSON.parse(require('fs').readFileSync('$FILE'));"
+            echo "✅ Valid schema"
           else
-            echo "❌ Schema file not found"
+            echo "❌ Schema not found"
             exit 1
           fi
-
-  comment-on-pr:
-    name: Comment Build Results on PR
-    runs-on: ubuntu-latest
-    needs: [build, validate-schema]
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: builds-node-20.x
-
-      - name: Comment PR with build results
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            
-            const nodeSize = require('child_process')
-              .execSync('du -h dist-node/index.js')
-              .toString()
-              .split('\t')[0];
-            
-            const bunSize = require('child_process')
-              .execSync('du -h dist-bun/index.js')
-              .toString()
-              .split('\t')[0];
-            
-            const comment = `## ✅ Build & Validation Successful
-
-### Build Artifacts
-- **dist-node/index.js**: ${nodeSize} (Node.js, esbuild)
-- **dist-bun/index.js**: ${bunSize} (Bun, bun build)
-- **assets/olimpus.schema.json**: ✅ Valid
-
-### Checks
-- ✅ TypeScript type checking
-- ✅ Node.js 18.x build
-- ✅ Node.js 20.x build
-- ✅ Bun build
-- ✅ JSON Schema validation
-
-Ready to merge! 🚀`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
