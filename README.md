@@ -526,6 +526,129 @@ Handles:
 
 ---
 
+## Templates
+
+Templates are pre-configured meta-agent definitions that save you time by providing battle-tested routing configurations for common development patterns, languages, workflows, team sizes, and project domains.
+
+### Why Use Templates?
+
+| Benefit | Description |
+|---------|-------------|
+| **Immediate productivity** | Start with working configurations |
+| **Best practices** | Templates follow proven patterns |
+| **Reduced complexity** | No need to design routing rules from scratch |
+| **Consistency** | Standardized approaches across projects |
+
+### Available Templates
+
+Templates are organized into four categories in the `templates/` directory:
+
+#### 📝 Language Templates
+Specialized meta-agents for programming languages and their ecosystems.
+
+| Template | Description | Frameworks |
+|----------|-------------|------------|
+| [python-dev.jsonc](./templates/language/python-dev.jsonc) | Python development | Django, FastAPI, Flask, Pandas, PyTorch |
+| [typescript-dev.jsonc](./templates/language/typescript-dev.jsonc) | TypeScript/JavaScript | React, Next.js, Node.js, Express |
+| [rust-dev.jsonc](./templates/language/rust-dev.jsonc) | Rust development | Tokio, Actix, Axum |
+| [go-dev.jsonc](./templates/language/go-dev.jsonc) | Go development | Gin, Echo, standard library |
+
+#### 🔧 Workflow Templates
+Meta-agents optimized for specific development workflows.
+
+| Template | Description | Focus |
+|----------|-------------|-------|
+| [debugger.jsonc](./templates/workflow/debugger.jsonc) | Systematic debugging | Error analysis, root cause |
+| [refactor.jsonc](./templates/workflow/refactor.jsonc) | Code refactoring | Code quality, patterns |
+| [tdd.jsonc](./templates/workflow/tdd.jsonc) | Test-driven development | Testing, TDD |
+
+#### 👥 Team Templates
+Meta-agents optimized for different team sizes and collaboration models.
+
+| Template | Description | Best For |
+|----------|-------------|----------|
+| [solo-dev.jsonc](./templates/team/solo-dev.jsonc) | Solo developer | Individual projects |
+| [small-team.jsonc](./templates/team/small-team.jsonc) | Small team | Startups |
+| [enterprise.jsonc](./templates/team/enterprise.jsonc) | Enterprise | Large organizations |
+
+#### 🌐 Domain Templates
+Meta-agents for specific project architectures and domains.
+
+| Template | Description | Use Cases |
+|----------|-------------|-----------|
+| [monorepo.jsonc](./templates/domain/monorepo.jsonc) | Monorepo routing | Turborepo, Nx |
+| [cicd.jsonc](./templates/domain/cicd.jsonc) | CI/CD workflows | GitHub Actions, GitLab CI |
+| [api-first.jsonc](./templates/domain/api-first.jsonc) | API-first development | REST, GraphQL |
+| [data-analysis.jsonc](./templates/domain/data-analysis.jsonc) | Data analysis | Jupyter, Pandas, ML |
+| [documentation.jsonc](./templates/domain/documentation.jsonc) | Documentation | Docusaurus, MDX |
+| [security-audit.jsonc](./templates/domain/security-audit.jsonc) | Security review | OWASP, auth |
+
+### Quick Start
+
+```bash
+# Copy a template to your project root
+cp templates/language/python-dev.jsonc olimpus.jsonc
+
+# Or copy to user config
+cp templates/workflow/debugger.jsonc ~/.config/opencode/olimpus.jsonc
+
+# Validate the configuration
+bun run olimpus validate olimpus.jsonc
+```
+
+### Usage
+
+After copying a template, use the meta-agent directly:
+
+```bash
+# Use the python meta-agent
+@python Create a Django model for user profiles
+@python Build a FastAPI endpoint with Pydantic validation
+
+# Use the debugger meta-agent
+@debugger Debug this null pointer error
+@debugger Analyze this stack trace and find the root cause
+```
+
+### Merging Multiple Templates
+
+Combine templates from different categories for a comprehensive configuration:
+
+```jsonc
+{
+  "$schema": "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json",
+
+  "meta_agents": {
+    // Language template
+    "python": { /* from python-dev.jsonc */ },
+    // Workflow template
+    "debugger": { /* from debugger.jsonc */ },
+    // Domain template
+    "monorepo": { /* from monorepo.jsonc */ }
+  },
+  "settings": {
+    "max_delegation_depth": 3
+  }
+}
+```
+
+### Customization
+
+After copying a template, customize it to fit your needs:
+
+1. **Rename the meta-agent** to match your preferences
+2. **Add custom routing rules** for project-specific patterns
+3. **Update prompts** to match your coding standards
+4. **Remove irrelevant rules** to simplify configuration
+
+### Learn More
+
+- **[Templates Reference](./templates/README.md)** - Complete catalog and detailed documentation
+- **[Using Templates Tutorial](./docs/tutorials/06-using-templates.md)** - Step-by-step guide with examples
+- **[Contributing Templates](./templates/README.md#contributing-templates)** - Submit your own templates
+
+---
+
 ## Routing Rules
 
 Routing rules determine which builtin agent handles a request. Rules are evaluated in order; the first match wins.
