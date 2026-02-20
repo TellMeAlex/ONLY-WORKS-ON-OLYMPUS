@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "jsonc-parser";
-import { TemplateSchema, type Template } from "../config/schema.js";
+import { TemplateSchema, type Template } from "./types.js";
 
 /**
  * Options for loading templates
