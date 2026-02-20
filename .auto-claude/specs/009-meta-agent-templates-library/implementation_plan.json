@@ -416,7 +416,9 @@
             "command": "bun run olimpus templates apply python-dev --dry-run",
             "expected": "Apply preview displayed"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added templates apply subcommand to bin/olimpus.ts with following implementations:\n\n1. Created templatesApplyCommand() - Displays template apply preview including:\n   - Template name, category, and description\n   - Meta-agent configuration (base_model, delegates_to)\n   - Routing rules summary with matcher types and target agents\n   - Prompt template preview\n   - Documentation and examples\n   - Dry-run mode indicator with application instructions\n\n2. Created showTemplatesApplyHelp() - Help documentation for apply subcommand\n\n3. Updated templatesCommand() to handle 'apply' subcommand\n\n4. Updated showTemplatesHelp() to include apply in subcommands list\n\n5. Updated file header JSDoc to document templates apply command\n\nImplementation includes:\n- Template name validation (required argument)\n- Template not found error handling\n- Supports --config option for custom templates directory\n- Supports --dry-run flag to preview without applying\n- Follows same patterns as templatesListCommand and templatesPreviewCommand with proper error handling",
+          "updated_at": "2026-02-20T19:00:00.000Z"
         }
       ]
     },
@@ -592,7 +594,7 @@
   "planStatus": "in_progress",
   "xstateState": "backlog",
   "executionPhase": "coding",
-  "updated_at": "2026-02-20T17:02:51.635Z",
+  "updated_at": "2026-02-20T17:08:29.808Z",
   "recoveryNote": "Task recovered from stuck state at 2026-02-20T16:01:02.206Z",
   "last_updated": "2026-02-20T17:02:18.121929+00:00"
 }
