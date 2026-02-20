@@ -1,0 +1,214 @@
+{
+  // ============================================================================
+  // TypeScript/JavaScript Development Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for TypeScript and JavaScript
+  // development tasks. It handles frontend frameworks (React, Vue, Angular), backend
+  // frameworks (Node.js, Express, NestJS), and full-stack workflows.
+
+  "name": "typescript-dev",
+  "description": "Specialized meta-agent for TypeScript/JavaScript development including React, Vue, Angular, Node.js, Express, and NestJS",
+  "category": "language",
+  "tags": ["typescript", "javascript", "react", "vue", "angular", "node", "express", "nextjs", "nestjs"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "librarian", "explore", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Frontend Framework Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["react", "jsx", "tsx", "component", "hook", "usestate", "useeffect"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a React expert. Follow React best practices including functional components with hooks, proper state management, memoization where needed, and accessible UI patterns. Use TypeScript for type safety."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["vue", "v-for", "v-if", "computed", "watch", "composition api"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Vue expert. Follow Vue 3 Composition API patterns, proper reactive design, component communication patterns, and TypeScript integration best practices."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["angular", "@component", "@injectable", "service", "pipe", "directive"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an Angular expert. Follow Angular best practices including proper dependency injection, reactive forms, observables with RxJS, and module organization."
+        }
+      },
+
+      // ========================================================================
+      // Next.js and Full-Stack Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["next", "next.js", "app router", "page.tsx", "layout.tsx", "server action", "middleware"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Next.js expert. Follow App Router conventions, use Server Actions for mutations, optimize with dynamic imports, implement proper caching strategies, and use TypeScript throughout."
+        }
+      },
+
+      // ========================================================================
+      // Backend Framework Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["express", "middleware", "req", "res", "router"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an Express expert. Follow Express middleware patterns, implement proper error handling, use async/await correctly, and structure routes modularly. Use TypeScript for type safety."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["nest", "nestjs", "@controller", "@service", "@module", "decorator"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a NestJS expert. Follow NestJS patterns including dependency injection, modular architecture, proper DTOs with validation decorators, and use of guards and interceptors."
+        }
+      },
+
+      // ========================================================================
+      // TypeScript Project Context Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["tsconfig.json", "package.json"],
+          "has_deps": ["jest", "vitest", "mocha", "@types/jest"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TDD-focused TypeScript developer. Write comprehensive tests first using Jest or Vitest, use mocking appropriately, ensure type coverage, and implement with strict TypeScript configuration.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["tsconfig.json"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TypeScript developer. Use strict TypeScript configuration, leverage type inference, avoid 'any' types, and provide proper type definitions for interfaces and types."
+        }
+      },
+
+      // ========================================================================
+      // TypeScript Task Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["generic", "type parameter", "constraint", "mapped type", "conditional type"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a TypeScript advanced types expert. Provide guidance on generic types, type constraints, mapped types, conditional types, and utility types. Focus on type safety and reusability."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["promise", "async", "await", "observable", "rxjs"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are an async JavaScript expert. Focus on proper Promise handling, error propagation with async/await, RxJS observables patterns, and avoiding callback hell or race conditions."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "optimization", "bundle", "tree shaking", "code splitting", "lazy loading"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a frontend performance expert. Focus on bundle optimization, code splitting strategies, lazy loading, tree shaking, and runtime performance patterns. Consider both build-time and runtime optimization."
+        }
+      },
+
+      // ========================================================================
+      // Testing Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "spec", "mock", "stub", "spy", "fixture", "describe", "it"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a testing expert for TypeScript. Write clear, maintainable tests using Jest or Vitest. Use mocking appropriately, test edge cases, and follow AAA (Arrange-Act-Assert) pattern. Ensure tests are type-safe."
+        }
+      },
+
+      // ========================================================================
+      // Build Tool and Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["webpack", "vite", "rollup", "babel", "tsconfig", "esbuild"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a build tool expert. Provide guidance on configuring Webpack, Vite, Rollup, or Babel for TypeScript projects. Focus on performance, optimization, and proper type checking integration."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General TypeScript/JavaScript Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are a TypeScript/JavaScript developer. Write clean, type-safe code following modern JavaScript standards (ES6+). Use TypeScript for type safety, follow functional programming patterns where appropriate, and ensure code is maintainable and well-documented."
+        }
+      }
+    ],
+
+    "prompt_template": "TypeScript/JavaScript Development Task: {input}\n\nConsider:\n- TypeScript type safety and strict mode\n- Modern ES6+ JavaScript features\n- Framework-specific best practices\n- Proper error handling\n- Testing strategy with type coverage"
+  },
+
+  "documentation": "This meta-agent template is designed for TypeScript/JavaScript development workflows. It automatically detects common frameworks (React, Vue, Angular, Next.js, Express, NestJS) and routes to appropriate specialized agents. It emphasizes type safety, modern JavaScript patterns, and comprehensive testing.",
+  "examples": [
+    "Create a React component with proper TypeScript types and hooks",
+    "Set up a Next.js API route with validation",
+    "Build an Express middleware for authentication",
+    "Add type safety to this existing JavaScript code"
+  ]
+}

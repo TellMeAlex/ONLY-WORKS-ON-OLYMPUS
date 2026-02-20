@@ -1,0 +1,229 @@
+{
+  // ============================================================================
+  // Rust Development Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for Rust development tasks.
+  // It handles systems programming, async/await patterns, memory safety concepts,
+  // and popular Rust frameworks and libraries.
+
+  "name": "rust-dev",
+  "description": "Specialized meta-agent for Rust development including async programming, systems programming, tokio, actix, and memory safety patterns",
+  "category": "language",
+  "tags": ["rust", "tokio", "actix", "axum", "async", "memory safety", "borrow checker", "systems"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "librarian", "explore", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Async Runtime Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["tokio", "async", "await", "spawn", "join", "future", "stream"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a Rust async expert. Follow async/await best practices, use Tokio runtime patterns correctly, handle cancellation properly, and understand Send/Sync bounds for async tasks."
+        }
+      },
+
+      // ========================================================================
+      // Web Framework Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["actix", "actix-web", "handler", "scope", "responder", "extractor"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an Actix-Web expert. Follow Actix patterns including proper extractor usage, middleware implementation, error handling with ResponseError, and performance considerations for web servers."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["axum", "tower", "layer", "service", "router", "extract"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an Axum expert. Follow Axum patterns with Tower layers, proper state management with extractors, async handler patterns, and type-safe routing."
+        }
+      },
+
+      // ========================================================================
+      // Rust Project Context Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["Cargo.toml"],
+          "has_deps": ["tokio", "async-std", "futures"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TDD-focused Rust async developer. Write comprehensive async tests with tokio::test, use mocking where appropriate, and ensure tests cover edge cases. Follow Rust testing conventions.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["Cargo.toml"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Rust developer. Follow Rust conventions, write safe code with the borrow checker, use idiomatic patterns, and leverage Cargo workspaces appropriately."
+        }
+      },
+
+      // ========================================================================
+      // Memory Safety and Ownership Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["borrow", "lifetime", "ownership", "move", "clone", "rc", "arc", "mutex", "rwlock", "refcell"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Rust memory safety expert. Provide guidance on ownership, borrowing, lifetimes, reference types (Rc, Arc), and interior mutability (RefCell, Mutex, RwLock). Focus on writing idiomatic, safe Rust code."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["unsafe", "transmute", "raw pointer", "ffi", "extern"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a Rust unsafe code expert. Provide guidance on using unsafe blocks judiciously, FFI boundaries, raw pointer manipulation, and invariants that must be maintained. Emphasize safety and documentation."
+        }
+      },
+
+      // ========================================================================
+      // Systems Programming Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["macro", "derive", "proc_macro", "attribute", "declarative macro"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Rust macro expert. Provide guidance on declarative macros (macro_rules!), procedural macros, derive macros, and attribute macros. Focus on hygiene and maintainability."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["trait", "generic", "impl", "dyn", "trait object", "associated type"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Rust generics and traits expert. Provide guidance on trait design, generic bounds, associated types, trait objects vs generics, and object safety rules."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["iterator", "collect", "map", "filter", "fold", "stream", "lazy", "generator"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Rust functional programming expert. Focus on iterator patterns, zero-cost abstractions, functional transformations, and when to use eager vs lazy evaluation."
+        }
+      },
+
+      // ========================================================================
+      // Performance and Optimization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "optimization", "profile", "benchmark", "criterion", "flamegraph"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a Rust performance expert. Focus on profiling techniques, benchmarking with Criterion, memory layout optimization, zero-copy patterns, and when to use optimizations vs readability."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["concurrent", "parallel", "rayon", "thread", "sync", "channel", "mpsc"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a Rust concurrency expert. Focus on proper use of channels, synchronization primitives, data parallelism with Rayon, and avoiding race conditions and deadlocks."
+        }
+      },
+
+      // ========================================================================
+      // Testing and Quality
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "mock", "mockall", "proptest", "property based", "fuzz", "cargo test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Rust testing expert. Use unit tests, integration tests, property-based testing with proptest, and mocking with mockall. Follow Rust testing conventions and ensure test isolation."
+        }
+      },
+
+      // ========================================================================
+      // Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["doc", "///", "//!", "rustdoc", "example", "documentation", "pub doc"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are a Rust documentation expert. Follow rustdoc conventions, write clear module and function documentation, include usage examples, and ensure documentation tests pass."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Rust Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are a Rust developer. Write safe, idiomatic Rust code that respects the borrow checker. Use modern Rust patterns, leverage the type system for correctness, and provide clear error handling with Result and Option."
+        }
+      }
+    ],
+
+    "prompt_template": "Rust Development Task: {input}\n\nConsider:\n- Memory safety and ownership principles\n- Proper use of borrowing and lifetimes\n- Async/await patterns with Tokio\n- Error handling with Result and Option\n- Zero-cost abstractions and performance"
+  },
+
+  "documentation": "This meta-agent template is designed for Rust development workflows. It specializes in async programming with Tokio, web frameworks like Actix and Axum, and memory safety concepts. The template emphasizes safe, idiomatic Rust code while providing expert guidance on advanced patterns like generics, traits, and macros.",
+  "examples": [
+    "Create an async HTTP server using Axum with proper error handling",
+    "Design a trait with generic bounds and associated types",
+    "Optimize this data structure for memory layout",
+    "Add comprehensive tests with property-based testing"
+  ]
+}
