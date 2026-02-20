@@ -448,7 +448,9 @@
             "type": "manual",
             "instructions": "Review templates/README.md for completeness and clarity"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created comprehensive templates/README.md with:\n- Overview of template categories (language, workflow, team, domain)\n- Template structure documentation with JSONC example\n- Detailed reference for all 10 templates with features and examples\n- Usage instructions for copying, merging, and customizing templates\n- Best practices for template adoption (start simple, validate, customize incrementally, use analytics, share)\n- Troubleshooting guide for common issues (template not matching, conflicts, too generic)\n- Contributing guidelines for new templates\n- Cross-references to main documentation\n\nFollows same style patterns as main README.md and quickstart tutorial with proper tables, code blocks, and section structure.",
+          "updated_at": "2026-02-20T17:15:47.530346+00:00"
         },
         {
           "id": "subtask-5-2",
@@ -465,7 +467,9 @@
             "type": "manual",
             "instructions": "Review docs/tutorials/06-using-templates.md for completeness"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created comprehensive templates tutorial (06-using-templates.md) following the pattern from 01-quickstart.md. Tutorial includes:\n- What templates are and why use them\n- Browsing available templates by category (language, workflow, team, domain)\n- Quick start guide for using templates\n- Detailed coverage of all template categories with examples\n- Merging multiple templates\n- Customizing templates\n- Real-world examples\n- Best practices (start simple, validate, customize incrementally, use analytics, avoid conflicts)\n- Troubleshooting (template not matching, conflicts, too generic, schema validation)\n- Next steps and contributing guidelines\n\nFollows same markdown conventions, table structure, code block formatting, and section organization as 01-quickstart.md.",
+          "updated_at": "2026-02-20T19:10:00.000Z"
         },
         {
           "id": "subtask-5-3",
@@ -594,7 +598,7 @@
   "planStatus": "in_progress",
   "xstateState": "backlog",
   "executionPhase": "coding",
-  "updated_at": "2026-02-20T17:08:29.808Z",
+  "updated_at": "2026-02-20T17:16:08.030Z",
   "recoveryNote": "Task recovered from stuck state at 2026-02-20T16:01:02.206Z",
-  "last_updated": "2026-02-20T17:02:18.121929+00:00"
+  "last_updated": "2026-02-20T17:15:47.530351+00:00"
 }
