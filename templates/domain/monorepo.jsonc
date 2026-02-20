@@ -1,0 +1,377 @@
+{
+  // ============================================================================
+  // Monorepo Meta-Agent Template
+  // ============================================================================
+  // This template provides intelligent routing for monorepo projects with multiple
+  // packages. It handles package-aware routing, language-based routing,
+  // cross-package coordination, and build system integration. Ideal for
+  // projects using Turborepo, Nx, npm/pnpm/yarn workspaces, or custom monorepo
+  // setups with multiple languages and frameworks.
+
+  "name": "monorepo",
+  "description": "Meta-agent template for monorepo projects with package-aware routing, language-based routing, cross-package coordination, and build system integration",
+  "category": "domain",
+  "tags": ["monorepo", "workspace", "turborepo", "nx", "multi-package", "cross-package"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["hephaestus", "sisyphus", "oracle", "atlas", "prometheus", "metis", "explore", "librarian"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Frontend Package Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["packages/web/package.json", "packages/frontend/package.json", "apps/web/package.json", "apps/frontend/package.json"],
+          "has_deps": ["react", "@vitejs/plugin-react", "next"]
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "React/TypeScript frontend specialist. Build with TypeScript, hooks, and modern React patterns. Use appropriate framework (Vite, Next.js) based on project configuration.",
+          "variant": "react"
+        }
+      },
+
+      // ========================================================================
+      // Backend API Package Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["packages/api/package.json", "packages/backend/package.json", "apps/api/package.json", "apps/backend/package.json"],
+          "has_deps": ["express", "fastify", "nest"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Node.js API specialist. Build REST endpoints with Express/Fastify or NestJS. Use TypeScript for type safety, proper error handling, and validation.",
+          "variant": "nodejs"
+        }
+      },
+
+      // ========================================================================
+      // Shared Core Library Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["packages/core/package.json", "packages/shared/package.json", "packages/common/package.json"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Core library architect. Design abstractions used by multiple packages. Consider impact on dependent packages and plan coordinated updates.",
+          "variant": "core"
+        }
+      },
+
+      // ========================================================================
+      // Rust/CLI Package Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["packages/cli/Cargo.toml", "apps/cli/Cargo.toml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Rust CLI specialist. Build fast, safe command-line tools. Focus on error handling, argument parsing, and cross-platform compatibility.",
+          "variant": "rust"
+        }
+      },
+
+      // ========================================================================
+      // Go/Backend Package Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["packages/api/go.mod", "packages/backend/go.mod", "apps/api/go.mod", "apps/backend/go.mod"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Go backend specialist. Build with idiomatic Go patterns, proper error handling, and concurrent programming patterns.",
+          "variant": "go"
+        }
+      },
+
+      // ========================================================================
+      // Python Package Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["packages/api/pyproject.toml", "packages/api/setup.py", "packages/backend/pyproject.toml", "packages/backend/setup.py", "pyproject.toml"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Python specialist. Follow PEP 8 standards, use type hints, virtual environments, and proper dependency management with poetry/pip.",
+          "variant": "python"
+        }
+      },
+
+      // ========================================================================
+      // React Component Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "packages/web.*test|test.*packages/web|react.*component.*test|component.*react.*test",
+          "flags": "i"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "React testing specialist. Use @testing-library/react and Vitest/Jest. Test user behavior, not implementation. Test accessibility and edge cases.",
+          "variant": "react-testing"
+        }
+      },
+
+      // ========================================================================
+      // API Endpoint Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "packages/api.*test|test.*packages/api|endpoint.*test|test.*endpoint",
+          "flags": "i"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "API testing specialist. Use supertest, fastify inject, or similar tools. Test endpoints, status codes, responses, and error handling.",
+          "variant": "api-testing"
+        }
+      },
+
+      // ========================================================================
+      // Cross-Package/High Complexity Routing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["shared", "multiple packages", "cross-package", "affects multiple", "coordinated update"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Architect: Analyze how this change affects multiple packages. Propose a coordinated approach considering dependencies and build system.",
+          "variant": "cross-package"
+        }
+      },
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "high"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Architect: This is a high-complexity task that may span multiple packages. Analyze from first principles considering system design, scalability, and impact across the monorepo.",
+          "variant": "cross-package"
+        }
+      },
+
+      // ========================================================================
+      // Shared Library Changes
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "(packages/core|packages/shared|packages/common|core library|shared types)",
+          "flags": "i"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Core library architect. Identify which packages depend on this module and plan coordinated updates. Consider versioning and breaking changes.",
+          "variant": "shared-lib"
+        }
+      },
+
+      // ========================================================================
+      // Type Changes (Ripple Effect)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "(type|interface|enum).*(change|update|modify|rename)",
+          "flags": "i"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "System designer: This type change may affect multiple packages. Plan the migration strategy, identify dependent packages, and coordinate the update.",
+          "variant": "type-migration"
+        }
+      },
+
+      // ========================================================================
+      // TypeScript Error Fixes
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["typescript error", "ts error", "type error", "fix types"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "TypeScript specialist. Fix type errors while maintaining type safety. Consider impact across the monorepo.",
+          "variant": "typescript-fix"
+        }
+      },
+
+      // ========================================================================
+      // Build System Configuration (Turborepo/Nx)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["turbo", "nx", "build config", "pipeline", "cache", "task graph"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Build system architect. Optimize build configuration for cache hits, parallelism, and task dependencies. Consider package interdependencies.",
+          "variant": "build-config"
+        }
+      },
+
+      // ========================================================================
+      // Workspace Configuration Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["pnpm-workspace.yaml", "lerna.json", "turbo.json", "nx.json"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Monorepo build system specialist. Consider workspace protocol, package dependencies, task graph, and caching strategies.",
+          "variant": "workspace"
+        }
+      },
+
+      // ========================================================================
+      // Dependency Updates
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["dependency", "npm", "pnpm", "yarn", "upgrade", "update"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Dependency strategist. Consider workspace protocols, lockfile updates, breaking changes, and how this affects dependent packages.",
+          "variant": "dependency-update"
+        }
+      },
+
+      // ========================================================================
+      // Workspace Root Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"]
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You're working at the monorepo workspace root. Consider configuration that affects all packages, workspace-level dependencies, and monorepo-wide setup."
+        }
+      },
+
+      // ========================================================================
+      // Language-Specific Prompt Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "(react|component|hook|useEffect|useState)",
+          "flags": "i"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "React specialist. Use TypeScript, hooks, and modern patterns. Consider the monorepo structure and shared components.",
+          "variant": "react"
+        }
+      },
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "(rust|cargo|struct|enum|impl|crate)",
+          "flags": "i"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Rust specialist. Focus on safety, performance, and idiomatic patterns. Consider FFI boundaries if interacting with other languages.",
+          "variant": "rust"
+        }
+      },
+      {
+        "matcher": {
+          "type": "regex",
+          "pattern": "(express|fastify|route|middleware|endpoint)",
+          "flags": "i"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Node.js API specialist. Build with Express/Fastify and TypeScript. Consider API contracts used by frontend packages.",
+          "variant": "nodejs"
+        }
+      },
+
+      // ========================================================================
+      // Testing Tasks (General)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "spec", "vitest", "jest", "coverage"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "TDD specialist. Write tests first, then implementation. Consider testing strategies appropriate to each package in the monorepo.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Medium Complexity Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "medium"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Strategist: Plan implementation considering package dependencies and build system. Balance between immediate solution and long-term maintainability.",
+          "variant": "multi-file"
+        }
+      },
+
+      // ========================================================================
+      // Fallback for Workspace Root
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are working in a monorepo. Consider package structure, dependencies, and how changes might affect multiple packages. Detect which package is relevant to the current task."
+        }
+      }
+    ],
+
+    "prompt_template": "Monorepo Task: {input}\n\nContext:\n- Identify which package(s) are affected\n- Consider cross-package dependencies\n- Use appropriate tools for the package's language/framework\n- Coordinate changes across packages when needed\n- Respect build system (Turborepo, Nx, workspaces)"
+  },
+
+  "documentation": "This meta-agent template provides intelligent routing for monorepo projects. It automatically detects packages (web, api, core, cli, etc.), routes based on language and framework, handles cross-package coordination, and integrates with build systems like Turborepo and Nx. The template supports multiple programming languages (TypeScript, Rust, Go, Python) and provides specialized routing for testing, dependency updates, and build configuration tasks.",
+  "examples": [
+    "Add a user profile card component to the web package",
+    "Create a DELETE /api/users/:id endpoint in the API package",
+    "Update the User interface to include a phoneNumber field in the shared types",
+    "Fix the TypeScript error in the core package's user types",
+    "Optimize the Turborepo build configuration for better caching"
+  ]
+}
