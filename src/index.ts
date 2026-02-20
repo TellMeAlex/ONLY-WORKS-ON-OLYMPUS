@@ -1,5 +1,5 @@
 import type { Plugin, PluginInput } from "@opencode-ai/plugin";
-type Config = Record<string, unknown>;
+import type { Config } from "@opencode-ai/sdk";
 import { loadOlimpusConfig } from "./config/loader.js";
 import { extractMetaAgentDefs } from "./config/translator.js";
 import {
@@ -9,6 +9,8 @@ import {
 import { MetaAgentRegistry } from "./agents/registry.js";
 import { ateneo, hermes, hades } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
+import { AnalyticsStorage } from "./analytics/storage.js";
+import { join } from "path";
 
 /**
  * OlimpusPlugin - Meta-orchestrator plugin for OpenCode
@@ -40,7 +42,25 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
 
   const maxDepth = config.settings?.max_delegation_depth ?? 3;
   const loggerConfig = config.settings?.routing_logger;
-  const registry = new MetaAgentRegistry(maxDepth, loggerConfig);
+
+  // Initialize AnalyticsStorage when analytics is enabled
+  let analyticsStorage: AnalyticsStorage | undefined;
+  const analyticsConfig = config.settings?.routing_logger?.analytics_config;
+  if (analyticsConfig?.enabled) {
+    const storageFile = analyticsConfig.storage_file
+      ? join(input.directory, analyticsConfig.storage_file)
+      : join(input.directory, "analytics.json");
+
+    analyticsStorage = new AnalyticsStorage({
+      enabled: true,
+      storage_file: storageFile,
+      max_events: analyticsConfig.max_events ?? 10000,
+      retention_days: analyticsConfig.retention_days ?? 90,
+      auto_prune: analyticsConfig.auto_prune ?? true,
+    });
+  }
+
+  const registry = new MetaAgentRegistry(maxDepth, loggerConfig, analyticsStorage);
 
   const configMetaAgents = extractMetaAgentDefs(config);
   for (const [name, def] of Object.entries(configMetaAgents)) {
@@ -89,7 +109,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
     for (const [agentName] of Object.entries(allMetaAgents)) {
       const agentConfig = registry.resolve(agentName, routingContext);
       if (agentConfig && configInput.agent) {
-        (configInput.agent as Record<string, unknown>)[agentName] = agentConfig;
+        configInput.agent[agentName] = agentConfig;
       }
     }
   };

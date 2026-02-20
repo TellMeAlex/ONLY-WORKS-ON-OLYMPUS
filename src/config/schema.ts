@@ -137,6 +137,19 @@ export const ProviderConfigSchema = z.object({
 });
 
 /**
+ * Analytics Configuration Schema
+ * Note: This is a simplified version for RoutingLogger integration
+ */
+
+export const RoutingAnalyticsConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storage_file: z.string().default("analytics.json"),
+  max_events: z.number().int().positive().default(10000),
+  retention_days: z.number().int().positive().default(90),
+  auto_prune: z.boolean().default(true),
+});
+
+/**
  * Routing Logger Configuration Schema
  */
 
@@ -145,6 +158,38 @@ export const RoutingLoggerConfigSchema = z.object({
   output: z.enum(["console", "file", "disabled"]).optional(),
   log_file: z.string().optional(),
   debug_mode: z.boolean().optional(),
+  analytics_config: RoutingAnalyticsConfigSchema.optional(),
+});
+
+/**
+ * Analytics Configuration Schema
+ */
+
+export const AnalyticsConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  storage: z
+    .object({
+      type: z.enum(["memory", "file", "database"]).optional(),
+      path: z.string().optional(),
+      retention_days: z.number().int().positive().optional(),
+    })
+    .optional(),
+  metrics: z
+    .object({
+      track_routing_decisions: z.boolean().optional(),
+      track_execution_time: z.boolean().optional(),
+      track_agent_usage: z.boolean().optional(),
+      track_model_costs: z.boolean().optional(),
+      track_success_rates: z.boolean().optional(),
+    })
+    .optional(),
+  aggregation: z
+    .object({
+      enabled: z.boolean().optional(),
+      window_minutes: z.number().int().positive().optional(),
+      include_percentiles: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -185,6 +230,9 @@ export const SettingsSchema = z.object({
 
   // Routing logger
   routing_logger: RoutingLoggerConfigSchema.optional(),
+
+  // Analytics
+  analytics: AnalyticsConfigSchema.optional(),
 });
 
 /**
@@ -220,7 +268,9 @@ export type MetaAgentDef = z.infer<typeof MetaAgentSchema>;
 export type AgentOverride = z.infer<typeof AgentOverrideSchema>;
 export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+export type RoutingAnalyticsConfig = z.infer<typeof RoutingAnalyticsConfigSchema>;
 export type RoutingLoggerConfig = z.infer<typeof RoutingLoggerConfigSchema>;
+export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 
 export type OlimpusConfig = z.infer<typeof OlimpusConfigSchema>;
