@@ -1,0 +1,436 @@
+{
+  // ============================================================================
+  // CI/CD Integration Meta-Agent Template
+  // ============================================================================
+  // This template provides intelligent routing for CI/CD (Continuous Integration/
+  // Continuous Deployment) projects. It handles pipeline configuration, automated
+  // testing, deployment automation, environment management, and infrastructure as
+  // code. Ideal for projects using GitHub Actions, GitLab CI, CircleCI, Jenkins,
+  // AWS CDK, Terraform, Docker, or custom CI/CD setups.
+
+  "name": "cicd",
+  "description": "Meta-agent template for CI/CD projects with pipeline routing, deployment automation, environment management, and infrastructure as code support",
+  "category": "domain",
+  "tags": ["cicd", "ci-cd", "deployment", "pipeline", "github-actions", "gitlab-ci", "circleci", "terraform", "docker", "kubernetes"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["atlas", "sisyphus", "prometheus", "oracle", "metis", "librarian"],
+
+    "routing_rules": [
+      // ========================================================================
+      // GitHub Actions Pipeline Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".github/workflows", ".github/workflows/*.yml", ".github/workflows/*.yaml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "GitHub Actions specialist. Create workflows following GitHub Actions best practices. Use proper job dependencies, caching, matrix builds, and reusable workflows.",
+          "variant": "github-actions"
+        }
+      },
+
+      // ========================================================================
+      // GitLab CI Pipeline Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".gitlab-ci.yml", "gitlab-ci.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "GitLab CI/CD specialist. Create pipelines with stages, jobs, rules, artifacts, and cache. Use GitLab-specific features like GitLab registry and environments.",
+          "variant": "gitlab-ci"
+        }
+      },
+
+      // ========================================================================
+      // CircleCI Pipeline Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".circleci/config.yml", "circleci/config.yml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "CircleCI specialist. Create workflows with jobs, executors, caching, and parallelism. Follow CircleCI configuration patterns.",
+          "variant": "circleci"
+        }
+      },
+
+      // ========================================================================
+      // Jenkins Pipeline Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["Jenkinsfile", "jenkinsfile"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Jenkins specialist. Create declarative or scripted pipelines with stages, steps, agents, and post-build actions. Use Jenkins pipeline syntax.",
+          "variant": "jenkins"
+        }
+      },
+
+      // ========================================================================
+      // Terraform Infrastructure as Code
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["terraform/*.tf", "terraform/*.tfvars", "*.tf"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Terraform specialist. Write infrastructure as code following best practices. Use modules, variables, outputs, and proper state management.",
+          "variant": "terraform"
+        }
+      },
+
+      // ========================================================================
+      // AWS CDK Infrastructure
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["cdk.json", "lib/*.ts", "bin/*.ts"],
+          "has_deps": ["aws-cdk"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "AWS CDK specialist. Define infrastructure using TypeScript. Follow CDK patterns for stacks, constructs, and resources.",
+          "variant": "aws-cdk"
+        }
+      },
+
+      // ========================================================================
+      // Docker Containerization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Docker specialist. Create optimized Dockerfiles with multi-stage builds, proper caching, and security best practices. Use docker-compose for local development.",
+          "variant": "docker"
+        }
+      },
+
+      // ========================================================================
+      // Kubernetes Manifests
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["k8s/*.yaml", "k8s/*.yml", "kubernetes/*.yaml", "kubernetes/*.yml"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Kubernetes specialist. Create manifests for deployments, services, configmaps, secrets, ingress, and other resources. Follow K8s best practices.",
+          "variant": "kubernetes"
+        }
+      },
+
+      // ========================================================================
+      // Helm Charts
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["Chart.yaml", "charts/*/Chart.yaml", "values.yaml"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Helm specialist. Create Helm charts with templates, values, and proper structure. Use Helm-specific patterns for Kubernetes deployment.",
+          "variant": "helm"
+        }
+      },
+
+      // ========================================================================
+      // ArgoCD/Flux GitOps
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["argocd/*.yaml", "flux/*.yaml", "apps/*.yaml"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "GitOps specialist. Create ArgoCD applications, Flux manifests, or other GitOps configuration. Follow declarative infrastructure patterns.",
+          "variant": "gitops"
+        }
+      },
+
+      // ========================================================================
+      // Ansible Playbooks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["playbooks/*.yml", "ansible/*.yml", "site.yml"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Ansible specialist. Create playbooks with roles, tasks, handlers, and proper idempotency. Follow Ansible best practices.",
+          "variant": "ansible"
+        }
+      },
+
+      // ========================================================================
+      // Deployment Pipelines
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["deploy", "deployment", "pipeline", "cd", "continuous deployment", "production", "staging"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Deployment pipeline specialist. Design automated deployment workflows with proper staging, rollback, and safety checks.",
+          "variant": "deployment"
+        }
+      },
+
+      // ========================================================================
+      // CI Testing & Quality Gates
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["ci", "continuous integration", "test pipeline", "quality gate", "lint pipeline", "test automation"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "CI testing specialist. Create automated test pipelines with linting, unit tests, integration tests, and code quality checks.",
+          "variant": "ci-testing"
+        }
+      },
+
+      // ========================================================================
+      // Build & Package Automation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["build", "compile", "package", "artifact", "bundle"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Build automation specialist. Create efficient build pipelines with caching, artifact management, and reproducible builds.",
+          "variant": "build"
+        }
+      },
+
+      // ========================================================================
+      // Environment Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["environment", "env var", "config", "secrets", "secret management"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Environment configuration strategist. Design secure environment and secret management across dev, staging, and production.",
+          "variant": "environment"
+        }
+      },
+
+      // ========================================================================
+      // Infrastructure Security
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["security", "scan", "vulnerability", "sast", "dast", "container scan", "dependency scan"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Infrastructure security specialist. Design security scanning, vulnerability assessment, and compliance checks in CI/CD.",
+          "variant": "security"
+        }
+      },
+
+      // ========================================================================
+      // Monitoring & Observability
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["monitoring", "observability", "logging", "metrics", "alerting", "prometheus", "grafana", "datadog"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Monitoring specialist. Design observability integration with logs, metrics, and alerts for CI/CD pipelines and deployments.",
+          "variant": "monitoring"
+        }
+      },
+
+      // ========================================================================
+      // Rollback & Recovery
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["rollback", "recovery", "canary", "blue-green", "feature flag"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Deployment safety specialist. Design rollback, canary, blue-green, and feature flag strategies for safe deployments.",
+          "variant": "safety"
+        }
+      },
+
+      // ========================================================================
+      // CI/CD Pipeline Debugging
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pipeline failed", "build failed", "deployment failed", "fix pipeline", "debug ci"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "CI/CD debugging specialist. Diagnose and fix pipeline failures. Check logs, syntax, permissions, and configuration.",
+          "variant": "debug"
+        }
+      },
+
+      // ========================================================================
+      // Workflow/Job Triggering
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["trigger", "on push", "on pull request", "schedule", "manual trigger", "workflow dispatch"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Workflow trigger specialist. Configure proper triggers for pipelines including push, PR, schedule, and manual triggers.",
+          "variant": "trigger"
+        }
+      },
+
+      // ========================================================================
+      // Cache Optimization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["cache", "caching", "optimize build", "speed up", "faster build"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Build optimization strategist. Design caching strategies for dependencies, build artifacts, and CI layers to speed up pipelines.",
+          "variant": "optimization"
+        }
+      },
+
+      // ========================================================================
+      // Multi-Environment Deployment
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["multi-environment", "dev staging prod", "multiple environments", "env promotion"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Multi-environment specialist. Design deployment flows across dev, staging, and production with proper promotion and isolation.",
+          "variant": "multi-env"
+        }
+      },
+
+      // ========================================================================
+      // High Complexity CI/CD Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "high"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "CI/CD architect: This is a high-complexity task. Design the pipeline considering scalability, reliability, security, and maintainability. Plan for edge cases and failures.",
+          "variant": "complex"
+        }
+      },
+
+      // ========================================================================
+      // Medium Complexity CI/CD Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "medium"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "CI/CD strategist: Plan the pipeline considering trade-offs between speed, reliability, and complexity. Follow best practices.",
+          "variant": "medium"
+        }
+      },
+
+      // ========================================================================
+      // CI/CD Pattern/Template Requests
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pattern", "template", "best practice", "example"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "CI/CD patterns specialist. Provide best practices, templates, and examples for the specific CI/CD system being used.",
+          "variant": "patterns"
+        }
+      },
+
+      // ========================================================================
+      // Fallback - General CI/CD
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "CI/CD generalist. Analyze the CI/CD setup and provide appropriate guidance for the task at hand. Detect which CI/CD system is in use.",
+        }
+      }
+    ],
+
+    "prompt_template": "CI/CD Task: {input}\n\nContext:\n- Detect the CI/CD platform (GitHub Actions, GitLab CI, CircleCI, Jenkins, etc.)\n- Consider infrastructure as code (Terraform, Docker, Kubernetes, Helm)\n- Handle environment-specific configuration\n- Implement proper testing, security, and monitoring\n- Optimize for speed, reliability, and safety"
+  },
+
+  "documentation": "This meta-agent template provides intelligent routing for CI/CD projects. It supports major CI/CD platforms (GitHub Actions, GitLab CI, CircleCI, Jenkins), infrastructure as code tools (Terraform, AWS CDK, Docker, Kubernetes, Helm), and GitOps workflows (ArgoCD, Flux). The template handles pipeline configuration, deployment automation, environment management, security scanning, monitoring, and optimization tasks. Routing is based on project files (presence of CI configuration), keywords in prompts, and task complexity.",
+  "examples": [
+    "Create a GitHub Actions workflow for running tests on every pull request",
+    "Add a deployment pipeline to production using GitLab CI",
+    "Configure Terraform to provision an AWS S3 bucket",
+    "Optimize the Docker build with multi-stage builds and caching",
+    "Set up Kubernetes manifests for a Node.js application with Helm",
+    "Add security scanning to the CI pipeline with SAST and dependency checks",
+    "Implement canary deployment strategy using ArgoCD"
+  ]
+}
