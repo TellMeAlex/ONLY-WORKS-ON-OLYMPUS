@@ -1,6 +1,6 @@
 {
   "name": "@TellMeAlex/only-works-on-olympus",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules",
   "license": "SUL-1.0",
   "module": "dist-node/index.js",
