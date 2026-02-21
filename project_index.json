@@ -1,0 +1,21 @@
+{
+  "project_type": "single",
+  "services": {
+    "olimpus": {
+      "path": ".",
+      "tech_stack": ["typescript", "bun"],
+      "dev_command": "bun run watch",
+      "test_command": "bun test"
+    }
+  },
+  "infrastructure": {
+    "docker": false,
+    "database": "none",
+    "ci_cd": "github-actions"
+  },
+  "conventions": {
+    "linter": "typescript-strict",
+    "formatter": "none-specified",
+    "testing": "bun-test"
+  }
+}

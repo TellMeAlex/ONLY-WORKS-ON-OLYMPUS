@@ -170,6 +170,88 @@ src/
 └── index.ts                 - Plugin entry point
 ```
 
+## Security
+
+### Credential Handling
+
+This project uses environment variables for all sensitive credentials. **Never hardcode credentials in source code.**
+
+#### Required Environment Variables
+
+Tools and integrations in this project rely on environment variables:
+
+```bash
+# Example for Jira integration
+JIRA_BASE_URL=https://your-company.atlassian.net
+JIRA_EMAIL=your.email@company.com
+JIRA_API_TOKEN=your-personal-access-token
+```
+
+#### Setup Steps
+
+1. **Create `.env` file** in project root:
+   ```bash
+   touch .env
+   ```
+
+2. **Add your credentials** (refer to specific tool documentation for required variables):
+   ```bash
+   JIRA_BASE_URL=https://example.atlassian.net
+   JIRA_EMAIL=user@example.com
+   JIRA_API_TOKEN=your_pat_here
+   ```
+
+3. **Verify `.env` is in `.gitignore`**:
+   ```bash
+   cat .gitignore | grep "\.env"
+   # Should show: .env
+   ```
+
+4. **Test configuration**:
+   ```bash
+   bun run dev
+   # Check for error messages about missing credentials
+   ```
+
+#### Best Practices
+
+- ✅ **Use environment variables** for all API keys, tokens, and secrets
+- ✅ **Validate credentials** at startup with clear error messages
+- ✅ **Document required variables** in module docstrings (see `src/tools/jira.ts` for example)
+- ✅ **Use `.env.example`** to document expected variables without exposing values
+- ✅ **Rotate credentials regularly** and invalidate old ones
+
+- ❌ **Never commit** `.env` files or credentials to version control
+- ❌ **Never hardcode** API keys, tokens, or passwords in source code
+- ❌ **Never log** sensitive data to console or files
+- ❌ **Never share** credentials in PR descriptions, comments, or issues
+
+#### Code Pattern
+
+Follow the pattern established in `src/tools/jira.ts`:
+
+```typescript
+/**
+ * Required environment variables:
+ * - TOOL_API_KEY: Your API key from the service provider
+ * - TOOL_SECRET: Your secret token for authentication
+ */
+
+function getConfig(): ToolConfig {
+  const apiKey = process.env.TOOL_API_KEY;
+  const secret = process.env.TOOL_SECRET;
+
+  if (!apiKey || !secret) {
+    throw new ToolConfigError(
+      `Missing required environment variables. ` +
+      `Please set TOOL_API_KEY and TOOL_SECRET in your .env file.`
+    );
+  }
+
+  return { apiKey, secret };
+}
+```
+
 ## Testing
 
 Currently, tests are optional. If you add tests:
