@@ -9,5 +9,6 @@ export default defineConfig({
       $lib: path.resolve("./src/lib"),
       "@olimpus/types": path.resolve("../src/config/schema.ts"),
     },
+    conditions: ["browser", "module", "default"],
   },
 });
