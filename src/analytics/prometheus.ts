@@ -515,7 +515,10 @@ export class PrometheusMetricsFormatter {
       return value > 0 ? "+Inf" : "-Inf";
     }
 
-    // Format with appropriate precision
+    // Use integer format for zero, exponential for others
+    if (value === 0) {
+      return "0";
+    }
     return value.toExponential();
   }
 

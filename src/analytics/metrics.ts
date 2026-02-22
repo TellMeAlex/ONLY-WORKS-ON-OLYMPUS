@@ -315,15 +315,16 @@ export class PerformanceMetricsCollector {
    * @returns Memory metrics
    */
   private computeMemoryMetrics(): MemoryMetrics {
-    const currentStats = this.getCurrentMemoryStats();
+    // Only read live memory if recordMemoryUsage() was called at least once
+    const hasMemoryData = this.memoryHistory.length > 0;
+    const currentStats = hasMemoryData ? this.getCurrentMemoryStats() : { current_usage_bytes: 0 };
     const leakTrend = this.detectMemoryLeakTrend();
-
     return {
       current_usage_bytes: currentStats.current_usage_bytes,
       peak_usage_bytes: this.peakMemoryUsage,
-      heap_usage_bytes: currentStats.heap_usage_bytes,
-      external_usage_bytes: currentStats.external_usage_bytes,
-      array_buffers_bytes: currentStats.array_buffers_bytes,
+      heap_usage_bytes: hasMemoryData ? currentStats.heap_usage_bytes : 0,
+      external_usage_bytes: hasMemoryData ? currentStats.external_usage_bytes : 0,
+      array_buffers_bytes: hasMemoryData ? currentStats.array_buffers_bytes : 0,
       leak_detected: leakTrend === "increasing" && this.isMemoryLeakSignificant(),
       leak_trend: leakTrend,
     };
