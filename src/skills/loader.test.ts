@@ -166,3 +166,10 @@ test("mergeSkills: preserve order", () => {
     "olimpus:new2",
   ]);
 });
+
+test("loadOlimpusSkills: reject absolute paths", () => {
+  // Test with an absolute path that would be a security vulnerability
+  const absolutePath = "/etc/passwd.md";
+  const skills = loadOlimpusSkills([absolutePath], ".");
+  expect(skills).toHaveLength(0);
+});
