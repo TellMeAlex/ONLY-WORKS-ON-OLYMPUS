@@ -111,6 +111,7 @@ export const ValidationContextSchema = z.object({
   checkCircularDependencies: z.boolean().default(true),
   checkAgentReferences: z.boolean().default(true),
   checkRegexPerformance: z.boolean().default(true),
+  checkRegexFlags: z.boolean().default(true),
 });
 
 /**
@@ -336,6 +337,7 @@ export function formatWarnings(result: ValidationResult): string[] {
  * Checks performed (when enabled in context):
  * - Circular dependency detection in meta-agent delegation chains
  * - Agent reference validation (all references must be to builtin agents or defined meta-agents)
+ * - Regex flags validation (ensures regex flags in matchers are valid JavaScript regex flags)
  * - Regex performance analysis for routing rule patterns (generates warnings only)
  *
  * @param config - The Olimpus configuration to validate
@@ -350,6 +352,7 @@ export function validateOlimpusConfig(
     checkCircularDependencies: true,
     checkAgentReferences: true,
     checkRegexPerformance: true,
+    checkRegexFlags: true,
     ...context,
   };
 
@@ -365,6 +368,12 @@ export function validateOlimpusConfig(
   if (ctx.checkAgentReferences) {
     const agentRefCheck = checkAgentReferencesInConfig(config, ctx);
     result.errors.push(...agentRefCheck.errors);
+  }
+
+  // Run regex flags validation check
+  if (ctx.checkRegexFlags) {
+    const regexFlagsCheck = checkRegexFlagsInConfig(config, ctx);
+    result.errors.push(...regexFlagsCheck.errors);
   }
 
   // Run regex performance check (generates warnings, not errors)
