@@ -297,7 +297,7 @@ export class AnalyticsExporter {
             ? this.escapeCsvValue(event.user_request)
             : "",
           // Common field
-          this.escapeCsvValue(event.meta_agent ?? ""),
+          (event.type === "routing_decision" || event.type === "unmatched_request") ? this.escapeCsvValue(event.meta_agent ?? "") : "",
         ];
 
         rows.push(row.join(","));
