@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { OlimpusConfigSchema } from "./schema.js";
 import { runWizard, type WizardResult } from "./wizard.js";
+import { success, warning, error, info, bold, dim } from "../utils/colors.js";
 
 /**
  * Options for scaffolding the Olimpus config
@@ -92,9 +93,9 @@ export async function scaffoldOlimpusConfig(
           path: wizardResult.path,
           created: true,
         };
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        console.warn(`[Olimpus] Wizard failed: ${err.message}`);
+      } catch (err) {
+        const caughtError = err instanceof Error ? err : new Error(String(err));
+        console.warn(`${bold("[Olimpus]")} ${error(`Wizard failed:`)} ${dim(caughtError.message)}`);
         return null;
       }
     }
@@ -103,7 +104,7 @@ export async function scaffoldOlimpusConfig(
     const homeDir = process.env.HOME;
     if (!homeDir) {
       console.warn(
-        "[Olimpus] HOME environment variable not set, skipping config generation",
+        `${bold("[Olimpus]")} ${warning("HOME environment variable not set, skipping config generation")}`,
       );
       return null;
     }
@@ -132,7 +133,7 @@ export async function scaffoldOlimpusConfig(
       const err = error instanceof Error ? error : new Error(String(error));
       if (err.message.includes("EACCES") || err.message.includes("EROFS")) {
         console.warn(
-          `[Olimpus] Permission denied creating directory: ${parentDir}`,
+          `${bold("[Olimpus]")} ${warning("Permission denied creating directory:")} ${dim(parentDir)}`,
         );
         return null;
       }
@@ -146,7 +147,7 @@ export async function scaffoldOlimpusConfig(
     const parsed = JSON.parse(content);
     const validation = OlimpusConfigSchema.safeParse(parsed);
     if (!validation.success) {
-      console.warn("[Olimpus] Generated config failed validation");
+      console.warn(`${bold("[Olimpus]")} ${error("Generated config failed validation")}`);
       return null;
     }
 
@@ -155,7 +156,7 @@ export async function scaffoldOlimpusConfig(
     try {
       fs.writeFileSync(tempPath, content, "utf-8");
       fs.renameSync(tempPath, targetPath);
-    } catch (error) {
+    } catch (err) {
       // Clean up temp file if it exists
       try {
         if (fs.existsSync(tempPath)) {
@@ -165,30 +166,31 @@ export async function scaffoldOlimpusConfig(
         // Ignore cleanup errors
       }
 
-      const err = error instanceof Error ? error : new Error(String(error));
+      const caughtError = err instanceof Error ? err : new Error(String(err));
       if (
-        err.message.includes("EACCES") ||
-        err.message.includes("EROFS") ||
-        err.message.includes("ENOSPC")
+        caughtError.message.includes("EACCES") ||
+        caughtError.message.includes("EROFS") ||
+        caughtError.message.includes("ENOSPC")
       ) {
-        console.warn(`[Olimpus] Failed to write config: ${err.message}`);
+        console.warn(`${bold("[Olimpus]")} ${error("Failed to write config:")} ${dim(caughtError.message)}`);
         return null;
       }
-      throw error;
+      throw err;
     }
 
     // Step 10: Log success message
-    console.log(`[Olimpus] Generated default config at ${targetPath}`);
+    console.log(
+      `${bold("[Olimpus]")} ${success("Generated default config at")} ${info(targetPath)}`,
+    );
 
     return {
       path: targetPath,
       created: true,
     };
-  } catch (error) {
+  } catch (err) {
+    const caughtError = err instanceof Error ? err : new Error(String(err));
     console.warn(
-      `[Olimpus] Scaffolding failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+      `${bold("[Olimpus]")} ${error("Scaffolding failed:")} ${dim(caughtError.message)}`,
     );
     return null;
   }

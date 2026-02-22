@@ -1,6 +1,7 @@
 import type { Matcher, RoutingLoggerConfig } from "../config/schema.js";
 import { dirname } from "path";
 import { mkdirSync, appendFileSync } from "fs";
+import { info, bold, dim } from "../utils/colors.js";
 
 export interface MatcherEvaluation {
   matcher_type: string;
@@ -29,6 +30,7 @@ export interface RoutingLogEntry {
  * RoutingLogger class for logging routing decisions
  * Supports console, file, and disabled output modes
  * Includes debug mode for comprehensive evaluation tracking
+ * Supports colored console output when enabled for better readability
  */
 export class RoutingLogger {
   private config: {
@@ -36,6 +38,7 @@ export class RoutingLogger {
     output: "console" | "file" | "disabled";
     log_file: string;
     debug_mode: boolean;
+    colored: boolean;
   };
   private enabled: boolean;
 
@@ -46,6 +49,7 @@ export class RoutingLogger {
       output: config.output ?? "console",
       log_file: config.log_file ?? "routing.log",
       debug_mode: config.debug_mode ?? false,
+      colored: config.colored ?? false,
     };
 
     // Determine if logging is enabled based on both enabled flag and output mode
@@ -93,7 +97,11 @@ export class RoutingLogger {
     try {
       switch (this.config.output) {
         case "console":
-          console.log(logLine);
+          if (this.config.colored) {
+            console.log(this.formatColoredOutput(entry));
+          } else {
+            console.log(logLine);
+          }
           break;
         case "file":
           this.writeToFile(logLine);
@@ -109,6 +117,50 @@ export class RoutingLogger {
       // Silently fail to avoid disrupting routing logic
       // Error is swallowed per performance pattern - minimal overhead
     }
+  }
+
+  /**
+   * Formats a routing log entry with colored output for console display
+   * Uses cyan for info, bold for emphasis, dim for secondary details
+   */
+  private formatColoredOutput(entry: RoutingLogEntry): string {
+    const parts: string[] = [];
+
+    // Timestamp in dim
+    parts.push(dim(entry.timestamp));
+
+    // Routing decision message with info color
+    parts.push(info("Routing decision:"));
+
+    // Target agent in bold
+    parts.push(bold(`→ ${entry.target_agent}`));
+
+    // Matcher type
+    parts.push(`(${entry.matcher_type})`);
+
+    // Matched content in dim
+    const contentPreview = entry.matched_content.length > 50
+      ? entry.matched_content.slice(0, 50) + "..."
+      : entry.matched_content;
+    parts.push(dim(`matched: "${contentPreview}"`));
+
+    // Config overrides if present
+    if (entry.config_overrides) {
+      const overrides: string[] = [];
+      if (entry.config_overrides.model) overrides.push(`model:${entry.config_overrides.model}`);
+      if (entry.config_overrides.temperature !== undefined) overrides.push(`temp:${entry.config_overrides.temperature}`);
+      if (entry.config_overrides.variant) overrides.push(`variant:${entry.config_overrides.variant}`);
+      if (overrides.length > 0) {
+        parts.push(dim(`[${overrides.join(", ")}]`));
+      }
+    }
+
+    // Debug info if present
+    if (entry.debug_info) {
+      parts.push(dim(`(evaluated ${entry.debug_info.total_evaluated} matcher(s))`));
+    }
+
+    return parts.join(" ");
   }
 
   /**

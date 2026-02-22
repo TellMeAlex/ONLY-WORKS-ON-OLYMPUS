@@ -11,6 +11,7 @@ import { MetaAgentRegistry } from "./agents/registry.js";
 import { ateneo, hermes, hades } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
 import { AnalyticsStorage } from "./analytics/storage.js";
+import { success, warning, bold } from "./utils/colors.js";
 import { join } from "path";
 
 /**
@@ -120,14 +121,12 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
       const olimpusSkills = loadOlimpusSkills(config.skills, input.directory);
       if (olimpusSkills.length > 0) {
         console.log(
-          `[Olimpus] Loaded ${olimpusSkills.length} Olimpus skills with ${namespace}: prefix`,
+          `${bold("[Olimpus]")} ${success(`Loaded ${olimpusSkills.length} Olimpus skills with ${namespace}: prefix`)}`,
         );
       }
     } catch (error) {
       console.warn(
-        `[Olimpus] Failed to load skills: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `${bold("[Olimpus]")} ${warning(`Failed to load skills: ${error instanceof Error ? error.message : String(error)}`)}`,
       );
     }
   }

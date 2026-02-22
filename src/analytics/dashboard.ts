@@ -13,6 +13,15 @@ import {
   type AgentStatistics,
   type MatcherStatistics,
 } from "./aggregator.js";
+import {
+  success,
+  warning,
+  error,
+  info,
+  bold,
+  dim,
+  reset,
+} from "../utils/colors.js";
 
 /**
  * Dashboard Output Schema - Result of a display operation
@@ -228,19 +237,20 @@ export class AnalyticsDashboard {
    * @param summary - Summary statistics
    */
   private displaySummary(summary: FormattedMetrics["summary"]): void {
-    console.log("\n📊 Analytics Summary");
-    console.log("─".repeat(40));
-    console.log(`Total Events:          ${summary.total_events}`);
-    console.log(`Routing Decisions:     ${summary.routing_decisions}`);
-    console.log(`Unmatched Requests:    ${summary.unmatched_requests}`);
-    console.log(`Unique Agents:         ${summary.unique_agents}`);
-    console.log(`Unique Matchers:       ${summary.unique_matchers}`);
-    console.log(`Unique Meta-Agents:    ${summary.unique_meta_agents}`);
+    console.log("");
+    console.log(`${bold("📊 Analytics Summary")}`);
+    console.log(dim("─".repeat(40)));
+    console.log(`${info("Total Events:")}          ${bold(String(summary.total_events))}`);
+    console.log(`${info("Routing Decisions:")}     ${bold(String(summary.routing_decisions))}`);
+    console.log(`${warning("Unmatched Requests:")}    ${bold(String(summary.unmatched_requests))}`);
+    console.log(`${info("Unique Agents:")}         ${bold(String(summary.unique_agents))}`);
+    console.log(`${info("Unique Matchers:")}       ${bold(String(summary.unique_matchers))}`);
+    console.log(`${info("Unique Meta-Agents:")}    ${bold(String(summary.unique_meta_agents))}`);
 
     if (summary.date_range?.start && summary.date_range?.end) {
       const startDate = new Date(summary.date_range.start).toLocaleDateString();
       const endDate = new Date(summary.date_range.end).toLocaleDateString();
-      console.log(`Date Range:           ${startDate} to ${endDate}`);
+      console.log(`${info("Date Range:")}           ${dim(`${startDate} to ${endDate}`)}`);
     }
   }
 
@@ -249,28 +259,34 @@ export class AnalyticsDashboard {
    * @param agents - Array of top agents
    */
   private displayTopAgents(agents: Array<{ name: string; requests: number; success_rate: number }>): void {
-    console.log("\n🎯 Top Agents");
-    console.log("─".repeat(40));
+    console.log("");
+    console.log(`${bold("🎯 Top Agents")}`);
+    console.log(dim("─".repeat(40)));
 
     if (agents.length === 0) {
-      console.log("No agents found.");
+      console.log(dim("No agents found."));
       return;
     }
 
     // Calculate column widths
     const maxNameWidth = Math.max(...agents.map((a) => a.name.length), 4);
-    const nameHeader = "Agent".padEnd(maxNameWidth);
-    const requestsHeader = "Requests";
-    const rateHeader = "Success Rate";
+    const nameHeader = bold("Agent").padEnd(maxNameWidth);
+    const requestsHeader = bold("Requests");
+    const rateHeader = bold("Success Rate");
 
     console.log(`${nameHeader}  ${requestsHeader}  ${rateHeader}`);
-    console.log("─".repeat(maxNameWidth + 20));
+    console.log(dim("─".repeat(maxNameWidth + 20)));
 
     for (const agent of agents) {
       const name = agent.name.padEnd(maxNameWidth);
       const requests = String(agent.requests).padStart(8);
       const rate = `${(agent.success_rate * 100).toFixed(1)}%`.padStart(13);
-      console.log(`${name}  ${requests}  ${rate}`);
+      const rateColored = agent.success_rate >= 0.9
+        ? success(rate)
+        : agent.success_rate >= 0.7
+          ? warning(rate)
+          : error(rate);
+      console.log(`${info(name)}  ${requests}  ${rateColored}`);
     }
   }
 
@@ -279,28 +295,34 @@ export class AnalyticsDashboard {
    * @param matchers - Array of top matchers
    */
   private displayTopMatchers(matchers: Array<{ type: string; evaluations: number; match_rate: number }>): void {
-    console.log("\n🔍 Top Matchers");
-    console.log("─".repeat(40));
+    console.log("");
+    console.log(`${bold("🔍 Top Matchers")}`);
+    console.log(dim("─".repeat(40)));
 
     if (matchers.length === 0) {
-      console.log("No matchers found.");
+      console.log(dim("No matchers found."));
       return;
     }
 
     // Calculate column widths
     const maxTypeWidth = Math.max(...matchers.map((m) => m.type.length), 7);
-    const typeHeader = "Matcher".padEnd(maxTypeWidth);
-    const evalHeader = "Evaluations";
-    const rateHeader = "Match Rate";
+    const typeHeader = bold("Matcher").padEnd(maxTypeWidth);
+    const evalHeader = bold("Evaluations");
+    const rateHeader = bold("Match Rate");
 
     console.log(`${typeHeader}  ${evalHeader}  ${rateHeader}`);
-    console.log("─".repeat(maxTypeWidth + 25));
+    console.log(dim("─".repeat(maxTypeWidth + 25)));
 
     for (const matcher of matchers) {
       const type = matcher.type.padEnd(maxTypeWidth);
       const evaluations = String(matcher.evaluations).padStart(12);
       const rate = `${(matcher.match_rate * 100).toFixed(1)}%`.padStart(11);
-      console.log(`${type}  ${evaluations}  ${rate}`);
+      const rateColored = matcher.match_rate >= 0.9
+        ? success(rate)
+        : matcher.match_rate >= 0.7
+          ? warning(rate)
+          : error(rate);
+      console.log(`${info(type)}  ${evaluations}  ${rateColored}`);
     }
   }
 
@@ -313,26 +335,28 @@ export class AnalyticsDashboard {
     requests: Array<{ timestamp: string; user_request: string; meta_agent?: string }>,
     options: DisplayOptions
   ): void {
-    console.log("\n⚠️ Unmatched Requests");
-    console.log("─".repeat(40));
+    console.log("");
+    console.log(`${warning("⚠️ Unmatched Requests")}`);
+    console.log(dim("─".repeat(40)));
 
     if (requests.length === 0) {
-      console.log("No unmatched requests found.");
+      console.log(dim("No unmatched requests found."));
       return;
     }
 
     const displayRequests = this.limitAndSortRequests(requests, options);
 
-    displayRequests.forEach((request, i) => {
+    for (let i = 0; i < displayRequests.length; i++) {
+      const request = displayRequests[i]!;
       const timestamp = new Date(request.timestamp).toLocaleString();
-      const metaAgentInfo = request.meta_agent ? ` (${request.meta_agent})` : "";
-
-      console.log(`\n${i + 1}. [${timestamp}]${metaAgentInfo}`);
-      console.log(`   ${request.user_request}`);
-    });
+      const metaAgentInfo = request.meta_agent ? ` ${dim(`(${request.meta_agent})`)}` : "";
+      console.log(`${bold(String(i + 1))}. ${dim(`[${timestamp}]`)}${metaAgentInfo}`);
+      console.log(`   ${warning(request.user_request)}`);
+    }
 
     if (requests.length > displayRequests.length) {
-      console.log(`\n... and ${requests.length - displayRequests.length} more unmatched requests`);
+      console.log("");
+      console.log(dim(`... and ${requests.length - displayRequests.length} more unmatched requests`));
     }
   }
 
