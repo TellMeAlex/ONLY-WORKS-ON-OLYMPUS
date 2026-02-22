@@ -2,12 +2,30 @@ import type { Matcher, RoutingLoggerConfig } from "../config/schema.js";
 import { dirname } from "path";
 import { mkdirSync, appendFileSync } from "fs";
 
+/**
+ * Result of evaluating a single matcher during routing.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Captures the evaluation outcome of a matcher including the matcher
+ * configuration and whether it matched the context.
+ */
 export interface MatcherEvaluation {
   matcher_type: string;
   matcher: Matcher;
   matched: boolean;
 }
 
+/**
+ * A single routing decision log entry.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Structured JSON log entry containing timestamp, selected agent, matcher
+ * information, and optional debug details about all evaluated matchers.
+ */
 export interface RoutingLogEntry {
   timestamp: string;
   target_agent: string;
@@ -26,9 +44,23 @@ export interface RoutingLogEntry {
 }
 
 /**
- * RoutingLogger class for logging routing decisions
- * Supports console, file, and disabled output modes
- * Includes debug mode for comprehensive evaluation tracking
+ * RoutingLogger class for logging routing decisions.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Supports console, file, and disabled output modes. Includes debug mode
+ * for comprehensive evaluation tracking when debugging routing logic.
+ *
+ * @example
+ * ```ts
+ * const logger = new RoutingLogger({
+ *   enabled: true,
+ *   output: "console",
+ *   debug_mode: true
+ * });
+ * logger.logRoutingDecision("agent-name", "keyword", "matched keywords: test");
+ * ```
  */
 export class RoutingLogger {
   private config: {
@@ -39,6 +71,15 @@ export class RoutingLogger {
   };
   private enabled: boolean;
 
+  /**
+   * Creates a new RoutingLogger instance.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * @param config - Logger configuration with options for enablement,
+   *   output mode, log file path, and debug mode
+   */
   constructor(config: RoutingLoggerConfig = {}) {
     // Apply defaults
     this.config = {
@@ -53,8 +94,19 @@ export class RoutingLogger {
   }
 
   /**
-   * Logs a routing decision with structured JSON format
-   * Includes timestamp, matcher type, matched content, and selected agent
+   * Logs a routing decision with structured JSON format.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * Includes timestamp, matcher type, matched content, and selected agent.
+   * In debug mode, also includes full evaluation information.
+   *
+   * @param targetAgent - The agent that was selected
+   * @param matcherType - The type of matcher that triggered the selection
+   * @param matchedContent - Human-readable description of what was matched
+   * @param configOverrides - Optional configuration overrides applied
+   * @param allEvaluations - Optional full evaluation list for debug mode
    */
   logRoutingDecision(
     targetAgent: string,
@@ -134,14 +186,25 @@ export class RoutingLogger {
   }
 
   /**
-   * Checks if logging is currently enabled
+   * Checks if logging is currently enabled.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * @returns true if logging is enabled and output mode is not "disabled"
    */
   isEnabled(): boolean {
     return this.enabled;
   }
 
   /**
-   * Checks if debug mode is enabled
+   * Checks if debug mode is enabled.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * @returns true if debug mode is enabled, which includes full evaluation
+   *   information in log entries
    */
   isDebugMode(): boolean {
     return this.config.debug_mode;
