@@ -26,6 +26,13 @@ export const SchemaValidationErrorSchema = z.object({
   zodIssue: z.any().optional(),
 });
 
+export const InvalidRegexFlagsErrorSchema = z.object({
+  type: z.literal("invalid_regex_flags"),
+  message: z.string(),
+  path: z.array(z.string()),
+  flags: z.string(),
+});
+
 export const RegexPerformanceWarningSchema = z.object({
   type: z.literal("regex_performance"),
   message: z.string(),
@@ -42,6 +49,7 @@ export const ValidationErrorSchema = z.discriminatedUnion("type", [
   CircularDependencyErrorSchema,
   InvalidAgentReferenceErrorSchema,
   SchemaValidationErrorSchema,
+  InvalidRegexFlagsErrorSchema,
 ]);
 
 /**
@@ -79,6 +87,7 @@ export const CheckTypeSchema = z.enum([
   "circular_dependency",
   "agent_reference",
   "regex_performance",
+  "regex_flags",
 ]);
 
 /**
@@ -102,6 +111,7 @@ export const ValidationContextSchema = z.object({
   checkCircularDependencies: z.boolean().default(true),
   checkAgentReferences: z.boolean().default(true),
   checkRegexPerformance: z.boolean().default(true),
+  checkRegexFlags: z.boolean().default(true),
 });
 
 /**
@@ -115,6 +125,9 @@ export type InvalidAgentReferenceError = z.infer<
   typeof InvalidAgentReferenceErrorSchema
 >;
 export type SchemaValidationError = z.infer<typeof SchemaValidationErrorSchema>;
+export type InvalidRegexFlagsError = z.infer<
+  typeof InvalidRegexFlagsErrorSchema
+>;
 
 export type ValidationError = z.infer<typeof ValidationErrorSchema>;
 
@@ -182,6 +195,23 @@ export function createSchemaValidationError(
     message,
     path,
     zodIssue,
+  };
+}
+
+/**
+ * Create an invalid regex flags error
+ */
+
+export function createInvalidRegexFlagsError(
+  message: string,
+  path: string[],
+  flags: string,
+): InvalidRegexFlagsError {
+  return {
+    type: "invalid_regex_flags",
+    message,
+    path,
+    flags,
   };
 }
 
@@ -307,6 +337,7 @@ export function formatWarnings(result: ValidationResult): string[] {
  * Checks performed (when enabled in context):
  * - Circular dependency detection in meta-agent delegation chains
  * - Agent reference validation (all references must be to builtin agents or defined meta-agents)
+ * - Regex flags validation (ensures regex flags in matchers are valid JavaScript regex flags)
  * - Regex performance analysis for routing rule patterns (generates warnings only)
  *
  * @param config - The Olimpus configuration to validate
@@ -321,6 +352,7 @@ export function validateOlimpusConfig(
     checkCircularDependencies: true,
     checkAgentReferences: true,
     checkRegexPerformance: true,
+    checkRegexFlags: true,
     ...context,
   };
 
@@ -336,6 +368,12 @@ export function validateOlimpusConfig(
   if (ctx.checkAgentReferences) {
     const agentRefCheck = checkAgentReferencesInConfig(config, ctx);
     result.errors.push(...agentRefCheck.errors);
+  }
+
+  // Run regex flags validation check
+  if (ctx.checkRegexFlags) {
+    const regexFlagsCheck = checkRegexFlagsInConfig(config, ctx);
+    result.errors.push(...regexFlagsCheck.errors);
   }
 
   // Run regex performance check (generates warnings, not errors)
@@ -639,6 +677,82 @@ export function checkAgentReferencesInConfig(
   }
 
   const errors = checkAgentReferences(config.meta_agents);
+
+  if (errors.length > 0) {
+    result.passed = false;
+    result.errors.push(...errors);
+  } else {
+    result.passed = true;
+  }
+
+  return result;
+}
+
+/**
+ * Check for invalid regex flags in meta-agent routing rules
+ * Validates that regex flags in matchers are valid JavaScript regex flags
+ * Valid flags are: g, i, m, s, u, y, d
+ * @param metaAgents - Map of meta-agent definitions
+ * @returns Array of InvalidRegexFlagsError for each invalid flag found
+ */
+export function checkRegexFlags(
+  metaAgents: Record<string, MetaAgentDef>
+): InvalidRegexFlagsError[] {
+  const errors: InvalidRegexFlagsError[] = [];
+  const validFlags = new Set(["g", "i", "m", "s", "u", "y", "d"]);
+
+  if (Object.keys(metaAgents).length === 0) {
+    return errors;
+  }
+
+  // Check each meta-agent for invalid regex flags
+  for (const [agentName, def] of Object.entries(metaAgents)) {
+    // Check routing_rules for regex flags
+    for (const [ruleIndex, rule] of def.routing_rules.entries()) {
+      if (rule.matcher.type === "regex") {
+        const flags = rule.matcher.flags;
+
+        if (flags) {
+          // Find any invalid flags
+          const invalidFlags = Array.from(flags).filter(
+            (flag: string) => !validFlags.has(flag)
+          );
+
+          if (invalidFlags.length > 0) {
+            errors.push(
+              createInvalidRegexFlagsError(
+                `Invalid regex flags: "${invalidFlags.join("")}" is not a valid regex flag. Valid flags are: ${Array.from(validFlags).join(", ")}`,
+                ["meta_agents", agentName, "routing_rules", String(ruleIndex), "matcher", "flags"],
+                flags
+              )
+            );
+          }
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Helper function to check regex flags from validation context
+ * @param config - The Olimpus configuration to validate
+ * @param context - Optional validation context
+ * @returns CheckResult with regex flags check status
+ */
+export function checkRegexFlagsInConfig(
+  config: OlimpusConfig,
+  context?: Partial<ValidationContext>
+): CheckResult {
+  const result = createCheckResult("regex_flags");
+
+  if (!config.meta_agents || Object.keys(config.meta_agents).length === 0) {
+    result.passed = true;
+    return result;
+  }
+
+  const errors = checkRegexFlags(config.meta_agents);
 
   if (errors.length > 0) {
     result.passed = false;
