@@ -28,9 +28,100 @@ export const UnmatchedRequestEventSchema = z.object({
   meta_agent: z.string().optional(),
 });
 
+/**
+ * Portfolio Analytics Event Types
+ */
+
+export const PortfolioCreationEventSchema = z.object({
+  type: z.literal("portfolio_creation"),
+  timestamp: z.string().datetime(),
+  portfolio_id: z.string(),
+  portfolio_name: z.string(),
+  initial_value: z.number().nonnegative(),
+  currency: z.string().default("USD"),
+  strategy: z.string().optional(),
+  user_id: z.string().optional(),
+});
+
+export const PortfolioUpdateEventSchema = z.object({
+  type: z.literal("portfolio_update"),
+  timestamp: z.string().datetime(),
+  portfolio_id: z.string(),
+  portfolio_name: z.string(),
+  previous_value: z.number().nonnegative(),
+  new_value: z.number().nonnegative(),
+  value_change: z.number(),
+  value_change_percent: z.number(),
+  updated_fields: z.array(z.string()),
+  user_id: z.string().optional(),
+});
+
+export const AssetAddedEventSchema = z.object({
+  type: z.literal("asset_added"),
+  timestamp: z.string().datetime(),
+  portfolio_id: z.string(),
+  asset_id: z.string(),
+  asset_name: z.string(),
+  asset_type: z.enum(["stock", "bond", "etf", "crypto", "commodity", "cash", "other"]),
+  quantity: z.number().nonnegative(),
+  price_per_unit: z.number().nonnegative(),
+  total_value: z.number().nonnegative(),
+  currency: z.string().default("USD"),
+  user_id: z.string().optional(),
+});
+
+export const AssetRemovedEventSchema = z.object({
+  type: z.literal("asset_removed"),
+  timestamp: z.string().datetime(),
+  portfolio_id: z.string(),
+  asset_id: z.string(),
+  asset_name: z.string(),
+  asset_type: z.enum(["stock", "bond", "etf", "crypto", "commodity", "cash", "other"]),
+  quantity: z.number().nonnegative(),
+  price_per_unit: z.number().nonnegative(),
+  total_value: z.number().nonnegative(),
+  currency: z.string().default("USD"),
+  reason: z.enum(["sold", "transferred", "correction", "other"]).optional(),
+  user_id: z.string().optional(),
+});
+
+export const PortfolioValueEventSchema = z.object({
+  type: z.literal("portfolio_value"),
+  timestamp: z.string().datetime(),
+  portfolio_id: z.string(),
+  portfolio_name: z.string(),
+  total_value: z.number().nonnegative(),
+  currency: z.string().default("USD"),
+  daily_return: z.number().optional(),
+  total_return: z.number().optional(),
+  asset_count: z.number().int().nonnegative(),
+  top_asset_allocation: z.record(z.string(), z.number()).optional(),
+});
+
+export const RebalancingEventSchema = z.object({
+  type: z.literal("rebalancing"),
+  timestamp: z.string().datetime(),
+  portfolio_id: z.string(),
+  portfolio_name: z.string(),
+  strategy: z.string(),
+  trigger_reason: z.enum(["scheduled", "threshold", "manual", "market_condition"]),
+  previous_allocation: z.record(z.string(), z.number()),
+  new_allocation: z.record(z.string(), z.number()),
+  trades_executed: z.number().int().nonnegative(),
+  total_value_before: z.number().nonnegative(),
+  total_value_after: z.number().nonnegative(),
+  user_id: z.string().optional(),
+});
+
 export const AnalyticsEventSchema = z.discriminatedUnion("type", [
   RoutingDecisionEventSchema,
   UnmatchedRequestEventSchema,
+  PortfolioCreationEventSchema,
+  PortfolioUpdateEventSchema,
+  AssetAddedEventSchema,
+  AssetRemovedEventSchema,
+  PortfolioValueEventSchema,
+  RebalancingEventSchema,
 ]);
 
 /**
@@ -142,6 +233,12 @@ export const AnalyticsConfigSchema = z.object({
 
 export type RoutingDecisionEvent = z.infer<typeof RoutingDecisionEventSchema>;
 export type UnmatchedRequestEvent = z.infer<typeof UnmatchedRequestEventSchema>;
+export type PortfolioCreationEvent = z.infer<typeof PortfolioCreationEventSchema>;
+export type PortfolioUpdateEvent = z.infer<typeof PortfolioUpdateEventSchema>;
+export type AssetAddedEvent = z.infer<typeof AssetAddedEventSchema>;
+export type AssetRemovedEvent = z.infer<typeof AssetRemovedEventSchema>;
+export type PortfolioValueEvent = z.infer<typeof PortfolioValueEventSchema>;
+export type RebalancingEvent = z.infer<typeof RebalancingEventSchema>;
 export type AnalyticsEvent = z.infer<typeof AnalyticsEventSchema>;
 
 export type AgentUsageMetrics = z.infer<typeof AgentUsageMetricsSchema>;

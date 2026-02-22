@@ -193,6 +193,8 @@ export const AnalyticsConfigSchema = z.object({
     .optional(),
 });
 
+
+
 /**
  * Olimpus Settings Schema (Extended with oh-my-opencode integration)
  */
@@ -246,11 +248,100 @@ export const OlimpusConfigSchema = z.object({
   providers: ProviderConfigSchema.optional(),
   settings: SettingsSchema.optional(),
   skills: z.array(z.string()).optional(),
-
   // oh-my-opencode passthrough sections
   agents: AgentOverridesSchema,
   categories: CategoriesSchema,
   disabled_hooks: z.array(z.string()).optional(),
+});
+
+/**
+ * Project Override Schema
+ * Allows project-specific overrides to shared configurations
+ */
+export const ProjectOverrideSchema = z.object({
+  // Meta-agent overrides
+  meta_agents: z.record(z.string(), MetaAgentSchema.partial()).optional(),
+  providers: ProviderConfigSchema.partial().optional(),
+  settings: SettingsSchema.partial().optional(),
+  agents: AgentOverridesSchema.optional(),
+  categories: CategoriesSchema.optional(),
+  skills: z.array(z.string()).optional(),
+});
+
+/**
+ * Project Configuration Schema
+ * Defines the configuration for an individual project
+ */
+export const ProjectConfigSchema = z.object({
+  // Unique project identifier
+  project_id: z.string().min(1),
+  name: z.string().optional(),
+  path: z.string().optional(),
+  overrides: ProjectOverrideSchema.optional(),
+  metadata: z
+    .object({
+      description: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      created_at: z.string().optional(),
+      updated_at: z.string().optional(),
+    })
+    .optional(),
+  // Analytics configuration for this project
+  analytics_enabled: z.boolean().default(true),
+});
+
+/**
+ * Shared Configuration Schema
+ * Defines shared configurations that can be inherited by projects
+ */
+export const SharedConfigSchema = z.object({
+  // Base configuration that all projects inherit
+  base_config: OlimpusConfigSchema.optional(),
+  default_project: ProjectConfigSchema.partial().optional(),
+  global_routing_rules: z.array(RoutingRuleSchema).optional(),
+  shared_meta_agents: z.record(z.string(), MetaAgentSchema).optional(),
+});
+
+/**
+ * Portfolio Configuration Schema
+ * Portfolio-level settings for cross-project orchestration
+ */
+export const PortfolioConfigSchema = z.object({
+  // Enable cross-project analytics aggregation
+  enable_aggregation: z.boolean().default(true),
+  enable_cross_project_delegation: z.boolean().default(true),
+  agent_namespace_format: z.string().default("{project_id}:{agent_name}"),
+  default_project_id: z.string().optional(),
+  max_cross_project_depth: z.number().int().positive().default(5),
+  aggregation_settings: z
+    .object({
+      // Minimum confidence threshold for portfolio-wide metrics
+      min_confidence_threshold: z.number().min(0).max(1).default(0.8),
+      aggregation_window_days: z.number().int().positive().default(30),
+      include_project_anonymization: z.boolean().default(true),
+    })
+    .optional(),
+});
+
+/**
+ * Project Registry Configuration Schema
+ * Top-level schema for managing multiple project configurations
+ */
+export const ProjectRegistryConfigSchema = z.object({
+  // Portfolio-wide settings
+  portfolio: PortfolioConfigSchema.optional(),
+  shared_config: SharedConfigSchema.optional(),
+  projects: z.record(z.string(), ProjectConfigSchema).default({}),
+  registry: z
+    .object({
+      // Registry version
+      version: z.string().default("1.0.0"),
+      registry_id: z.string().optional(),
+      created_at: z.string().optional(),
+      // Timestamp when registry was last updated
+      updated_at: z.string().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -273,5 +364,11 @@ export type RoutingAnalyticsConfig = z.infer<typeof RoutingAnalyticsConfigSchema
 export type RoutingLoggerConfig = z.infer<typeof RoutingLoggerConfigSchema>;
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
+
+export type ProjectOverride = z.infer<typeof ProjectOverrideSchema>;
+export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
+export type SharedConfig = z.infer<typeof SharedConfigSchema>;
+export type PortfolioConfig = z.infer<typeof PortfolioConfigSchema>;
+export type ProjectRegistryConfig = z.infer<typeof ProjectRegistryConfigSchema>;
 
 export type OlimpusConfig = z.infer<typeof OlimpusConfigSchema>;

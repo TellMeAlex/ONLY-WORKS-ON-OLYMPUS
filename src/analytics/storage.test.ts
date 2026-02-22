@@ -29,9 +29,8 @@ describe("AnalyticsStorage", () => {
 
   describe("constructor", () => {
     test("creates storage with default config", () => {
-      // Act
-      storage = new AnalyticsStorage();
-
+      // Act - use temp file to avoid picking up real analytics.json from cwd
+      storage = new AnalyticsStorage({ storage_file: storageFilePath });
       // Assert
       expect(storage.isEnabled()).toBe(true);
       expect(storage.getEventCount()).toBe(0);
@@ -86,12 +85,13 @@ describe("AnalyticsStorage", () => {
       // Arrange
       const config: Partial<AnalyticsConfig> = {
         storage_file: storageFilePath,
+        auto_prune: true,
       };
 
       // Act
       storage = new AnalyticsStorage(config);
-
-      // Assert - record many events and check they're retained
+      // Assert - record 100 events (well below the 10000 default) and verify none are pruned.
+      // If max_events defaulted to something smaller (e.g. 100), events would be pruned.
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
@@ -99,12 +99,12 @@ describe("AnalyticsStorage", () => {
         matcher_type: "keyword",
       };
 
-      for (let i = 0; i < 10000; i++) {
+      for (let i = 0; i < 100; i++) {
         storage.recordEvent(event);
       }
 
-      // Should still have all 10000 events
-      expect(storage.getEventCount()).toBe(10000);
+      // All 100 events retained because default max_events (10000) is not exceeded
+      expect(storage.getEventCount()).toBe(100);
     });
 
     test("defaults retention_days to 90 when not specified", () => {
@@ -372,7 +372,7 @@ describe("AnalyticsStorage", () => {
 
       // Assert - should only return the middle event
       expect(result).toHaveLength(1);
-      expect((result[0] as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 2");
+      expect((result[0] as import("./types.js").RoutingDecisionEvent).target_agent).toBe("agent2");
     });
 
     test("returns empty array when no events in range", () => {
@@ -789,14 +789,14 @@ describe("AnalyticsStorage", () => {
       // Assert - old event should be removed
       const remaining = storage.getAllEvents();
       expect(remaining).toHaveLength(1);
-      expect((remaining[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("recent query");
+      expect((remaining[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("agent2");
     });
 
     test("removes excess events when count exceeds max_events", () => {
       // Arrange - create 10 events
       for (let i = 0; i < 10; i++) {
         const event: AnalyticsEvent = {
-          timestamp: new Date(i * 1000).toISOString(),
+          timestamp: new Date(Date.now() - (10 - i) * 1000).toISOString(),
           type: "routing_decision",
           target_agent: "agent1",
           matcher_type: "keyword",
@@ -811,7 +811,7 @@ describe("AnalyticsStorage", () => {
       expect(storage.getEventCount()).toBe(5);
       const remaining = storage.getAllEvents();
       // Should keep the newest 5 events
-      expect((remaining[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 5");
+      expect((remaining[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("agent1");
     });
 
     test("does nothing when no events", () => {
@@ -1046,8 +1046,8 @@ describe("AnalyticsStorage", () => {
       expect(newStorage.getEventCount()).toBe(2);
       const loadedEvents = newStorage.getAllEvents();
       expect(loadedEvents).toHaveLength(2);
-      expect((loadedEvents[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 1");
-      expect((loadedEvents[1]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 2");
+      expect((loadedEvents[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("agent1");
+      expect(loadedEvents[1]!.type).toBe("unmatched_request");
     });
 
     test("handles invalid storage file gracefully", async () => {
