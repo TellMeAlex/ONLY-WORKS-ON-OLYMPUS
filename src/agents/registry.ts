@@ -163,4 +163,28 @@ export class MetaAgentRegistry {
 
     return maxDepth;
   }
+
+  /**
+   * Export the current delegation chain as a directed graph in DOT format
+   * Useful for visualization with tools like Graphviz
+   * @returns DOT format string representing the delegation graph
+   */
+  exportDelegationGraph(): string {
+    if (Object.keys(this.delegations).length === 0) {
+      return "digraph {\n}\n";
+    }
+
+    let dot = "digraph {\n";
+
+    // Add edges for each delegation
+    for (const [delegation] of Object.entries(this.delegations)) {
+      const [from, to] = delegation.split(":");
+      if (from && to) {
+        dot += `  "${from}" -> "${to}";\n`;
+      }
+    }
+
+    dot += "}\n";
+    return dot;
+  }
 }
