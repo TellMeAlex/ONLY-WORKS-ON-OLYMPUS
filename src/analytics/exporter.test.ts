@@ -183,7 +183,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToJson with empty storage", () => {
     // Arrange
-    const emptyStorage = new AnalyticsStorage({ enabled: true });
+    const emptyStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     const emptyExporter = new AnalyticsExporter(emptyStorage);
 
     // Act
@@ -357,7 +357,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToCsv escapes values with commas", () => {
     // Arrange: Create storage with event containing comma
-    const csvTestStorage = new AnalyticsStorage({ enabled: true });
+    const csvTestStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     csvTestStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -377,7 +377,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToCsv escapes values with quotes", () => {
     // Arrange: Create storage with event containing quotes
-    const quoteTestStorage = new AnalyticsStorage({ enabled: true });
+    const quoteTestStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     quoteTestStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -397,7 +397,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToCsv escapes values with newlines", () => {
     // Arrange: Create storage with event containing newline
-    const newlineTestStorage = new AnalyticsStorage({ enabled: true });
+    const newlineTestStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     newlineTestStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -417,7 +417,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToCsv handles unmatched_request events", () => {
     // Arrange: Create storage with unmatched request
-    const unmatchedStorage = new AnalyticsStorage({ enabled: true });
+    const unmatchedStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     unmatchedStorage.recordEvent({
       type: "unmatched_request",
       timestamp: new Date().toISOString(),
@@ -585,7 +585,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToFile handles empty storage", async () => {
     // Arrange
-    const emptyStorage = new AnalyticsStorage({ enabled: true });
+    const emptyStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     const emptyExporter = new AnalyticsExporter(emptyStorage);
     const filePath = join(tempDir, "empty.json");
 
@@ -599,7 +599,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToJson handles event without meta_agent", () => {
     // Arrange
-    const noMetaStorage = new AnalyticsStorage({ enabled: true });
+    const noMetaStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     noMetaStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -620,7 +620,7 @@ describe("AnalyticsExporter", () => {
 
   test("exportToJson handles event with all optional fields", () => {
     // Arrange
-    const fullEventStorage = new AnalyticsStorage({ enabled: true });
+    const fullEventStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     fullEventStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -808,7 +808,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles special characters in CSV values", () => {
     // Arrange
-    const specialStorage = new AnalyticsStorage({ enabled: true });
+    const specialStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     specialStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -832,7 +832,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles very long strings in CSV", () => {
     // Arrange
-    const longStorage = new AnalyticsStorage({ enabled: true });
+    const longStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     const longContent = "x".repeat(10000);
     longStorage.recordEvent({
       type: "routing_decision",
@@ -853,7 +853,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles empty strings in CSV", () => {
     // Arrange
-    const emptyStringStorage = new AnalyticsStorage({ enabled: true });
+    const emptyStringStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     emptyStringStorage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -871,7 +871,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles date filtering with no matching events", () => {
     // Arrange
-    const storage = new AnalyticsStorage({ enabled: true });
+    const storage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     storage.recordEvent({
       type: "routing_decision",
       timestamp: "2024-01-01T00:00:00.000Z",
@@ -896,7 +896,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles filtering with non-existent agent", () => {
     // Arrange
-    const storage = new AnalyticsStorage({ enabled: true });
+    const storage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     storage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -920,7 +920,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles filtering with non-existent matcher type", () => {
     // Arrange
-    const storage = new AnalyticsStorage({ enabled: true });
+    const storage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     storage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
@@ -944,7 +944,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("handles mixed event types in export", () => {
     // Arrange
-    const mixedStorage = new AnalyticsStorage({ enabled: true });
+    const mixedStorage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     const now = new Date();
 
     mixedStorage.recordEvent({
@@ -987,7 +987,7 @@ describe("AnalyticsExporter Edge Cases", () => {
 
   test("exportToJson produces consistent record_count across calls", () => {
     // Arrange
-    const storage = new AnalyticsStorage({ enabled: true });
+    const storage = new AnalyticsStorage({ enabled: true, storage_file: `/olimpus-test--.json` });
     storage.recordEvent({
       type: "routing_decision",
       timestamp: new Date().toISOString(),
