@@ -2,7 +2,7 @@ import type { MetaAgentDef } from "../config/schema.js";
 import { evaluateRoutingRules, type RoutingContext, type ResolvedRoute } from "./routing.js";
 import type { RoutingLogger } from "./logger.js";
 
-type AgentConfig = {
+export type AgentConfig = {
   model?: string;
   prompt?: string;
   temperature?: number;

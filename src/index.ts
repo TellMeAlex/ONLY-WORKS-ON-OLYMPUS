@@ -1,5 +1,6 @@
 import type { Plugin, PluginInput } from "@opencode-ai/plugin";
-import type { Config } from "@opencode-ai/sdk";
+/** Minimal Config type — mirrors @opencode-ai/sdk without the broken dependency */
+type Config = { agent?: Record<string, unknown>; [key: string]: unknown };
 import { loadOlimpusConfig } from "./config/loader.js";
 import { extractMetaAgentDefs } from "./config/translator.js";
 import {

@@ -2,7 +2,7 @@ import type { MetaAgentDef, RoutingLoggerConfig } from "../config/schema.js";
 import type { RoutingContext } from "./routing.js";
 import { createMetaAgentConfig } from "./meta-agent.js";
 import { RoutingLogger } from "./logger.js";
-import type { AgentConfig } from "@opencode-ai/sdk";
+import type { AgentConfig } from "./meta-agent.js";
 import type { AnalyticsStorage } from "../analytics/storage.js";
 
 /**

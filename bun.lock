@@ -6,7 +6,6 @@
       "name": "@TellMeAlex/only-works-on-olympus",
       "dependencies": {
         "@opencode-ai/plugin": "^1.1.19",
-        "@opencode-ai/sdk": "^1.1.19",
         "jsonc-parser": "^3.3.1",
         "oh-my-opencode": "^3.4.0",
         "zod": "^4.1.8",
@@ -18,7 +17,6 @@
       },
       "peerDependencies": {
         "@opencode-ai/plugin": "^1.1.19",
-        "@opencode-ai/sdk": "^1.1.19",
       },
     },
   },
