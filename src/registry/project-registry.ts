@@ -25,17 +25,15 @@ export class ProjectRegistry {
     this.analyticsStorage = analyticsStorage;
 
     // Initialize shared config if provided
-    if (config.shared_config) {
-      this.sharedConfig = config.shared_config;
+    if (this.registryConfig.shared_config) {
+      this.sharedConfig = this.registryConfig.shared_config;
     }
-
     // Initialize portfolio config if provided
-    if (config.portfolio) {
-      this.portfolioConfig = config.portfolio;
+    if (this.registryConfig.portfolio) {
+      this.portfolioConfig = this.registryConfig.portfolio;
     }
-
     // Register all projects from initial config
-    for (const [projectId, projectConfig] of Object.entries(config.projects || {})) {
+    for (const [projectId, projectConfig] of Object.entries(this.registryConfig.projects || {})) {
       this.register(projectId, projectConfig);
     }
   }
@@ -126,7 +124,7 @@ export class ProjectRegistry {
         merged.settings = {
           ...merged.settings,
           ...project.overrides.settings,
-        };
+        } as typeof merged.settings;
       }
 
       // Merge agent overrides
@@ -244,7 +242,7 @@ export class ProjectRegistry {
 
     // Simple case: "project:agent"
     if (format === "{project_id}:{agent_name}" && parts.length === 2) {
-      return { projectId: parts[0], agentName: parts[1] };
+      return { projectId: parts[0] ?? "", agentName: parts[1] ?? "" };
     }
 
     // For other formats, try to infer based on registered projects
