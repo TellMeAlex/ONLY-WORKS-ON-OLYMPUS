@@ -34,7 +34,30 @@ export const ComplexityMatcherSchema = z.object({
 export const RegexMatcherSchema = z.object({
   type: z.literal("regex"),
   pattern: z.string().min(1),
-  flags: z.string().optional(),
+  flags: z
+    .string()
+    .optional()
+    .refine(
+      (flags) => {
+        if (!flags) return true;
+        const validFlags = new Set(["g", "i", "m", "s", "u", "y", "d"]);
+        return Array.from(flags).every((flag) => validFlags.has(flag));
+      },
+      {
+        message:
+          "Invalid regex flags. Only valid RegExp flags are allowed: g, i, m, s, u, y, d",
+      }
+    )
+    .refine(
+      (flags) => {
+        if (!flags) return true;
+        const uniqueFlags = new Set(flags.split(""));
+        return uniqueFlags.size === flags.length;
+      },
+      {
+        message: "Regex flags must be unique (no duplicate flags allowed)",
+      }
+    ),
 });
 
 export const ProjectContextMatcherSchema = z.object({
