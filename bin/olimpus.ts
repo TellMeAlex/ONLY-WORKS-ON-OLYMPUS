@@ -324,28 +324,28 @@ async function validateCommand(args: string[]): Promise<number> {
  * Show validate command help
  */
 function showValidateHelp(): void {
-  console.log(`
-Usage: olimpus validate [options] [<config-file>]
-
-Validate a configuration file for errors, circular dependencies, invalid agent references, and other common issues.
-
-Arguments:
-  <config-file>    Path to the configuration file to validate (e.g., olimpus.jsonc)
-                  If --config is provided, this argument is ignored.
-
-Options:
-  --config <file>  Path to the configuration file (alternative to positional argument)
-  -h, --help       Show this help message
-
-Examples:
-  olimpus validate olimpus.jsonc
-  olimpus validate --config ./example/olimpus.jsonc
-  olimpus validate --config=/path/to/config.jsonc
-
-Exit codes:
-  0                Configuration is valid
-  1                Configuration has errors or validation failed
-`);
+  console.log(``);
+  console.log(`${bold("Usage:")}`);
+  console.log(`  olimpus validate [options] [<config-file>]\n`);
+  console.log(`${bold("Description:")}`);
+  console.log(`  Validate a configuration file for errors, circular dependencies,`);
+  console.log(`  invalid agent references, and other common issues.\n`);
+  console.log(`${bold("Arguments:")}`);
+  console.log(`  ${dim("<config-file>")}${dim("    ".repeat(14))} Path to the configuration file to validate`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} (e.g., olimpus.jsonc)`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} If --config is provided, this argument is ignored.\n`);
+  console.log(`${bold("Options:")}`);
+  console.log(`  ${dim("--config <file>")}${dim("  ".repeat(10))} Path to the configuration file`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} (alternative to positional argument)`);
+  console.log(`  ${dim("-h, --help")}${dim("       ".repeat(10))} Show this help message\n`);
+  console.log(`${bold("Examples:")}`);
+  console.log(`  ${dim("olimpus validate olimpus.jsonc")}`);
+  console.log(`  ${dim("olimpus validate --config ./example/olimpus.jsonc")}`);
+  console.log(`  ${dim("olimpus validate --config=/path/to/config.jsonc")}\n`);
+  console.log(`${bold("Exit codes:")}`);
+  console.log(`  ${dim("0")} ${dim(" ".repeat(15))} Configuration is valid`);
+  console.log(`  ${dim("1")} ${dim(" ".repeat(15))} Configuration has errors or validation failed\n`);
+  console.log(`${dim("─".repeat(56))}\n`);
 }
 
 /**
@@ -690,64 +690,66 @@ async function testCommand(args: string[]): Promise<number> {
  * Show test command help
  */
 function showTestHelp(): void {
-  console.log(`
-Usage: olimpus test [options] [<config-file>]
-
-Test routing rules to verify they match the expected behavior for various user queries.
-
-Arguments:
-  <config-file>    Path to the configuration file to test (e.g., olimpus.jsonc)
-                  If --config is provided, this argument is treated as the test query.
-
-Options:
-  --config <file>  Path to the configuration file (alternative to positional argument)
-  --meta-agent <agent>
-                  Meta-agent ID to test against (default: the meta-agent specified in config)
-  --verbose, -v    Show detailed output including project context
-  --dry-run        Show all evaluated matchers without selecting one
-  --expect-agent <agent>
-                  Expected agent ID to match (exit 2 if not matched, for CI)
-  -h, --help       Show this help message
-
-Examples:
-  olimpus test olimpus.jsonc
-  olimpus test --config ./example/olimpus.jsonc
-  olimpus test --config=/path/to/config.jsonc --meta-agent=my-agent
-  olimpus test olimpus.jsonc --verbose
-  olimpus test olimpus.jsonc --dry-run
-  olimpus test olimpus.jsonc --expect-agent librarian
-
-Exit codes:
-  0                Matched expected agent or all tests passed
-  1                Error occurred
-  2                No match or expected agent not matched
-`);
+  console.log(``);
+  console.log(`${bold("Usage:")}`);
+  console.log(`  olimpus test [options] [<config-file>]\n`);
+  console.log(`${bold("Description:")}`);
+  console.log(`  Test routing rules to verify they match the expected behavior`);
+  console.log(`  for various user queries.\n`);
+  console.log(`${bold("Arguments:")}`);
+  console.log(`  ${dim("<config-file>")}${dim("    ".repeat(14))} Path to the configuration file to test`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} (e.g., olimpus.jsonc)`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} If --config is provided, this argument is`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} treated as the test query.\n`);
+  console.log(`${bold("Options:")}`);
+  console.log(`  ${dim("--config <file>")}${dim("  ".repeat(10))} Path to the configuration file`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} (alternative to positional argument)`);
+  console.log(`  ${dim("--meta-agent <agent>")}`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} Meta-agent ID to test against`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} (default: the meta-agent specified in config)`);
+  console.log(`  ${dim("--verbose, -v")}${dim("    ".repeat(10))} Show detailed output including`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} project context`);
+  console.log(`  ${dim("--dry-run")}${dim("        ".repeat(10))} Show all evaluated matchers without`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} selecting one`);
+  console.log(`  ${dim("--expect-agent <agent>")}`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} Expected agent ID to match`);
+  console.log(`  ${dim("")}${dim(" ".repeat(15))} (exit 2 if not matched, for CI)`);
+  console.log(`  ${dim("-h, --help")}${dim("       ".repeat(10))} Show this help message\n`);
+  console.log(`${bold("Examples:")}`);
+  console.log(`  ${dim("olimpus test olimpus.jsonc")}`);
+  console.log(`  ${dim("olimpus test --config ./example/olimpus.jsonc")}`);
+  console.log(`  ${dim("olimpus test --config=/path/to/config.jsonc --meta-agent=my-agent")}`);
+  console.log(`  ${dim("olimpus test olimpus.jsonc --verbose")}`);
+  console.log(`  ${dim("olimpus test olimpus.jsonc --dry-run")}`);
+  console.log(`  ${dim("olimpus test olimpus.jsonc --expect-agent librarian")}\n`);
+  console.log(`${bold("Exit codes:")}`);
+  console.log(`  ${dim("0")} ${dim(" ".repeat(15))} Matched expected agent or all tests passed`);
+  console.log(`  ${dim("1")} ${dim(" ".repeat(15))} Error occurred`);
+  console.log(`  ${dim("2")} ${dim(" ".repeat(15))} No match or expected agent not matched\n`);
+  console.log(`${dim("─".repeat(56))}\n`);
 }
 
 /**
  * Show general help
  */
 function showHelp(): void {
-  console.log(`
-Olimpus CLI - Configuration management tool for Olimpus meta-agent orchestrator
-
-Usage: olimpus <command> [options]
-
-Commands:
-  validate          Validate configuration file
-  test              Test routing rules
-
-Options:
-  -h, --help       Show this help message
-
-Examples:
-  olimpus validate olimpus.jsonc
-  olimpus test olimpus.jsonc
-  olimpus validate --help
-
-For more information on a specific command, run:
-  olimpus <command> --help
-`);
+  console.log(``);
+  console.log(`${bold("Olimpus CLI")}`);
+  console.log(`${dim("Configuration management tool for Olimpus meta-agent orchestrator")}\n`);
+  console.log(`${bold("Usage:")}`);
+  console.log(`  olimpus <command> [options]\n`);
+  console.log(`${bold("Commands:")}`);
+  console.log(`  ${success("validate")}          ${dim("Validate configuration file")}`);
+  console.log(`  ${info("test")}              ${dim("Test routing rules")}\n`);
+  console.log(`${bold("Options:")}`);
+  console.log(`  ${dim("-h, --help")}       ${dim("Show this help message")}\n`);
+  console.log(`${bold("Examples:")}`);
+  console.log(`  ${dim("olimpus validate olimpus.jsonc")}`);
+  console.log(`  ${dim("olimpus test olimpus.jsonc")}`);
+  console.log(`  ${dim("olimpus validate --help")}\n`);
+  console.log(`${bold("For more information on a specific command, run:")}`);
+  console.log(`  ${dim("olimpus <command> --help")}\n`);
+  console.log(`${dim("─".repeat(56))}\n`);
 }
 
 /**
@@ -780,8 +782,17 @@ async function main(): Promise<number> {
   const command = commands[commandName];
 
   if (!command) {
-    console.error(`\n❌ Unknown command: ${commandName}\n`);
-    console.log("Run 'olimpus --help' for available commands.\n");
+    console.error(``);
+    console.error(`${errorColor("❌ Error:")} ${errorColor(`Unknown command '${commandName}'`)}`);
+    console.error(``);
+    console.log(`${dim("─".repeat(56))}`);
+    console.log(`${bold("Available commands:")}`);
+    console.log(`  ${success("validate")}          ${dim("Validate configuration file")}`);
+    console.log(`  ${info("test")}              ${dim("Test routing rules")}`);
+    console.log(`${dim("─".repeat(56))}`);
+    console.log(``);
+    console.log(`${info("Run 'olimpus --help' for more information.")}`);
+    console.log(``);
     return 1;
   }
 
