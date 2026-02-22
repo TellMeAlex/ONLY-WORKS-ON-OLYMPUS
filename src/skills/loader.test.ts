@@ -173,3 +173,10 @@ test("loadOlimpusSkills: reject absolute paths", () => {
   const skills = loadOlimpusSkills([absolutePath], ".");
   expect(skills).toHaveLength(0);
 });
+
+test("loadOlimpusSkills: reject relative paths with ../", () => {
+  // Test with a path that would escape the project directory
+  const relativePath = "../../secrets.md";
+  const skills = loadOlimpusSkills([relativePath], ".");
+  expect(skills).toHaveLength(0);
+});
