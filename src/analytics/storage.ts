@@ -1,6 +1,6 @@
 import type { AnalyticsEvent, AnalyticsConfig } from "./types.js";
 import { dirname } from "path";
-import { mkdirSync, existsSync, readFileSync } from "fs";
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from "fs";
 
 const CURRENT_VERSION = "1.0.0";
 
@@ -297,7 +297,7 @@ export class AnalyticsStorage {
       // Export data and write to file
       const data = this.exportData();
       const json = JSON.stringify(data, null, 2);
-      Bun.write(this.storageFilePath, json);
+      writeFileSync(this.storageFilePath, json, "utf-8");
     } catch {
       // Silently fail to avoid disrupting routing logic
       // Error is swallowed per performance pattern - minimal overhead
