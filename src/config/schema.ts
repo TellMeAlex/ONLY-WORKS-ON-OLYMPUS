@@ -158,6 +158,7 @@ export const RoutingLoggerConfigSchema = z.object({
   output: z.enum(["console", "file", "disabled"]).optional(),
   log_file: z.string().optional(),
   debug_mode: z.boolean().optional(),
+  colored: z.boolean().optional(),
   analytics_config: RoutingAnalyticsConfigSchema.optional(),
 });
 
