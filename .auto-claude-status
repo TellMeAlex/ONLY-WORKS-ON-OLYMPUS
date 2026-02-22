@@ -3,23 +3,23 @@
   "spec": "021-add-input-validation-for-regex-flags-in-routing-ru",
   "state": "building",
   "subtasks": {
-    "completed": 4,
+    "completed": 10,
     "total": 15,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Validator Check",
+    "current": "Tests",
     "id": null,
-    "total": 6
+    "total": 5
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 6,
+    "number": 10,
     "started_at": "2026-02-22T11:27:36.601461"
   },
-  "last_update": "2026-02-22T11:41:08.193539"
+  "last_update": "2026-02-22T11:52:33.741522"
 }

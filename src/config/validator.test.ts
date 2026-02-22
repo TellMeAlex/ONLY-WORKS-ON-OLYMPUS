@@ -2633,6 +2633,448 @@ describe("circular dependency", () => {
         expect(result.errors).toEqual([]);
         expect(result.warnings).toEqual([]);
       });
+
+      describe("regex flags validation", () => {
+        test("config with valid regex flags is valid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "gi" },
+                    target_agent: "sisyphus",
+                  },
+                  {
+                    matcher: { type: "regex", pattern: "example", flags: "m" },
+                    target_agent: "hephaestus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+          expect(result.warnings).toEqual([]);
+        });
+
+        test("config with invalid regex flags is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "x" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBeGreaterThan(0);
+          const error = result.errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("x");
+        });
+
+        test("config with multiple invalid regex flags across rules is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "x" },
+                    target_agent: "sisyphus",
+                  },
+                  {
+                    matcher: { type: "regex", pattern: "example", flags: "yz" },
+                    target_agent: "hephaestus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBe(2);
+          const regexFlagsErrors = result.errors.filter((e) => e.type === "invalid_regex_flags");
+          expect(regexFlagsErrors.length).toBe(2);
+          const invalidFlags = regexFlagsErrors.map((e) => e.flags);
+          expect(invalidFlags).toContain("x");
+          expect(invalidFlags).toContain("yz");
+        });
+
+        test("config with mixed valid and invalid regex flags is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "gi" },
+                    target_agent: "sisyphus",
+                  },
+                  {
+                    matcher: { type: "regex", pattern: "example", flags: "x" },
+                    target_agent: "hephaestus",
+                  },
+                  {
+                    matcher: { type: "regex", pattern: "sample", flags: "m" },
+                    target_agent: "oracle",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBe(1);
+          const error = result.errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("x");
+        });
+
+        test("config with invalid regex flags across multiple meta-agents is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router_a: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "x" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+              router_b: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "example", flags: "yz" },
+                    target_agent: "hephaestus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBe(2);
+          const regexFlagsErrors = result.errors.filter((e) => e.type === "invalid_regex_flags");
+          expect(regexFlagsErrors.length).toBe(2);
+        });
+
+        test("config can disable regex flags check via context", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "x" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config, { checkRegexFlags: false });
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+        });
+
+        test("config with all valid regex flags combined is valid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "gimsuyd" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+        });
+
+        test("config with regex without flags is valid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+        });
+
+        test("config with empty string flags is valid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+        });
+
+        test("config with mixed valid and invalid flags in single matcher is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "gix" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBe(1);
+          const error = result.errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("gix");
+          expect(error?.message).toContain("x");
+        });
+
+        test("config with duplicate valid flags is valid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "gg" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+        });
+
+        test("config with duplicate invalid flags is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "xx" },
+                    target_agent: "sisyphus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBe(1);
+          const error = result.errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("xx");
+        });
+
+        test("config with only non-regex matchers is valid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "always" },
+                    target_agent: "sisyphus",
+                  },
+                  {
+                    matcher: { type: "contains", value: "test" } as any,
+                    target_agent: "hephaestus",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(true);
+          expect(result.errors).toEqual([]);
+        });
+
+        test("config with mixed matcher types and invalid regex flags is invalid", () => {
+          // Arrange
+          const config: OlimpusConfig = {
+            meta_agents: {
+              router: {
+                base_model: "claude-3-5-sonnet",
+                delegates_to: [],
+                routing_rules: [
+                  {
+                    matcher: { type: "always" },
+                    target_agent: "sisyphus",
+                  },
+                  {
+                    matcher: { type: "regex", pattern: "test", flags: "x" },
+                    target_agent: "hephaestus",
+                  },
+                  {
+                    matcher: { type: "contains", value: "sample" } as any,
+                    target_agent: "oracle",
+                  },
+                ],
+              },
+            },
+            agents: {},
+            categories: undefined,
+          };
+
+          // Act
+          const result = validateOlimpusConfig(config);
+
+          // Assert
+          expect(result.valid).toBe(false);
+          expect(result.errors.length).toBe(1);
+          const error = result.errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("x");
+        });
+      });
     });
   });
 });
