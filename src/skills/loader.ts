@@ -5,6 +5,7 @@ import type {
   SkillMetadata,
   CommandDefinition,
 } from "./types.js";
+import { warning, error, bold, dim } from "../utils/colors.js";
 
 const FRONTMATTER_DELIMITER = "---";
 const OLIMPUS_PREFIX = "olimpus:";
@@ -125,12 +126,16 @@ export function loadOlimpusSkills(
       : resolve(projectDir, skillPath);
 
     if (!existsSync(resolvedPath)) {
-      console.warn(`Skill file not found: ${resolvedPath}`);
+      console.warn(
+        `${bold("[Olimpus]")} ${warning("Skill file not found:")} ${dim(resolvedPath)}`,
+      );
       continue;
     }
 
     if (extname(resolvedPath) !== ".md") {
-      console.warn(`Skipping non-markdown file: ${resolvedPath}`);
+      console.warn(
+        `${bold("[Olimpus]")} ${warning("Skipping non-markdown file:")} ${dim(resolvedPath)}`,
+      );
       continue;
     }
 
@@ -178,9 +183,10 @@ export function loadOlimpusSkills(
 
       skills.push(skill);
     } catch (error) {
-      console.error(
-        `Error loading skill from ${resolvedPath}:`,
-        error instanceof Error ? error.message : String(error)
+      console.warn(
+        `${bold("[Olimpus]")} ${error("Error loading skill from")} ${dim(resolvedPath)}: ${dim(
+          error instanceof Error ? error.message : String(error),
+        )}`,
       );
       continue;
     }
