@@ -192,6 +192,40 @@ function deepMerge(
 }
 
 /**
+ * Expand environment variable placeholders in a value.
+ * Replaces {env:VAR_NAME} patterns with the value of the environment variable VAR_NAME.
+ *
+ * Recursively processes objects and arrays to expand environment variables
+ * at any depth.
+ *
+ * @param value - The value to expand (string, object, array, or primitive)
+ * @returns The value with environment variable placeholders replaced
+ */
+export function expandEnvVars(value: unknown): unknown {
+  if (typeof value === "string") {
+    // Replace {env:VAR_NAME} with environment variable value
+    return value.replace(/\{env:([^}]+)\}/g, (_, varName) => {
+      return process.env[varName] ?? "";
+    });
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => expandEnvVars(item));
+  }
+
+  if (isPlainObject(value)) {
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = expandEnvVars(val);
+    }
+    return result;
+  }
+
+  // Return primitives and other types as-is
+  return value;
+}
+
+/**
  * Check if value is a plain object (not array, null, etc.)
  */
 function isPlainObject(value: unknown): value is Record<string, unknown> {
