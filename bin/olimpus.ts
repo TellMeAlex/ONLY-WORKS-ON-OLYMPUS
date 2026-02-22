@@ -28,7 +28,7 @@ import {
   type RoutingResult,
   type MatcherEvaluation,
 } from "../src/agents/routing.js";
-import { success, warning, error as errorColor, bold, dim } from "../src/utils/colors.js";
+import { success, warning, error as errorColor, info, bold, dim } from "../src/utils/colors.js";
 
 /**
  * Parsed command options
@@ -375,7 +375,7 @@ async function testCommand(args: string[]): Promise<number> {
     const config = loadConfig(filePath);
     const absolutePath = path.resolve(filePath);
 
-    console.log(`\n🧪 Testing routing rules: ${filePath}\n`);
+    console.log(`\n${bold(info("🧪 Testing routing rules:"))} ${dim(filePath)}\n`);
 
     // Get project directory from config file location
     const projectDir = path.dirname(absolutePath);
@@ -384,29 +384,29 @@ async function testCommand(args: string[]): Promise<number> {
     const { projectFiles, projectDeps } = scanProjectContext(projectDir);
 
     if (options.verbose) {
-      console.log(`📁 Project directory: ${projectDir}`);
-      console.log(`📄 Found ${projectFiles.length} files`);
-      console.log(`📦 Found ${projectDeps.length} dependencies`);
+      console.log(`${info("📁 Project directory:")} ${dim(projectDir)}`);
+      console.log(`${info("📄 Found")} ${bold(String(projectFiles.length))} ${info("files")}`);
+      console.log(`${info("📦 Found")} ${bold(String(projectDeps.length))} ${info("dependencies")}`);
       console.log();
 
       if (projectFiles.length > 0) {
-        console.log(`📄 projectFiles:`);
+        console.log(`${info("📄 projectFiles:")}`);
         for (const file of projectFiles.slice(0, 20)) {
-          console.log(`   - ${file}`);
+          console.log(`   ${dim("-")} ${dim(file)}`);
         }
         if (projectFiles.length > 20) {
-          console.log(`   ... and ${projectFiles.length - 20} more files`);
+          console.log(`   ${dim(`... and ${projectFiles.length - 20} more files`)}`);
         }
         console.log();
       }
 
       if (projectDeps.length > 0) {
-        console.log(`📦 projectDeps:`);
+        console.log(`${info("📦 projectDeps:")}`);
         for (const dep of projectDeps.slice(0, 20)) {
-          console.log(`   - ${dep}`);
+          console.log(`   ${dim("-")} ${dim(dep)}`);
         }
         if (projectDeps.length > 20) {
-          console.log(`   ... and ${projectDeps.length - 20} more dependencies`);
+          console.log(`   ${dim(`... and ${projectDeps.length - 20} more dependencies`)}`);
         }
         console.log();
       }
@@ -445,9 +445,9 @@ async function testCommand(args: string[]): Promise<number> {
     }
 
     if (options.verbose) {
-      console.log(`🤖 Meta-agent: ${metaAgentId}`);
-      console.log(`📝 Test prompt: ${testPrompt}`);
-      console.log(`📋 Routing rules: ${metaAgent.routing_rules.length}`);
+      console.log(`${info("🤖 Meta-agent:")} ${bold(metaAgentId)}`);
+      console.log(`${info("📝 Test prompt:")} ${dim(testPrompt)}`);
+      console.log(`${info("📋 Routing rules:")} ${bold(String(metaAgent.routing_rules.length))}`);
       console.log();
     }
 
@@ -487,32 +487,32 @@ async function testCommand(args: string[]): Promise<number> {
 
     // Display dry-run results (all evaluated matchers)
     if (options.dryRun && dryRunResult) {
-      console.log(`🔍 Dry-run mode - showing all evaluated matchers:\n`);
+      console.log(`${info("🔍 Dry-run mode - showing all evaluated matchers:")}\n`);
 
       for (const evaluation of dryRunResult.evaluations) {
-        const resultPrefix = evaluation.matched ? "✅" : "❌";
-        const resultText = evaluation.matched ? "Matched" : "Not matched";
-        console.log(`${resultPrefix} Evaluating matcher: ${evaluation.matcher_type}`);
-        console.log(`   Result: ${resultText}`);
+        const resultPrefix = evaluation.matched ? success("✅") : errorColor("❌");
+        const resultText = evaluation.matched ? success("Matched") : errorColor("Not matched");
+        console.log(`${resultPrefix} ${info("Evaluating matcher:")} ${bold(evaluation.matcher_type)}`);
+        console.log(`   ${dim("Result:")} ${resultText}`);
 
         // Show matcher details
         switch (evaluation.matcher.type) {
           case "keyword":
-            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
-            console.log(`   Mode: ${evaluation.matcher.mode}`);
+            console.log(`   ${dim("Keywords:")} ${dim(evaluation.matcher.keywords.join(", "))}`);
+            console.log(`   ${dim("Mode:")} ${dim(evaluation.matcher.mode)}`);
             break;
           case "regex":
-            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
+            console.log(`   ${dim("Pattern:")} ${dim(`/${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`)}`);
             break;
           case "complexity":
-            console.log(`   Threshold: ${evaluation.matcher.threshold}`);
+            console.log(`   ${dim("Threshold:")} ${dim(String(evaluation.matcher.threshold))}`);
             break;
           case "project_context":
             if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
-              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
+              console.log(`   ${dim("Has files:")} ${dim(evaluation.matcher.has_files.join(", "))}`);
             }
             if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
-              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
+              console.log(`   ${dim("Has deps:")} ${dim(evaluation.matcher.has_deps.join(", "))}`);
             }
             break;
           case "always":
@@ -523,7 +523,7 @@ async function testCommand(args: string[]): Promise<number> {
         // Show target agent for each rule
         const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
         if (rule) {
-          console.log(`   Target agent: ${rule.target_agent}`);
+          console.log(`   ${dim("Target agent:")} ${success(rule.target_agent)}`);
           if (rule.config_overrides) {
             const overrides: string[] = [];
             if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
@@ -532,7 +532,7 @@ async function testCommand(args: string[]): Promise<number> {
             }
             if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
             if (overrides.length > 0) {
-              console.log(`   Overrides: ${overrides.join(", ")}`);
+              console.log(`   ${dim("Overrides:")} ${dim(overrides.join(", "))}`);
             }
           }
         }
@@ -542,26 +542,26 @@ async function testCommand(args: string[]): Promise<number> {
 
       // Show final result
       if (result) {
-        console.log(`✅ Final match: ${result.target_agent}`);
-        console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
-        console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
+        console.log(`${success("✅ Final match:")} ${success(result.target_agent)}`);
+        console.log(`   ${dim("Matcher type:")} ${info(result.matcher_type || 'unknown')}`);
+        console.log(`   ${dim("Matched content:")} ${dim(result.matched_content || 'N/A')}`);
         console.log();
 
         // Check if the matched agent matches the expected agent
         if (options.expectAgent) {
           if (result.target_agent === options.expectAgent) {
-            console.log(`✅ Expected agent matched: ${options.expectAgent}`);
+            console.log(`${success("✅ Expected agent matched:")} ${success(options.expectAgent)}`);
             return 0;
           } else {
-            console.log(`❌ Expected agent: ${options.expectAgent}`);
-            console.log(`   Actual matched agent: ${result.target_agent}`);
+            console.log(`${errorColor("❌ Expected agent:")} ${errorColor(options.expectAgent)}`);
+            console.log(`   ${dim("Actual matched agent:")} ${result.target_agent}`);
             return 2;
           }
         }
 
         return 0;
       } else {
-        console.log(`❌ No matching agent found for the given prompt.`);
+        console.log(`${errorColor("❌ No matching agent found for the given prompt.")}`);
         console.log();
 
         if (options.expectAgent) {
@@ -574,32 +574,32 @@ async function testCommand(args: string[]): Promise<number> {
 
     // Display step-by-step evaluation for verbose mode (non-dry-run)
     if (!options.dryRun && options.verbose && verboseResult) {
-      console.log(`🔍 Step-by-step evaluation:\n`);
+      console.log(`${info("🔍 Step-by-step evaluation:")}\n`);
 
       for (const evaluation of verboseResult.evaluations) {
-        const resultPrefix = evaluation.matched ? "✅" : "❌";
-        const resultText = evaluation.matched ? "Matched" : "Not matched";
-        console.log(`${resultPrefix} ${evaluation.matcher_type} matcher`);
-        console.log(`   Result: ${resultText}`);
+        const resultPrefix = evaluation.matched ? success("✅") : errorColor("❌");
+        const resultText = evaluation.matched ? success("Matched") : errorColor("Not matched");
+        console.log(`${resultPrefix} ${info(evaluation.matcher_type)} matcher`);
+        console.log(`   ${dim("Result:")} ${resultText}`);
 
         // Show matcher details
         switch (evaluation.matcher.type) {
           case "keyword":
-            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
-            console.log(`   Mode: ${evaluation.matcher.mode}`);
+            console.log(`   ${dim("Keywords:")} ${dim(evaluation.matcher.keywords.join(", "))}`);
+            console.log(`   ${dim("Mode:")} ${dim(evaluation.matcher.mode)}`);
             break;
           case "regex":
-            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
+            console.log(`   ${dim("Pattern:")} ${dim(`/${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`)}`);
             break;
           case "complexity":
-            console.log(`   Threshold: ${evaluation.matcher.threshold}`);
+            console.log(`   ${dim("Threshold:")} ${dim(String(evaluation.matcher.threshold))}`);
             break;
           case "project_context":
             if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
-              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
+              console.log(`   ${dim("Has files:")} ${dim(evaluation.matcher.has_files.join(", "))}`);
             }
             if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
-              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
+              console.log(`   ${dim("Has deps:")} ${dim(evaluation.matcher.has_deps.join(", "))}`);
             }
             break;
           case "always":
@@ -610,7 +610,7 @@ async function testCommand(args: string[]): Promise<number> {
         // Show target agent for each rule
         const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
         if (rule) {
-          console.log(`   Target agent: ${rule.target_agent}`);
+          console.log(`   ${dim("Target agent:")} ${success(rule.target_agent)}`);
           if (rule.config_overrides) {
             const overrides: string[] = [];
             if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
@@ -619,7 +619,7 @@ async function testCommand(args: string[]): Promise<number> {
             }
             if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
             if (overrides.length > 0) {
-              console.log(`   Overrides: ${overrides.join(", ")}`);
+              console.log(`   ${dim("Overrides:")} ${dim(overrides.join(", "))}`);
             }
           }
         }
@@ -630,12 +630,12 @@ async function testCommand(args: string[]): Promise<number> {
 
     // Display normal results (non-dry-run)
     if (result) {
-      console.log(`✅ Matched agent: ${result.target_agent}`);
-      console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
-      console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
+      console.log(`${success("✅ Matched agent:")} ${success(result.target_agent)}`);
+      console.log(`   ${dim("Matcher type:")} ${info(result.matcher_type || 'unknown')}`);
+      console.log(`   ${dim("Matched content:")} ${dim(result.matched_content || 'N/A')}`);
 
       if (options.verbose) {
-        console.log(`   Target agent: ${result.target_agent}`);
+        console.log(`   ${dim("Target agent:")} ${success(result.target_agent)}`);
         if (result.config_overrides) {
           const overrides: string[] = [];
           if (result.config_overrides.model) overrides.push(`model=${result.config_overrides.model}`);
@@ -645,7 +645,7 @@ async function testCommand(args: string[]): Promise<number> {
           if (result.config_overrides.variant) overrides.push(`variant=${result.config_overrides.variant}`);
           if (result.config_overrides.prompt) overrides.push(`prompt=${result.config_overrides.prompt.slice(0, 50)}...`);
           if (overrides.length > 0) {
-            console.log(`   Overrides: ${overrides.join(", ")}`);
+            console.log(`   ${dim("Overrides:")} ${dim(overrides.join(", "))}`);
           }
         }
       }
@@ -654,12 +654,12 @@ async function testCommand(args: string[]): Promise<number> {
       if (options.expectAgent) {
         if (result.target_agent === options.expectAgent) {
           console.log();
-          console.log(`✅ Expected agent matched: ${options.expectAgent}`);
+          console.log(`${success("✅ Expected agent matched:")} ${success(options.expectAgent)}`);
           return 0;
         } else {
           console.log();
-          console.log(`❌ Expected agent: ${options.expectAgent}`);
-          console.log(`   Actual matched agent: ${result.target_agent}`);
+          console.log(`${errorColor("❌ Expected agent:")} ${errorColor(options.expectAgent)}`);
+          console.log(`   ${dim("Actual matched agent:")} ${result.target_agent}`);
           return 2;
         }
       }
@@ -667,7 +667,7 @@ async function testCommand(args: string[]): Promise<number> {
       console.log();
       return 0;
     } else {
-      console.log(`❌ No matching agent found for the given prompt.`);
+      console.log(`${errorColor("❌ No matching agent found for the given prompt.")}`);
       console.log();
 
       if (options.expectAgent) {
