@@ -10,6 +10,9 @@ import type { OlimpusConfig, MetaAgentDef } from "../config/schema";
 /**
  * PluginInterface is an alias for the Hooks type returned by plugins.
  * It defines the contract between plugins and the oh-my-opencode framework.
+ *
+ * @since 0.1.0
+ * @stable
  */
 export type PluginInterface = Hooks;
 
@@ -23,6 +26,9 @@ export type PluginInterface = Hooks;
  * 4. Creates Olimpus extension handlers (stub for now, will be populated by Task 6)
  * 5. Merges the base PluginInterface with Olimpus extensions
  * 6. Returns the combined PluginInterface
+ *
+ * @since 0.1.0
+ * @stable
  *
  * @param input - PluginInput containing client, project, directory, etc.
  * @param config - OlimpusConfig for routing rules and meta-agents
@@ -63,6 +69,8 @@ export async function createOlimpusWrapper(
  * - Preserves the OMO config
  * - Prepares for future meta-agent agent-config generation
  *
+ * @internal
+ *
  * @param metaAgents - Extracted meta-agent definitions
  * @param omoConfig - Translated OMO config
  * @returns Stub PluginInterface for Olimpus extensions
@@ -88,6 +96,9 @@ function createOlimpusExtension(
  * - Config handler: Chain both (base first, then extension)
  * - Hooks: Chain all handlers (base first, then extension)
  * - Other properties: Extension overwrites base
+ *
+ * @since 0.1.0
+ * @stable
  *
  * @param base - Base PluginInterface (from oh-my-opencode)
  * @param extension - Extension PluginInterface (from Olimpus)
