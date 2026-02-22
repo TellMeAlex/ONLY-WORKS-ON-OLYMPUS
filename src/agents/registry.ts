@@ -8,13 +8,31 @@ import type { AnalyticsStorage } from "../analytics/storage.js";
 /**
  * Tracks delegation chains to detect circular dependencies
  * Key: "from:to", Value: depth level
+ *
+ * @since 0.1.0
+ * @internal
+ * Internal implementation detail of the registry system.
  */
 interface DelegationTracker {
   [key: string]: number;
 }
 
 /**
- * Registry for meta-agents with delegation tracking and circular dependency detection
+ * Registry for meta-agents with delegation tracking and circular dependency detection.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Manages meta-agent definitions and tracks delegation relationships to prevent
+ * circular dependencies. Provides methods for registering, resolving, and
+ * tracking meta-agent delegations.
+ *
+ * @example
+ * ```ts
+ * const registry = new MetaAgentRegistry(3, loggerConfig);
+ * registry.register("my-agent", metaAgentDef);
+ * const agentConfig = registry.resolve("my-agent", routingContext);
+ * ```
  */
 export class MetaAgentRegistry {
   private definitions: Map<string, MetaAgentDef> = new Map();
@@ -23,6 +41,16 @@ export class MetaAgentRegistry {
   private logger?: RoutingLogger;
   private analyticsStorage?: AnalyticsStorage;
 
+  /**
+   * Creates a new MetaAgentRegistry instance.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * @param maxDepth - Maximum delegation depth to prevent infinite chains (default: 3)
+   * @param loggerConfig - Optional configuration for routing logger
+   * @param analyticsStorage - Optional analytics storage for tracking routing decisions
+   */
   constructor(
     maxDepth: number = 3,
     loggerConfig?: RoutingLoggerConfig,
@@ -36,14 +64,25 @@ export class MetaAgentRegistry {
   }
 
   /**
-   * Register a meta-agent definition
+   * Register a meta-agent definition.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * @param name - Unique identifier for the meta-agent
+   * @param def - Meta-agent definition containing routing rules and configuration
    */
   register(name: string, def: MetaAgentDef): void {
     this.definitions.set(name, def);
   }
 
   /**
-   * Get all registered meta-agent definitions
+   * Get all registered meta-agent definitions.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * @returns Object mapping agent names to their definitions
    */
   getAll(): Record<string, MetaAgentDef> {
     const result: Record<string, MetaAgentDef> = {};
@@ -54,8 +93,18 @@ export class MetaAgentRegistry {
   }
 
   /**
-   * Resolve a meta-agent to its AgentConfig by evaluating routing rules
-   * Returns null if no route matches
+   * Resolve a meta-agent to its AgentConfig by evaluating routing rules.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * Evaluates the meta-agent's routing rules against the provided context
+   * to determine which sub-agent to use. Returns null if no route matches.
+   *
+   * @param name - Name of the meta-agent to resolve
+   * @param context - Routing context containing task information
+   * @returns AgentConfig if a route matches, null otherwise
+   * @throws Error if the meta-agent is not registered
    */
   resolve(name: string, context: RoutingContext): AgentConfig | null {
     const def = this.definitions.get(name);
@@ -67,8 +116,16 @@ export class MetaAgentRegistry {
   }
 
   /**
-   * Track a delegation from one agent to another
-   * Used for circular dependency detection
+   * Track a delegation from one agent to another.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * Records the delegation relationship for circular dependency detection.
+   * Used by the routing system to track which agents delegate to which.
+   *
+   * @param from - Source agent that is delegating
+   * @param to - Target agent being delegated to
    */
   trackDelegation(from: string, to: string): void {
     const key = `${from}:${to}`;
@@ -76,8 +133,18 @@ export class MetaAgentRegistry {
   }
 
   /**
-   * Check if a delegation would create a circular dependency
-   * Returns true if circular, false if safe
+   * Check if a delegation would create a circular dependency.
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * Performs recursive depth-limited search to detect circular delegation
+   * chains that could cause infinite loops during agent execution.
+   *
+   * @param from - Source agent that would delegate
+   * @param to - Target agent to check for circular path
+   * @param maxDepth - Maximum depth to search (defaults to instance maxDepth)
+   * @returns true if a circular dependency would be created, false otherwise
    */
   checkCircular(
     from: string,
@@ -131,7 +198,15 @@ export class MetaAgentRegistry {
   }
 
   /**
-   * Get current delegation depth (longest chain tracked)
+   * Get current delegation depth (longest chain tracked).
+   *
+   * @since 0.1.0
+   * @stable
+   *
+   * Analyzes all tracked delegations to find the longest delegation chain.
+   * Useful for monitoring and debugging complex routing scenarios.
+   *
+   * @returns The maximum depth of any tracked delegation chain
    */
   getMaxTrackedDepth(): number {
     let maxDepth = 0;
