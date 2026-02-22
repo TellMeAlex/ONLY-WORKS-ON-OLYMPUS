@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "fs";
-import { resolve, extname } from "path";
+import { resolve, extname, normalize } from "path";
 import type {
   SkillDefinition,
   SkillMetadata,
@@ -106,6 +106,37 @@ function parseYamlValue(value: string): string | boolean | string[] {
 function extractSkillName(filePath: string): string {
   const fileName = filePath.split("/").pop() || "";
   return fileName.replace(/\.[^.]+$/, "");
+}
+
+/**
+ * Validate a skill path to detect path traversal attacks
+ * Checks if the path contains '..' or attempts to escape the base directory
+ *
+ * @param skillPath - The skill path to validate
+ * @param baseDir - The base directory to check against
+ * @returns true if path is safe, false if path traversal is detected
+ */
+function validateSkillPath(skillPath: string, baseDir: string): boolean {
+  const normalizedPath = normalize(skillPath);
+
+  // Check for path traversal patterns
+  if (normalizedPath.includes("..")) {
+    return false;
+  }
+
+  // For relative paths, check if resolved path stays within base directory
+  if (!skillPath.startsWith("/")) {
+    const resolvedPath = resolve(baseDir, skillPath);
+    const normalizedResolved = normalize(resolvedPath);
+    const normalizedBase = normalize(baseDir);
+
+    // Ensure the resolved path is within the base directory
+    if (!normalizedResolved.startsWith(normalizedBase)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
