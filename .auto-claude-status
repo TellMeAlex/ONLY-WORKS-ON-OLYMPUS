@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "013-multi-project-orchestration",
+  "spec": "019-remove-hardcoded-github-token-from-environment-fil",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 11,
+    "completed": 5,
+    "total": 6,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Project Registry",
+    "current": "Update Documentation",
     "id": null,
-    "total": 2
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-02-20T18:13:59.456697"
+    "number": 7,
+    "started_at": "2026-02-20T16:36:59.821068"
   },
-  "last_update": "2026-02-20T18:28:20.177715"
+  "last_update": "2026-02-20T16:47:30.139234"
 }
