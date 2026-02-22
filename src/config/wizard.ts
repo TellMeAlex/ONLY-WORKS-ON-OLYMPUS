@@ -26,6 +26,7 @@ import {
   getProviderModel,
   type ProjectTypeId,
 } from "./prompts.js";
+import { success, warning, error, info, bold, dim } from "../utils/colors.js";
 
 export type { WizardAnswers };
 
@@ -449,9 +450,11 @@ class ReadlineInterface {
  */
 function displayOptions(options: PromptOption[], selectedIndex?: number): void {
   options.forEach((opt, index) => {
-    const prefix = index === selectedIndex ? "> " : "  ";
-    const description = opt.description ? ` - ${opt.description}` : "";
-    console.log(`${prefix}${index + 1}. ${opt.label}${description}`);
+    const isSelected = index === selectedIndex;
+    const prefix = isSelected ? bold("> ") : "  ";
+    const label = isSelected ? bold(`${index + 1}. ${opt.label}`) : `${index + 1}. ${opt.label}`;
+    const description = opt.description ? dim(` - ${opt.description}`) : "";
+    console.log(`${prefix}${label}${description}`);
   });
 }
 
@@ -464,9 +467,10 @@ function displayMultiSelectOptions(
 ): void {
   options.forEach((opt, index) => {
     const selected = selectedIndices.has(index);
-    const checkbox = selected ? "[x]" : "[ ]";
-    const description = opt.description ? ` - ${opt.description}` : "";
-    console.log(`  ${checkbox} ${index + 1}. ${opt.label}${description}`);
+    const checkbox = selected ? success("[x]") : "[ ]";
+    const label = selected ? bold(opt.label) : opt.label;
+    const description = opt.description ? dim(` - ${opt.description}`) : "";
+    console.log(`  ${checkbox} ${index + 1}. ${label}${description}`);
   });
 }
 
@@ -488,7 +492,7 @@ async function selectOption(
   const options = optionsPrompt.options;
 
   if (help) {
-    console.log(`💡 ${help}\n`);
+    console.log(info(`💡 ${help}\n`));
   }
 
   // Simple numeric selection for now
@@ -501,7 +505,7 @@ async function selectOption(
     const num = parseInt(answer, 10);
 
     if (isNaN(num) || num < 1 || num > options.length) {
-      console.log(`Invalid selection. Please enter a number between 1 and ${options.length}.`);
+      console.log(error(`Invalid selection. Please enter a number between 1 and ${options.length}.`));
       continue;
     }
 
@@ -535,22 +539,22 @@ async function selectMultipleOptions(
   }
 
   if (help) {
-    console.log(`💡 ${help}`);
-    console.log("Select multiple options, then press 'd' when done.\n");
+    console.log(info(`💡 ${help}`));
+    console.log(dim("Select multiple options, then press 'd' when done.\n"));
   }
 
   while (true) {
     console.clear();
     displayMultiSelectOptions(options, selected);
     console.log("");
-    console.log("Toggle: <number>  |  Done: d  |  Clear all: c");
+    console.log(dim("Toggle: <number>  |  Done: d  |  Clear all: c"));
 
     const answer = await rli.question("> ");
     const lower = answer.toLowerCase();
 
     if (lower === "d") {
       if (selected.size === 0) {
-        console.log("Please select at least one option.");
+        console.log(warning("Please select at least one option."));
         continue;
       }
       break;

@@ -1,4 +1,5 @@
 import index from "./index.html"
+import { info, bold } from "../src/utils/colors.js"
 
 Bun.serve({
   port: 3000,
@@ -11,4 +12,4 @@ Bun.serve({
   },
 })
 
-console.log("Server listening on port 3000")
+console.log(`${info("Server listening on port")} ${bold("3000")}`)

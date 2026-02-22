@@ -1,5 +1,7 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
+import { success, info, bold, dim } from "../src/utils/colors.js";
+
 function generateOlimpusSchema() {
   const schema = {
     $schema: "http://json-schema.org/draft-07/schema#",
@@ -548,14 +550,14 @@ const assetPath = join(process.cwd(), "assets", "olimpus.schema.json");
 
 try {
   writeFileSync(assetPath, JSON.stringify(schema, null, 2) + "\n");
-  console.log(`✅ Schema generated: ${assetPath}`);
-  console.log(`\n📋 Schema details:`);
-  console.log(`   - ID: ${schema.$id}`);
-  console.log(`   - Extends: oh-my-opencode base schema`);
+  console.log(`${success("✅ Schema generated:")} ${bold(assetPath)}`);
+  console.log(`\n${info("📋 Schema details:")}`);
+  console.log(`   ${dim("-")} ${dim("ID:")} ${dim(schema.$id)}`);
+  console.log(`   ${dim("-")} ${dim("Extends:")} ${dim("oh-my-opencode base schema")}`);
   console.log(
-    `   - Definitions: ${Object.keys(schema.definitions).length} types`,
+    `   ${dim("-")} ${dim("Definitions:")} ${bold(String(Object.keys(schema.definitions).length))} ${dim("types")}`,
   );
 } catch (error) {
-  console.error(`❌ Failed to generate schema:`, error);
+  console.error(`${dim("❌ Failed to generate schema:")} ${dim(String(error))}`);
   process.exit(1);
 }

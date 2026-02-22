@@ -402,9 +402,9 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert
       expect(parsed.metrics).toBeDefined();
-      expect(parsed.metrics.summary).toBeDefined();
-      expect(parsed.metrics.agent_statistics).toBeDefined();
-      expect(parsed.metrics.matcher_statistics).toBeDefined();
+      expect(parsed.metrics.total_events).toBeDefined();
+      expect(parsed.metrics.agent_metrics).toBeDefined();
+      expect(parsed.metrics.matcher_metrics).toBeDefined();
     });
 
     test("should export only events when metrics disabled", () => {

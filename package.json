@@ -37,12 +37,20 @@
     "build": "bun run build:node && bun run build:bun && bun run schema:generate",
     "build:node": "bun build-node.mjs",
     "build:bun": "bun build src/index.ts --outdir dist-bun --target bun",
+    "check": "bunx biome check .",
+    "check:fix": "bunx biome check --write .",
+    "format": "bunx biome format .",
+    "format:fix": "bunx biome format --write .",
+    "lint": "bunx biome lint .",
+    "lint:fix": "bunx biome lint --write .",
     "typecheck": "bunx tsc --noEmit",
     "schema:generate": "bun scripts/generate-schema.ts",
     "schema:validate": "bun scripts/validate-schema.ts",
     "olimpus": "bun bin/olimpus.ts",
     "test": "bun test",
-    "publish:github": "npm publish"
+    "publish:github": "npm publish",
+    "serve:web": "bun bin/serve-web.ts",
+    "build:web": "cd web && bun install && bunx vite build"
   },
   "dependencies": {
     "oh-my-opencode": "^3.4.0",
@@ -51,6 +59,7 @@
     "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/bun": "latest",
     "typescript": "^5",
     "esbuild": "^0.23.0"
