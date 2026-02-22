@@ -1,15 +1,15 @@
 {
   "active": true,
-  "spec": "018-colored-cli-output-with-visual-hierarchy",
+  "spec": "016-config-environment-variable-expansion",
   "state": "building",
   "subtasks": {
-    "completed": 18,
-    "total": 19,
+    "completed": 0,
+    "total": 4,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration and Verification",
+    "current": "Env Var Expansion Implementation",
     "id": null,
     "total": 4
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 20,
-    "started_at": "2026-02-22T11:21:29.395484"
+    "number": 1,
+    "started_at": "2026-02-22T11:20:56.881414"
   },
-  "last_update": "2026-02-22T12:18:28.410542"
+  "last_update": "2026-02-22T11:20:56.938125"
 }
