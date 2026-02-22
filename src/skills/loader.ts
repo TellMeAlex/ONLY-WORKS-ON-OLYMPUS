@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "fs";
-import { resolve, extname } from "path";
+import { resolve, extname, normalize } from "path";
 import type {
   SkillDefinition,
   SkillMetadata,
@@ -109,6 +109,40 @@ function extractSkillName(filePath: string): string {
 }
 
 /**
+ * Validate a skill path to detect path traversal attacks
+ * Checks if the path is absolute, contains '..', or attempts to escape the base directory
+ *
+ * @param skillPath - The skill path to validate
+ * @param baseDir - The base directory to check against
+ * @returns true if path is safe, false if path traversal is detected
+ */
+function validateSkillPath(skillPath: string, baseDir: string): boolean {
+  const normalizedPath = normalize(skillPath);
+
+  // Reject absolute paths - they could point anywhere on the system
+  if (skillPath.startsWith("/") || skillPath.startsWith("\\") || /[A-Za-z]:/.test(skillPath)) {
+    return false;
+  }
+
+  // Check for path traversal patterns
+  if (normalizedPath.includes("..")) {
+    return false;
+  }
+
+  // For relative paths, check if resolved path stays within base directory
+  const resolvedPath = resolve(baseDir, skillPath);
+  const normalizedResolved = normalize(resolvedPath);
+  const normalizedBase = normalize(baseDir);
+
+  // Ensure the resolved path is within the base directory
+  if (!normalizedResolved.startsWith(normalizedBase)) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Load Olimpus skills from specified paths
  * Reads markdown files and parses frontmatter + template
  * Returns array of SkillDefinitions with olimpus: prefix applied
@@ -120,9 +154,14 @@ export function loadOlimpusSkills(
   const skills: SkillDefinition[] = [];
 
   for (const skillPath of skillPaths) {
-    const resolvedPath = skillPath.startsWith("/")
-      ? skillPath
-      : resolve(projectDir, skillPath);
+    // Validate the path to prevent path traversal attacks
+    if (!validateSkillPath(skillPath, projectDir)) {
+      console.warn(`Invalid skill path (must be relative to project directory): ${skillPath}`);
+      continue;
+    }
+
+    // Resolve relative to project directory (absolute paths already rejected above)
+    const resolvedPath = resolve(projectDir, skillPath);
 
     if (!existsSync(resolvedPath)) {
       console.warn(`Skill file not found: ${resolvedPath}`);

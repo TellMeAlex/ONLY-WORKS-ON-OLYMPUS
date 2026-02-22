@@ -166,3 +166,27 @@ test("mergeSkills: preserve order", () => {
     "olimpus:new2",
   ]);
 });
+
+test("loadOlimpusSkills: reject absolute paths", () => {
+  // Test with an absolute path that would be a security vulnerability
+  const absolutePath = "/etc/passwd.md";
+  const skills = loadOlimpusSkills([absolutePath], ".");
+  expect(skills).toHaveLength(0);
+});
+
+test("loadOlimpusSkills: reject relative paths with ../", () => {
+  // Test with a path that would escape the project directory
+  const relativePath = "../../secrets.md";
+  const skills = loadOlimpusSkills([relativePath], ".");
+  expect(skills).toHaveLength(0);
+});
+
+test("loadOlimpusSkills: accept valid relative paths", () => {
+  // Test that legitimate relative paths within the project are accepted
+  createTestSkill("valid-skill.md", "---\n---\nContent");
+
+  const skills = loadOlimpusSkills([join(TEST_DIR, "valid-skill.md")], ".");
+  expect(skills).toHaveLength(1);
+  expect(skills[0]?.name).toBe("olimpus:valid-skill");
+  cleanup();
+});
