@@ -151,6 +151,12 @@ export function loadOlimpusSkills(
   const skills: SkillDefinition[] = [];
 
   for (const skillPath of skillPaths) {
+    // Validate the path to prevent path traversal attacks
+    if (!validateSkillPath(skillPath, projectDir)) {
+      console.warn(`Invalid skill path (potential path traversal): ${skillPath}`);
+      continue;
+    }
+
     const resolvedPath = skillPath.startsWith("/")
       ? skillPath
       : resolve(projectDir, skillPath);
