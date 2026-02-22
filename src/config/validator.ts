@@ -26,6 +26,13 @@ export const SchemaValidationErrorSchema = z.object({
   zodIssue: z.any().optional(),
 });
 
+export const InvalidRegexFlagsErrorSchema = z.object({
+  type: z.literal("invalid_regex_flags"),
+  message: z.string(),
+  path: z.array(z.string()),
+  flags: z.string(),
+});
+
 export const RegexPerformanceWarningSchema = z.object({
   type: z.literal("regex_performance"),
   message: z.string(),
@@ -42,6 +49,7 @@ export const ValidationErrorSchema = z.discriminatedUnion("type", [
   CircularDependencyErrorSchema,
   InvalidAgentReferenceErrorSchema,
   SchemaValidationErrorSchema,
+  InvalidRegexFlagsErrorSchema,
 ]);
 
 /**
@@ -115,6 +123,9 @@ export type InvalidAgentReferenceError = z.infer<
   typeof InvalidAgentReferenceErrorSchema
 >;
 export type SchemaValidationError = z.infer<typeof SchemaValidationErrorSchema>;
+export type InvalidRegexFlagsError = z.infer<
+  typeof InvalidRegexFlagsErrorSchema
+>;
 
 export type ValidationError = z.infer<typeof ValidationErrorSchema>;
 
@@ -182,6 +193,23 @@ export function createSchemaValidationError(
     message,
     path,
     zodIssue,
+  };
+}
+
+/**
+ * Create an invalid regex flags error
+ */
+
+export function createInvalidRegexFlagsError(
+  message: string,
+  path: string[],
+  flags: string,
+): InvalidRegexFlagsError {
+  return {
+    type: "invalid_regex_flags",
+    message,
+    path,
+    flags,
   };
 }
 
