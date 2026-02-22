@@ -28,6 +28,7 @@ import {
   type RoutingResult,
   type MatcherEvaluation,
 } from "../src/agents/routing.js";
+import { success, warning, error as errorColor, bold, dim } from "../src/utils/colors.js";
 
 /**
  * Parsed command options
@@ -286,24 +287,24 @@ async function validateCommand(args: string[]): Promise<number> {
     });
 
     // Print results
-    console.log(`\n📋 Validating: ${filePath}\n`);
+    console.log(`\n${bold("📋 Validating:")} ${filePath}\n`);
 
     if (result.valid) {
-      console.log("✅ " + getValidationSummary(result));
+      console.log(success("✅ " + getValidationSummary(result)));
     } else {
-      console.log("❌ " + getValidationSummary(result));
+      console.log(errorColor("❌ " + getValidationSummary(result)));
     }
 
     // Print errors if any
     if (result.errors.length > 0) {
-      console.log("\nErrors:");
-      formatErrors(result).forEach((error) => console.log(`  ${error}`));
+      console.log(`\n${errorColor(bold("Errors:"))}`);
+      formatErrors(result).forEach((errorMsg) => console.log(`  ${errorColor(errorMsg)}`));
     }
 
     // Print warnings if any
     if (result.warnings.length > 0) {
-      console.log("\nWarnings:");
-      formatWarnings(result).forEach((warning) => console.log(`  ${warning}`));
+      console.log(`\n${warning(bold("Warnings:"))}`);
+      formatWarnings(result).forEach((warningMsg) => console.log(`  ${warning(warningMsg)}`));
     }
 
     console.log();
@@ -311,9 +312,9 @@ async function validateCommand(args: string[]): Promise<number> {
     return result.valid ? 0 : 1;
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`\n❌ Error: ${error.message}\n`);
+      console.error(`\n${errorColor("❌ Error:")} ${dim(error.message)}\n`);
     } else {
-      console.error(`\n❌ Unexpected error\n`);
+      console.error(`\n${errorColor("❌ Unexpected error")}\n`);
     }
     return 1;
   }
@@ -677,9 +678,9 @@ async function testCommand(args: string[]): Promise<number> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`\n❌ Error: ${error.message}\n`);
+      console.error(`\n${errorColor("❌ Error:")} ${dim(error.message)}\n`);
     } else {
-      console.error(`\n❌ Unexpected error\n`);
+      console.error(`\n${errorColor("❌ Unexpected error")}\n`);
     }
     return 1;
   }
