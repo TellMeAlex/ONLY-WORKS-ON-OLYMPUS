@@ -247,9 +247,9 @@ function evaluateRegexMatcher(
   try {
     const regex = new RegExp(matcher.pattern, matcher.flags || "i");
     return regex.test(context.prompt);
-  } catch (error) {
+  } catch (err) {
     console.error(
-      `${bold("[Olimpus]")} ${error("Invalid regex pattern:")} ${dim(matcher.pattern)} - ${dim(error instanceof Error ? error.message : String(error))}`
+      `${bold("[Olimpus]")} ${error("Invalid regex pattern:")} ${dim(matcher.pattern)} - ${dim(err instanceof Error ? err.message : String(err))}`
     );
     return false;
   }

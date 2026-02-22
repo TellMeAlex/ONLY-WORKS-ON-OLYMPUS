@@ -93,9 +93,9 @@ export async function scaffoldOlimpusConfig(
           path: wizardResult.path,
           created: true,
         };
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        console.warn(`${bold("[Olimpus]")} ${error(`Wizard failed:`)} ${dim(err.message)}`);
+      } catch (err) {
+        const caughtError = err instanceof Error ? err : new Error(String(err));
+        console.warn(`${bold("[Olimpus]")} ${error(`Wizard failed:`)} ${dim(caughtError.message)}`);
         return null;
       }
     }
@@ -156,7 +156,7 @@ export async function scaffoldOlimpusConfig(
     try {
       fs.writeFileSync(tempPath, content, "utf-8");
       fs.renameSync(tempPath, targetPath);
-    } catch (error) {
+    } catch (err) {
       // Clean up temp file if it exists
       try {
         if (fs.existsSync(tempPath)) {
@@ -166,16 +166,16 @@ export async function scaffoldOlimpusConfig(
         // Ignore cleanup errors
       }
 
-      const err = error instanceof Error ? error : new Error(String(error));
+      const caughtError = err instanceof Error ? err : new Error(String(err));
       if (
-        err.message.includes("EACCES") ||
-        err.message.includes("EROFS") ||
-        err.message.includes("ENOSPC")
+        caughtError.message.includes("EACCES") ||
+        caughtError.message.includes("EROFS") ||
+        caughtError.message.includes("ENOSPC")
       ) {
-        console.warn(`${bold("[Olimpus]")} ${error("Failed to write config:")} ${dim(err.message)}`);
+        console.warn(`${bold("[Olimpus]")} ${error("Failed to write config:")} ${dim(caughtError.message)}`);
         return null;
       }
-      throw error;
+      throw err;
     }
 
     // Step 10: Log success message
@@ -187,11 +187,10 @@ export async function scaffoldOlimpusConfig(
       path: targetPath,
       created: true,
     };
-  } catch (error) {
+  } catch (err) {
+    const caughtError = err instanceof Error ? err : new Error(String(err));
     console.warn(
-      `${bold("[Olimpus]")} ${error("Scaffolding failed:")} ${dim(
-        error instanceof Error ? error.message : String(error),
-      )}`,
+      `${bold("[Olimpus]")} ${error("Scaffolding failed:")} ${dim(caughtError.message)}`,
     );
     return null;
   }

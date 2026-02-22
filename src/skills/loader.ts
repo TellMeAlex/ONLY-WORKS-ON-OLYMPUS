@@ -182,11 +182,10 @@ export function loadOlimpusSkills(
       };
 
       skills.push(skill);
-    } catch (error) {
+    } catch (err) {
+      const caughtError = err instanceof Error ? err : new Error(String(err));
       console.warn(
-        `${bold("[Olimpus]")} ${error("Error loading skill from")} ${dim(resolvedPath)}: ${dim(
-          error instanceof Error ? error.message : String(error),
-        )}`,
+        `${bold("[Olimpus]")} ${error("Error loading skill from")} ${dim(resolvedPath)}: ${dim(caughtError.message)}`,
       );
       continue;
     }
