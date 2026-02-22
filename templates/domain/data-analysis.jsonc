@@ -1,0 +1,623 @@
+{
+  // ============================================================================
+  // Data Analysis Meta-Agent Template
+  // ============================================================================
+  // This template provides intelligent routing for data analysis projects.
+  // It handles exploratory data analysis, data cleaning, visualization,
+  // statistical analysis, machine learning, and reporting. Ideal for projects
+  // using Python data science stack (pandas, numpy, matplotlib, seaborn),
+  // R (tidyverse), or SQL-based analysis. Supports both interactive analysis
+  // notebooks and production data pipelines.
+
+  "name": "data-analysis",
+  "description": "Meta-agent template for data analysis projects with intelligent routing for EDA, data cleaning, visualization, statistical analysis, and machine learning workflows",
+  "category": "domain",
+  "tags": ["data", "analysis", "eda", "statistics", "machine-learning", "visualization", "pandas", "numpy", "sql", "data-science"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["oracle", "sisyphus", "atlas", "librarian", "metis", "prometheus"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Python Pandas Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["pandas"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Pandas data analysis specialist. Use pandas for data manipulation, cleaning, and analysis. Leverage vectorized operations, proper indexing, and efficient memory usage. Write idiomatic pandas code.",
+          "variant": "pandas"
+        }
+      },
+
+      // ========================================================================
+      // NumPy Numerical Computing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["numpy"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "NumPy numerical computing specialist. Use numpy for array operations, linear algebra, and numerical computations. Leverage broadcasting, vectorization, and efficient memory patterns.",
+          "variant": "numpy"
+        }
+      },
+
+      // ========================================================================
+      // Matplotlib Visualization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["matplotlib"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Matplotlib visualization specialist. Create clear, publication-quality plots with matplotlib. Use proper figure sizing, labels, legends, and styling. Choose appropriate plot types for the data.",
+          "variant": "matplotlib"
+        }
+      },
+
+      // ========================================================================
+      // Seaborn Statistical Visualization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["seaborn"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Seaborn statistical visualization specialist. Create statistical graphics with seaborn. Use appropriate plots for categorical and numerical data. Leverage seaborn's themes and color palettes.",
+          "variant": "seaborn"
+        }
+      },
+
+      // ========================================================================
+      // Plotly Interactive Visualization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["plotly", "plotly.express"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Plotly interactive visualization specialist. Create interactive charts with plotly or plotly express. Enable zooming, hovering, and interactivity for data exploration.",
+          "variant": "plotly"
+        }
+      },
+
+      // ========================================================================
+      // Scikit-learn Machine Learning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["scikit-learn", "sklearn"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Scikit-learn machine learning specialist. Implement ML workflows including preprocessing, feature engineering, model selection, and evaluation. Use cross-validation and proper train-test splits.",
+          "variant": "sklearn"
+        }
+      },
+
+      // ========================================================================
+      // PyTorch Deep Learning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["torch", "pytorch"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "PyTorch deep learning specialist. Implement neural networks with PyTorch. Use proper tensor operations, autograd, and efficient training loops. Leverage torch.nn, torch.optim, and torch.utils.data.",
+          "variant": "pytorch"
+        }
+      },
+
+      // ========================================================================
+      // TensorFlow / Keras Deep Learning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "Pipfile"],
+          "has_deps": ["tensorflow", "keras"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "TensorFlow/Keras deep learning specialist. Implement neural networks with TensorFlow and Keras. Use Keras APIs for model definition and TensorFlow for training loops. Consider GPU acceleration.",
+          "variant": "tensorflow"
+        }
+      },
+
+      // ========================================================================
+      // R Tidyverse Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["DESCRIPTION", "renv.lock"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "R tidyverse data analysis specialist. Use dplyr for data manipulation, ggplot2 for visualization, and tidyr for reshaping. Write idiomatic R code with pipe operators (%>% or |>).",
+          "variant": "tidyverse"
+        }
+      },
+
+      // ========================================================================
+      // SQL Data Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["*.sql", "queries/*.sql", "migrations/*.sql"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "SQL data analysis specialist. Write efficient SQL queries for data analysis. Use proper joins, window functions, aggregations, and CTEs. Optimize for database performance.",
+          "variant": "sql"
+        }
+      },
+
+      // ========================================================================
+      // Jupyter Notebooks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["*.ipynb", "notebooks/*.ipynb"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Jupyter notebook specialist. Create well-structured Jupyter notebooks with clear sections, markdown explanations, and code cells. Use best practices for notebook organization and reproducibility.",
+          "variant": "notebook"
+        }
+      },
+
+      // ========================================================================
+      // Exploratory Data Analysis (EDA) Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["eda", "exploratory", "explore data", "analyze data", "data exploration", "understand data"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "EDA specialist. Perform exploratory data analysis including data summary, distribution analysis, correlation analysis, outlier detection, and pattern discovery. Generate insights and visualizations.",
+          "variant": "eda"
+        }
+      },
+
+      // ========================================================================
+      // Data Cleaning Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["clean data", "data cleaning", "missing values", "null", "na", "impute", "outlier", "duplicates"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data cleaning specialist. Clean and preprocess data including handling missing values, removing duplicates, fixing inconsistent formats, and detecting/handling outliers. Document cleaning steps.",
+          "variant": "cleaning"
+        }
+      },
+
+      // ========================================================================
+      // Data Transformation Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["transform", "normalize", "standardize", "scale", "encode", "feature engineering", "one-hot", "label encoding"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data transformation specialist. Transform data for analysis or modeling including normalization, standardization, encoding categorical variables, feature scaling, and creating derived features.",
+          "variant": "transformation"
+        }
+      },
+
+      // ========================================================================
+      // Visualization Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["plot", "chart", "graph", "visualize", "visualization", "dashboard", "figure", "matplotlib", "seaborn", "plotly", "ggplot"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data visualization specialist. Create effective data visualizations with appropriate chart types for the data. Use clear labels, legends, and styling. Choose colors and scales carefully.",
+          "variant": "visualization"
+        }
+      },
+
+      // ========================================================================
+      // Statistical Analysis Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["statistical", "statistics", "hypothesis test", "p-value", "confidence interval", "correlation", "regression", "t-test", "anova", "chi-square"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Statistical analysis specialist. Perform statistical tests and analyses including hypothesis testing, correlation analysis, regression analysis, and significance testing. Report results with proper statistical interpretation.",
+          "variant": "statistics"
+        }
+      },
+
+      // ========================================================================
+      // Machine Learning Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["machine learning", "ml", "model", "train", "predict", "classification", "regression", "clustering", "feature", "supervised", "unsupervised"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Machine learning specialist. Design and implement ML workflows including feature selection, model selection, training, and evaluation. Use appropriate metrics and cross-validation.",
+          "variant": "ml"
+        }
+      },
+
+      // ========================================================================
+      // Deep Learning Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["deep learning", "neural network", "neural net", "cnn", "rnn", "lstm", "transformer", "attention", "pytorch", "tensorflow"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Deep learning specialist. Design and implement neural network architectures. Consider appropriate layer types, activation functions, regularization, and optimization strategies for the task.",
+          "variant": "dl"
+        }
+      },
+
+      // ========================================================================
+      // Feature Engineering Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["feature engineering", "feature selection", "feature importance", "dimensionality reduction", "pca", "t-sne", "umap"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Feature engineering specialist. Create, select, and transform features for ML models. Use feature importance analysis, dimensionality reduction techniques (PCA, t-SNE, UMAP), and domain knowledge.",
+          "variant": "feature-engineering"
+        }
+      },
+
+      // ========================================================================
+      // Model Evaluation Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["evaluate", "evaluation", "metric", "accuracy", "precision", "recall", "f1", "roc", "auc", "cross-validation", "confusion matrix"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Model evaluation specialist. Evaluate ML models using appropriate metrics including accuracy, precision, recall, F1, ROC-AUC, confusion matrix, and cross-validation. Provide interpretable results.",
+          "variant": "evaluation"
+        }
+      },
+
+      // ========================================================================
+      // Hyperparameter Tuning Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["hyperparameter", "tuning", "grid search", "random search", "bayesian optimization", "optuna"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Hyperparameter tuning specialist. Optimize model hyperparameters using grid search, random search, or Bayesian optimization. Use cross-validation and proper search spaces.",
+          "variant": "hyperparameter-tuning"
+        }
+      },
+
+      // ========================================================================
+      // Data Pipeline Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pipeline", "etl", "data pipeline", "batch", "stream", "airflow", "prefect", "dag"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Data pipeline specialist. Design and implement data pipelines for batch or stream processing. Use appropriate orchestration tools (Airflow, Prefect) and ensure idempotency and reliability.",
+          "variant": "pipeline"
+        }
+      },
+
+      // ========================================================================
+      // Big Data Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["spark", "pyspark", "big data", "distributed", "hadoop", "databricks", "polars", "dask"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Big data specialist. Process large-scale datasets using distributed computing frameworks like PySpark, Polars, or Dask. Consider parallelism, shuffling, and memory optimization.",
+          "variant": "big-data"
+        }
+      },
+
+      // ========================================================================
+      // Time Series Analysis Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["time series", "ts", "forecast", "arima", "prophet", "seasonal", "trend", "autocorrelation"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Time series analysis specialist. Analyze time series data including trend analysis, seasonality detection, stationarity testing, and forecasting. Use ARIMA, Prophet, or appropriate time series models.",
+          "variant": "time-series"
+        }
+      },
+
+      // ========================================================================
+      // NLP Analysis Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["nlp", "text", "natural language", "sentiment", "tokenize", "embedding", "word2vec", "bert", "gpt", "llm"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "NLP specialist. Analyze text data including tokenization, preprocessing, embeddings, sentiment analysis, topic modeling, and text classification. Consider transformer-based models.",
+          "variant": "nlp"
+        }
+      },
+
+      // ========================================================================
+      // Computer Vision Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["computer vision", "image", "object detection", "segmentation", "classification", "cnn", "yolo", "resnet", "opencv"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Computer vision specialist. Analyze image data including preprocessing, object detection, segmentation, and classification. Use appropriate CNN architectures and pretrained models.",
+          "variant": "cv"
+        }
+      },
+
+      // ========================================================================
+      // Data Reporting Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["report", "reporting", "summary", "insight", "findings", "conclusion", "recommendation", "data story"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Data reporting specialist. Create clear, actionable data reports with executive summaries, key findings, visualizations, and recommendations. Structure for business stakeholders.",
+          "variant": "reporting"
+        }
+      },
+
+      // ========================================================================
+      // A/B Testing Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["ab test", "a/b test", "experiment", "split test", "variant", "control", "treatment", "statistical significance"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "A/B testing specialist. Design and analyze A/B tests including power analysis, sample size calculation, hypothesis testing, and statistical significance. Report effect sizes and confidence intervals.",
+          "variant": "ab-testing"
+        }
+      },
+
+      // ========================================================================
+      // Data Quality Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["data quality", "validate", "data validation", "data integrity", "consistency", "anomaly detection", "data profiling"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Data quality specialist. Implement data validation and quality checks including data profiling, anomaly detection, consistency validation, and integrity checks. Set up automated monitoring.",
+          "variant": "data-quality"
+        }
+      },
+
+      // ========================================================================
+      // Data Augmentation Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["augment", "data augmentation", "synthetic data", "oversample", "undersample", "smote"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data augmentation specialist. Implement data augmentation techniques to increase dataset size and diversity. Use methods appropriate for the data type (image, text, tabular).",
+          "variant": "augmentation"
+        }
+      },
+
+      // ========================================================================
+      // Ensemble Methods Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["ensemble", "bagging", "boosting", "random forest", "gradient boosting", "xgboost", "lightgbm", "catboost", "stacking"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Ensemble methods specialist. Implement ensemble techniques including bagging, boosting, and stacking. Use appropriate ensemble methods (Random Forest, XGBoost, LightGBM, CatBoost) for improved performance.",
+          "variant": "ensemble"
+        }
+      },
+
+      // ========================================================================
+      // Data Merging Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["merge", "join", "concat", "combine", "union", "left join", "inner join", "outer join"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data merging specialist. Combine data from multiple sources using appropriate join strategies (inner, left, right, outer). Handle duplicate keys, null values, and data type mismatches.",
+          "variant": "merge"
+        }
+      },
+
+      // ========================================================================
+      // Data Aggregation Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["aggregate", "group by", "pivot", "unpivot", "summarize", "rollup", "cube"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data aggregation specialist. Aggregate data using group-by operations, pivot tables, and window functions. Compute summaries, rollups, and drill-downs for multi-dimensional analysis.",
+          "variant": "aggregation"
+        }
+      },
+
+      // ========================================================================
+      // Data Export Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["export", "save", "write", "csv", "json", "parquet", "excel", "database", "to_csv", "to_json", "to_parquet"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Data export specialist. Export data to various formats (CSV, JSON, Parquet, Excel, database) considering file size, performance, and downstream usage. Use efficient formats for large datasets.",
+          "variant": "export"
+        }
+      },
+
+      // ========================================================================
+      // High Complexity Data Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "high"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Data architect: This is a high-complexity data task. Design considering data scalability, performance, accuracy, and interpretability. Analyze from first principles and plan the data strategy.",
+          "variant": "complex"
+        }
+      },
+
+      // ========================================================================
+      // Medium Complexity Data Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "medium"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Data strategist: Plan the implementation considering data analysis best practices, statistical validity, and trade-offs between complexity and interpretability.",
+          "variant": "medium"
+        }
+      },
+
+      // ========================================================================
+      // Fallback - General Data Analysis
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "Data analysis generalist. Analyze the data task and provide appropriate guidance. Detect which tools and approaches are being used (pandas, R, SQL, etc.).",
+        }
+      }
+    ],
+
+    "prompt_template": "Data Analysis Task: {input}\n\nContext:\n- Data analysis methodology: Understand, clean, transform, analyze, and report\n- Choose appropriate tools: pandas/Python, tidyverse/R, or SQL\n- Use visualization libraries: matplotlib, seaborn, plotly, or ggplot2\n- For ML: scikit-learn, PyTorch, TensorFlow as appropriate\n- Follow statistical best practices: proper hypothesis testing and validation"
+  },
+
+  "documentation": "This meta-agent template provides intelligent routing for data analysis projects. It supports multiple data analysis ecosystems including Python (pandas, numpy, matplotlib, seaborn, scikit-learn, PyTorch, TensorFlow), R (tidyverse), and SQL-based analysis. The template handles exploratory data analysis (EDA), data cleaning and preprocessing, transformation and feature engineering, visualization, statistical analysis, machine learning workflows (classification, regression, clustering), deep learning, time series analysis, NLP, computer vision, and data reporting. Routing is based on project dependencies, data-related keywords, complexity, and analysis patterns.",
+  "examples": [
+    "Perform exploratory data analysis on the customer dataset",
+    "Clean the data by handling missing values and removing duplicates",
+    "Create visualizations showing the distribution of key metrics",
+    "Build a classification model to predict customer churn",
+    "Perform sentiment analysis on customer reviews using NLP",
+    "Train a neural network for image classification",
+    "Analyze time series data for forecasting future sales",
+    "Design an A/B test and analyze the results",
+    "Build a data pipeline using Airflow for daily reporting",
+    "Create an interactive dashboard with Plotly for sales data"
+  ]
+}

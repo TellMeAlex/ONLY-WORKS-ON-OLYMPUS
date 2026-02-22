@@ -1,0 +1,573 @@
+{
+  // ============================================================================
+  // Documentation Meta-Agent Template
+  // ============================================================================
+  // This template provides intelligent routing for documentation projects. It
+  // handles documentation generation, maintenance, tooling setup, content
+  // strategy, and documentation-as-code workflows. Ideal for projects using
+  // Docusaurus, MkDocs, Sphinx, VitePress, Jekyll, Hugo, or custom markdown
+  // documentation setups. Supports API documentation (OpenAPI/Swagger), code
+  // comments, inline documentation, and automated documentation pipelines.
+
+  "name": "documentation",
+  "description": "Meta-agent template for documentation projects with documentation routing, content strategy, automated generation, and documentation-as-code support",
+  "category": "domain",
+  "tags": ["documentation", "docs", "docusaurus", "mkdocs", "sphinx", "vitepress", "jekyll", "hugo", "api-docs", "swagger", "openapi", "mdx", "restructuredtext"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["librarian", "sisyphus", "atlas", "oracle", "prometheus", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Docusaurus Documentation Site
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["docusaurus.config.js", "docusaurus.config.ts", "docusaurus.config.mjs"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Docusaurus specialist. Set up and maintain Docusaurus documentation sites. Use MDX, proper content structure, plugins, and themes. Follow Docusaurus best practices.",
+          "variant": "docusaurus"
+        }
+      },
+
+      // ========================================================================
+      // MkDocs Documentation Site
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["mkdocs.yml", "mkdocs.yaml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "MkDocs specialist. Set up and maintain MkDocs documentation sites. Use Material theme, proper content structure, plugins, and extensions. Follow MkDocs best practices.",
+          "variant": "mkdocs"
+        }
+      },
+
+      // ========================================================================
+      // Sphinx Documentation (Python)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["conf.py", "docs/conf.py", "source/conf.py"],
+          "has_deps": ["sphinx"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Sphinx specialist. Set up and maintain Sphinx documentation for Python projects. Use reStructuredText, proper content structure, extensions, and themes. Follow Sphinx best practices.",
+          "variant": "sphinx"
+        }
+      },
+
+      // ========================================================================
+      // VitePress Documentation Site
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": [".vitepress/config.js", ".vitepress/config.ts", "docs/.vitepress/config.js"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "VitePress specialist. Set up and maintain VitePress documentation sites. Use Markdown, proper content structure, themes, and custom components. Follow VitePress best practices.",
+          "variant": "vitepress"
+        }
+      },
+
+      // ========================================================================
+      // Jekyll Documentation Site
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["_config.yml", "_config.yaml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Jekyll specialist. Set up and maintain Jekyll documentation sites. Use Liquid templates, proper content structure, layouts, and plugins. Follow Jekyll best practices.",
+          "variant": "jekyll"
+        }
+      },
+
+      // ========================================================================
+      // Hugo Documentation Site
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["config.toml", "config.yaml", "hugo.toml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Hugo specialist. Set up and maintain Hugo documentation sites. Use Go templates, proper content structure, themes, and shortcodes. Follow Hugo best practices.",
+          "variant": "hugo"
+        }
+      },
+
+      // ========================================================================
+      // OpenAPI/Swagger Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["openapi.yaml", "openapi.json", "swagger.yaml", "swagger.json", "api/openapi.yaml"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "OpenAPI/Swagger documentation specialist. Generate and maintain API documentation from OpenAPI specs. Use Swagger UI, Redoc, or similar tools. Ensure proper descriptions, examples, and schemas.",
+          "variant": "openapi-docs"
+        }
+      },
+
+      // ========================================================================
+      // GraphQL Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["schema.graphql", "api/schema.graphql"],
+          "has_deps": ["@apollo/server", "graphql-yoga", "graphql"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "GraphQL documentation specialist. Generate and maintain API documentation from GraphQL schemas. Use introspection, GraphiQL, or GraphQL Playground. Ensure proper type descriptions and field documentation.",
+          "variant": "graphql-docs"
+        }
+      },
+
+      // ========================================================================
+      // README Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["readme", "read me", "project readme", "documentation readme"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "README documentation specialist. Create clear, comprehensive README files with project description, installation, usage, examples, and contributing guidelines. Use proper markdown formatting.",
+          "variant": "readme"
+        }
+      },
+
+      // ========================================================================
+      // API Reference Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["api reference", "api docs", "endpoints", "methods", "parameters", "responses"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "API reference specialist. Document API endpoints, methods, parameters, request/response formats, authentication, and error codes. Use clear examples and proper formatting.",
+          "variant": "api-reference"
+        }
+      },
+
+      // ========================================================================
+      // Getting Started / Quick Start Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["getting started", "quick start", "beginner", "tutorial", "introduction"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Getting started specialist. Create beginner-friendly quick start guides and tutorials. Include installation steps, first-use examples, and common scenarios. Keep it simple and actionable.",
+          "variant": "getting-started"
+        }
+      },
+
+      // ========================================================================
+      // Code Comments and Inline Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["code comment", "javadoc", "jsdoc", "tsdoc", "pydoc", "docstring", "inline docs"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Inline documentation specialist. Add comprehensive code comments and documentation strings. Use appropriate documentation standards (JSDoc, TSDoc, Javadoc, Python docstrings). Document parameters, return values, and examples.",
+          "variant": "comments"
+        }
+      },
+
+      // ========================================================================
+      // Changelog and Release Notes
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["changelog", "release notes", "version history", "what's new"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Changelog specialist. Create or update CHANGELOG files with clear version history. Include new features, bug fixes, breaking changes, and migration guides. Follow Keep a Changelog format if applicable.",
+          "variant": "changelog"
+        }
+      },
+
+      // ========================================================================
+      // Architecture and Design Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["architecture", "design", "system design", "adr", "architecture decision record"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Architecture documentation specialist. Document system architecture, design decisions, components, and interactions. Use Architecture Decision Records (ADRs), diagrams, and clear explanations.",
+          "variant": "architecture"
+        }
+      },
+
+      // ========================================================================
+      // Tutorial and Guide Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["tutorial", "guide", "how to", "step by step", "walkthrough"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Tutorial and guide specialist. Create step-by-step tutorials and guides. Include prerequisites, clear instructions, code examples, screenshots, and troubleshooting tips.",
+          "variant": "tutorial"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Quality and Consistency
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["improve docs", "quality", "consistency", "review docs", "fix documentation"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Documentation quality specialist. Review and improve documentation for clarity, completeness, consistency, and accuracy. Fix grammar, typos, and formatting issues. Ensure docs match code reality.",
+          "variant": "quality"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Searchability
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["search", "findable", "seo", "metadata", "tags", "categories"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Documentation searchability specialist. Improve documentation discovery through proper titles, descriptions, tags, categories, and SEO. Add cross-references and internal links.",
+          "variant": "searchability"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Localization (i18n)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["translation", "i18n", "localization", "locale", "multilingual", "translate"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Documentation localization specialist. Set up and maintain multilingual documentation. Use proper i18n patterns, translation workflows, and locale-specific content.",
+          "variant": "i18n"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Versioning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["versioning", "docs version", "versioned docs", "stable", "latest", "old docs"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Documentation versioning specialist. Set up versioned documentation for different software releases. Use version selectors, proper redirects, and maintain older versions.",
+          "variant": "versioning"
+        }
+      },
+
+      // ========================================================================
+      // Automated Documentation Generation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["auto-generate", "automated docs", "generate documentation", "docs from code"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Automated documentation specialist. Set up automated documentation generation from code, API specs, or comments. Use appropriate tools and CI/CD integration.",
+          "variant": "automation"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Testing and Validation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test docs", "validate docs", "check links", "broken links", "doc test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Documentation testing specialist. Set up link checking, content validation, and example testing. Verify code examples work and documentation is accurate.",
+          "variant": "testing"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Deployment
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["deploy docs", "publish docs", "host docs", "static site"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Documentation deployment specialist. Set up documentation hosting and deployment. Use GitHub Pages, Netlify, Vercel, or custom hosting. Configure CI/CD for automatic builds.",
+          "variant": "deployment"
+        }
+      },
+
+      // ========================================================================
+      // Diagrams and Visual Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["diagram", "flowchart", "architecture diagram", "mermaid", "plantuml", "visual", "image"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Visual documentation specialist. Create clear diagrams and visuals using Mermaid, PlantUML, or image files. Use diagrams to explain architecture, flows, and concepts.",
+          "variant": "diagrams"
+        }
+      },
+
+      // ========================================================================
+      // Interactive Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["interactive", "playground", "demo", "live code", "interactive demo"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Interactive documentation specialist. Create interactive code examples, playgrounds, and demos. Use appropriate tools for the documentation platform.",
+          "variant": "interactive"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Migration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["migrate docs", "move docs", "convert docs", "docs migration"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Documentation migration specialist. Migrate documentation between platforms or formats. Preserve content, formatting, links, and structure. Plan and execute migration strategy.",
+          "variant": "migration"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Analytics
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["analytics", "track docs", "usage metrics", "page views", "doc analytics"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Documentation analytics specialist. Set up analytics tracking for documentation. Monitor page views, search queries, and user behavior to improve content.",
+          "variant": "analytics"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Strategy
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["docs strategy", "documentation plan", "content strategy", "docs roadmap"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Documentation strategy specialist. Plan documentation structure, content roadmap, and maintenance strategy. Consider audience, use cases, and long-term sustainability.",
+          "variant": "strategy"
+        }
+      },
+
+      // ========================================================================
+      // Markdown Content Creation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["write", "create content", "markdown", "doc content"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Content creation specialist. Write clear, well-structured documentation content. Use proper markdown, headings, lists, code blocks, and examples. Write for the target audience.",
+          "variant": "content"
+        }
+      },
+
+      // ========================================================================
+      // Contributing Guidelines
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["contributing", "contribute", "how to contribute", "developer guide"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Contributing guidelines specialist. Create clear contributing guidelines for the project. Include setup, development workflow, pull request process, and code of conduct.",
+          "variant": "contributing"
+        }
+      },
+
+      // ========================================================================
+      // FAQ Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["faq", "frequently asked", "questions", "troubleshooting", "common issues"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "FAQ specialist. Create or update FAQ documentation covering common questions, issues, and solutions. Organize by category and provide clear answers.",
+          "variant": "faq"
+        }
+      },
+
+      // ========================================================================
+      // High Complexity Documentation Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "high"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "Documentation architect: This is a high-complexity documentation task. Design considering audience needs, content strategy, tool selection, and long-term maintenance. Plan the documentation system comprehensively.",
+          "variant": "complex"
+        }
+      },
+
+      // ========================================================================
+      // Medium Complexity Documentation Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "medium"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "Documentation strategist: Plan the documentation task considering best practices, clarity, completeness, and the chosen documentation platform.",
+          "variant": "medium"
+        }
+      },
+
+      // ========================================================================
+      // Documentation Search and Research
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["find docs", "search docs", "look for", "documentation research"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "Documentation research specialist. Search comprehensively for relevant documentation, guides, and examples. Provide links, summaries, and synthesized findings.",
+          "variant": "research"
+        }
+      },
+
+      // ========================================================================
+      // Fallback - General Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "Documentation generalist. Analyze the documentation task and provide appropriate guidance. Detect which documentation platform and tools are being used."
+        }
+      }
+    ],
+
+    "prompt_template": "Documentation Task: {input}\n\nContext:\n- Detect the documentation platform (Docusaurus, MkDocs, Sphinx, VitePress, Jekyll, Hugo, or custom)\n- Consider documentation type: API docs, user guides, tutorials, or reference\n- Use appropriate documentation standards and formats\n- Prioritize clarity, completeness, and consistency\n- Include examples, diagrams, and cross-references where helpful"
+  },
+
+  "documentation": "This meta-agent template provides intelligent routing for documentation projects. It supports major documentation platforms including Docusaurus (React/MDX), MkDocs (Python/Markdown), Sphinx (Python/reStructuredText), VitePress (Vue/Markdown), Jekyll (Ruby/Liquid), and Hugo (Go/Markdown). The template handles API documentation (OpenAPI/Swagger, GraphQL), README files, getting started guides, code comments, changelogs, architecture documentation, tutorials, documentation quality improvement, localization (i18n), versioning, automated generation, testing, deployment, diagrams, and interactive content. Routing is based on project configuration files, keywords in prompts, task complexity, and documentation patterns.",
+  "examples": [
+    "Set up a Docusaurus site for a React component library",
+    "Create a comprehensive README for a Node.js project",
+    "Generate API documentation from OpenAPI specification using Swagger UI",
+    "Write a getting started tutorial for first-time users",
+    "Add JSDoc comments to all functions in src/utils.ts",
+    "Update the CHANGELOG for version 2.0.0 with new features and breaking changes",
+    "Create Architecture Decision Records for system design choices",
+    "Set up documentation versioning for multiple software releases",
+    "Configure automated documentation generation in CI/CD pipeline",
+    "Add Mermaid diagrams to explain the system architecture",
+    "Fix broken links and improve content quality in the documentation"
+  ]
+}

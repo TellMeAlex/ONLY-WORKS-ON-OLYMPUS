@@ -1,0 +1,604 @@
+{
+  "feature": "Meta-Agent Templates Library",
+  "workflow_type": "feature",
+  "workflow_rationale": "This is a feature addition that adds new functionality (templates library) to the Olimpus plugin. It involves creating new code, extending the config schema, adding CLI commands, and creating documentation. The phases build on each other: schema first, then templates, then loader, then CLI, finally documentation.",
+  "phases": [
+    {
+      "id": "phase-1-schema",
+      "name": "Schema Extension",
+      "type": "implementation",
+      "description": "Extend the config schema to support template definitions and categorization",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Add Template schema to config/schema.ts",
+          "service": "core",
+          "files_to_modify": [
+            "src/config/schema.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/config/schema.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run typecheck",
+            "expected": "No type errors"
+          },
+          "status": "completed",
+          "notes": "Added TemplateSchema with name, description, category, tags, meta_agent, documentation, and examples fields. Added Template inferred type."
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Add templates field to OlimpusConfigSchema",
+          "service": "core",
+          "files_to_modify": [
+            "src/config/schema.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/config/schema.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run typecheck",
+            "expected": "No type errors"
+          },
+          "status": "completed",
+          "notes": "Added templates field to OlimpusConfigSchema as a record of template names to TemplateSchema, following the same pattern as meta_agents."
+        }
+      ]
+    },
+    {
+      "id": "phase-2-templates",
+      "name": "Template Creation",
+      "type": "implementation",
+      "description": "Create 10+ template configurations organized by category",
+      "depends_on": [
+        "phase-1-schema"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Create templates directory structure",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/",
+            "templates/language/",
+            "templates/workflow/",
+            "templates/team/",
+            "templates/domain/"
+          ],
+          "patterns_from": [
+            "example/"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "ls -la templates/",
+            "expected": "language workflow team domain directories exist"
+          },
+          "status": "completed",
+          "notes": "Created templates/ directory with four subdirectories: language/, workflow/, team/, domain/. Added .gitkeep files to each directory for Git tracking."
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Create language-specific templates (Python, JavaScript, Rust, Go)",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/language/python-dev.jsonc",
+            "templates/language/typescript-dev.jsonc",
+            "templates/language/rust-dev.jsonc",
+            "templates/language/go-dev.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc",
+            "src/agents/definitions/atenea.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "ls templates/language/",
+            "expected": "4 language template files"
+          },
+          "status": "completed",
+          "notes": "All 4 language-specific templates created: python-dev.jsonc, typescript-dev.jsonc, rust-dev.jsonc, go-dev.jsonc. All templates follow the pattern from example/olimpus.jsonc with proper meta_agent structure including routing_rules for language-specific patterns and framework detection.",
+          "updated_at": "2026-02-20T16:03:23.682893+00:00"
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Create workflow templates (debugging, refactoring, testing)",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/workflow/debugger.jsonc",
+            "templates/workflow/refactor.jsonc",
+            "templates/workflow/tdd.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc",
+            "src/agents/definitions/hermes.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "ls templates/workflow/",
+            "expected": "3 workflow template files"
+          },
+          "status": "completed",
+          "notes": "All 3 workflow templates created: debugger.jsonc, refactor.jsonc, tdd.jsonc. debugger.jsonc specializes in debugging tasks including error analysis, root cause investigation, and log analysis. refactor.jsonc specializes in refactoring tasks including code cleanup, architectural improvements, and design pattern implementation. tdd.jsonc specializes in test-driven development workflows including test-first development, unit testing, and mocking."
+        },
+        {
+          "id": "subtask-2-4",
+          "description": "Create team size templates (solo, small-team, enterprise)",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/team/solo-dev.jsonc",
+            "templates/team/small-team.jsonc",
+            "templates/team/enterprise.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc",
+            "docs/tutorials/03-team-workflows.md"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "ls templates/team/",
+            "expected": "3 team template files"
+          },
+          "status": "completed",
+          "notes": "All 3 team size templates created successfully:\n- solo-dev.jsonc: Optimized for individual developers with emphasis on autonomy, rapid development, and all-in-one capability\n- small-team.jsonc: Designed for teams of 2-10 people with role-based specialization and collaborative workflows\n- enterprise.jsonc: Comprehensive template for large organizations with compliance requirements, security, and structured processes\n\nAll templates follow the established pattern from example/olimpus.jsonc and include comprehensive routing rules for various development scenarios.",
+          "updated_at": "2026-02-20T16:26:24.201035+00:00"
+        },
+        {
+          "id": "subtask-2-5",
+          "description": "Create monorepo template",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/domain/monorepo.jsonc"
+          ],
+          "patterns_from": [
+            "docs/tutorials/02-monorepo-routing.md",
+            "example/olimpus.jsonc"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f templates/domain/monorepo.jsonc",
+            "expected": "monorepo template exists"
+          },
+          "status": "completed",
+          "notes": "Created monorepo.jsonc template with comprehensive routing rules for:\n- Frontend packages (React/Next.js detection)\n- Backend API packages (Express/Fastify/NestJS)\n- Shared core libraries\n- Rust/CLI packages\n- Go backend packages\n- Python packages\n- Cross-package coordination\n- Build system integration (Turborepo/Nx)\n- Workspace configuration detection\n- Testing patterns for different package types\n- Language-specific routing\n- Dependency updates",
+          "updated_at": "2026-02-20T17:33:00.000Z"
+        },
+        {
+          "id": "subtask-2-6",
+          "description": "Create CI/CD integration template",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/domain/cicd.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f templates/domain/cicd.jsonc",
+            "expected": "cicd template exists"
+          },
+          "status": "completed",
+          "notes": "Created cicd.jsonc template with comprehensive routing rules for:\n- GitHub Actions, GitLab CI, CircleCI, Jenkins pipeline configuration\n- Terraform and AWS CDK infrastructure as code\n- Docker containerization and multi-stage builds\n- Kubernetes manifests, Helm charts, and GitOps (ArgoCD, Flux)\n- Ansible playbooks\n- Deployment automation and pipeline workflows\n- CI testing and quality gates\n- Build and package automation\n- Environment configuration and secret management\n- Infrastructure security scanning\n- Monitoring and observability integration\n- Rollback, canary, and blue-green deployment strategies\n- CI/CD pipeline debugging and optimization\n- Workflow triggering and caching strategies\n- Multi-environment deployment",
+          "updated_at": "2026-02-20T17:35:00.000Z"
+        },
+        {
+          "id": "subtask-2-7",
+          "description": "Create API-first template",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/domain/api-first.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc",
+            "src/agents/definitions/hefesto.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f templates/domain/api-first.jsonc",
+            "expected": "api-first template exists"
+          },
+          "status": "completed",
+          "notes": "Created api-first.jsonc template with comprehensive routing rules for:\n- OpenAPI/Swagger specification design\n- GraphQL schema design and resolvers\n- gRPC Protocol Buffers\n- REST API implementation (Express, Fastify, NestJS, Hono, tRPC)\n- API testing (unit, integration, contract tests)\n- API documentation generation\n- API versioning strategy\n- API security (authentication, authorization, rate limiting)\n- API error handling, validation, and pagination\n- API caching, performance optimization, and monitoring\n- Webhooks and callbacks\n- AsyncAPI and event-driven APIs\n- API gateway configuration\n- REST patterns and GraphQL federation",
+          "updated_at": "2026-02-20T17:45:00.000Z"
+        },
+        {
+          "id": "subtask-2-8",
+          "description": "Create data-analysis template",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/domain/data-analysis.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f templates/domain/data-analysis.jsonc",
+            "expected": "data-analysis template exists"
+          },
+          "status": "completed",
+          "notes": "Created data-analysis.jsonc template with comprehensive routing rules for:\n- Python data stack (pandas, numpy, matplotlib, seaborn, plotly, scikit-learn, PyTorch, TensorFlow)\n- R tidyverse analysis\n- SQL data analysis\n- Jupyter notebooks\n- Exploratory data analysis (EDA)\n- Data cleaning and preprocessing\n- Data transformation and feature engineering\n- Visualization and plotting\n- Statistical analysis and hypothesis testing\n- Machine learning workflows (classification, regression, clustering)\n- Deep learning and neural networks\n- Time series analysis and forecasting\n- NLP and text analysis\n- Computer vision\n- Data reporting and insights\n- A/B testing\n- Data quality and validation\n- Data augmentation\n- Ensemble methods\n- Data merging, aggregation, and export",
+          "updated_at": "2026-02-20T17:50:00.000Z"
+        },
+        {
+          "id": "subtask-2-9",
+          "description": "Create documentation template",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/domain/documentation.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc",
+            "src/agents/definitions/hermes.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f templates/domain/documentation.jsonc",
+            "expected": "documentation template exists"
+          },
+          "status": "completed",
+          "notes": "Created documentation.jsonc template with comprehensive routing rules for:\\n- Docusaurus, MkDocs, Sphinx, VitePress, Jekyll, Hugo documentation sites\\n- OpenAPI/Swagger and GraphQL API documentation\\n- README, getting started guides, and tutorials\\n- Code comments and inline documentation (JSDoc, TSDoc, Javadoc, Python docstrings)\\n- Changelogs and release notes\\n- Architecture documentation and ADRs\\n- Documentation quality, consistency, and searchability\\n- Localization (i18n), versioning, and automated generation\\n- Documentation testing, deployment, and analytics\\n- Diagrams, visual documentation, and interactive examples\\n- Documentation migration, strategy, and contributing guidelines\\n- FAQ documentation\\n\\nAll routing rules follow patterns from hermes.ts for documentation-related keywords and project context detection.",
+          "updated_at": "2026-02-20T16:46:17.288170+00:00"
+        },
+        {
+          "id": "subtask-2-10",
+          "description": "Create security-audit template",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/domain/security-audit.jsonc"
+          ],
+          "patterns_from": [
+            "example/olimpus.jsonc"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "test -f templates/domain/security-audit.jsonc",
+            "expected": "security-audit template exists"
+          },
+          "status": "completed",
+          "notes": "Created security-audit.jsonc template with comprehensive routing rules for:\n- SAST tools (Semgrep, CodeQL, SonarQube, ESLint security)\n- Dependency scanning (Snyk, Trivy, npm audit, OWASP Dependency-Check)\n- Secret detection (Gitleaks, truffleHog, GitGuardian)\n- Container security (Dockerfile review, Hadolint, Kubernetes security)\n- IaC security (Terraform tfsec, Checkov, cloud security)\n- DAST (OWASP ZAP, penetration testing)\n- Compliance (OWASP Top 10, PCI DSS, HIPAA, SOC 2, GDPR)\n- Security code reviews, threat modeling, fuzz testing\n- Supply chain security (SBOM, Sigstore/SLSA)\n- Auth/authz, input validation, cryptography reviews\n- Security monitoring and incident response planning",
+          "updated_at": "2026-02-20T16:48:35.492645+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-loader",
+      "name": "Template Loader",
+      "type": "implementation",
+      "description": "Create template loading and validation functionality",
+      "depends_on": [
+        "phase-2-templates"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Create src/templates/loader.ts",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/templates/loader.ts"
+          ],
+          "patterns_from": [
+            "src/config/loader.ts",
+            "src/config/validator.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run typecheck",
+            "expected": "No type errors"
+          },
+          "status": "completed",
+          "notes": "Created src/templates/loader.ts with functions: loadTemplates(), loadTemplate(), listTemplates(), listTemplatesByCategory(), searchTemplatesByTag(). Follows patterns from config/loader.ts with JSONC parsing, schema validation, and proper error handling. No type errors in src/templates/ module."
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Create template type definitions",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/templates/types.ts"
+          ],
+          "patterns_from": [
+            "src/config/schema.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run typecheck",
+            "expected": "No type errors"
+          },
+          "status": "completed",
+          "notes": "Created src/templates/types.ts with template type definitions including:\n- Re-exports of template schemas and types from config/schema.js\n- TEMPLATE_CATEGORIES constant and TemplateCategory type\n- TemplateMetadata interface for template previews without full meta_agent\n- TemplateValidationOptions for loading options\n- TemplateLoadResult for load operation results with success/error tracking\n- TemplateSearchCriteria for filtering templates by category, tags, name, description\n\nUpdated src/templates/loader.ts to import from ./types.ts instead of ../config/schema.js for cleaner module organization. Types compile successfully.",
+          "updated_at": "2026-02-20T16:55:59.223752+00:00"
+        },
+        {
+          "id": "subtask-3-3",
+          "description": "Create template validation function",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/templates/validator.ts"
+          ],
+          "patterns_from": [
+            "src/config/validator.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run typecheck",
+            "expected": "No type errors"
+          },
+          "status": "completed",
+          "notes": "Created src/templates/validator.ts with comprehensive template validation:\n- Error schemas: InvalidTemplateCategoryError, InvalidTemplateNameError, TemplateSchemaValidationError, MissingRequiredFieldError, InvalidAgentReferenceError\n- Warning schemas: EmptyRoutingRulesWarning, MissingTagsWarning, RegexPerformanceWarning\n- Main validateTemplate() function orchestrates all validation checks\n- Individual check functions: checkTemplateCategory(), checkTemplateName(), checkRequiredFields(), checkAgentReferencesInTemplate(), checkRegexPerformanceInTemplate()\n- Helper functions for creating errors/warnings, formatting results, and validation summaries\n- Follows same patterns as src/config/validator.ts\n- No type errors in src/templates/validator.ts",
+          "updated_at": "2026-02-20T18:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-cli",
+      "name": "CLI Extensions",
+      "type": "implementation",
+      "description": "Add template list and preview commands to CLI",
+      "depends_on": [
+        "phase-3-loader"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Add template list command to bin/olimpus.ts",
+          "service": "cli",
+          "files_to_modify": [
+            "bin/olimpus.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "bin/olimpus.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run olimpus templates list",
+            "expected": "List of templates displayed"
+          },
+          "status": "completed",
+          "notes": "Added templates command to bin/olimpus.ts with the following implementations:\n\n1. Added imports: loadTemplates, LoadTemplatesOptions from ../src/templates/loader.js and Template type from ../src/templates/types.js\n\n2. Created templatesCommand() - Main command handler that routes to subcommands (list, preview, apply)\n\n3. Created templatesListCommand() - Lists all available templates grouped by category (language, workflow, team, domain). Shows template name, description, tags (if any), and documentation preview (in verbose mode). Supports --config option for custom templates directory and --verbose for additional details.\n\n4. Created showTemplatesHelp() - Help for templates command showing available subcommands\n\n5. Created showTemplatesListHelp() - Detailed help for templates list subcommand\n\n6. Registered 'templates' command in main()'s commands object\n\n7. Updated showHelp() to include templates in the command list\n\n8. Updated file header JSDoc to document templates list command\n\nImplementation follows existing CLI patterns from validate and test commands. Uses existing parseOptions() for argument parsing. Error handling matches existing patterns with try/catch blocks.",
+          "updated_at": "2026-02-20T17:02:18.121924+00:00"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Add template preview command to bin/olimpus.ts",
+          "service": "cli",
+          "files_to_modify": [
+            "bin/olimpus.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "bin/olimpus.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run olimpus templates preview python-dev",
+            "expected": "Template preview displayed"
+          },
+          "status": "completed",
+          "notes": "Added templates preview subcommand to bin/olimpus.ts with following implementations:\n\n1. Updated templatesCommand() to handle 'preview' subcommand\n\n2. Created templatesPreviewCommand() - Displays detailed template information including:\n   - Template name, category, and description\n   - Tags (if present)\n   - Full documentation\n   - Usage examples\n   - In verbose mode: meta_agent configuration details (base_model, delegates_to, routing_rules count, prompt_template preview)\n\n3. Created showTemplatesPreviewHelp() - Help documentation for preview subcommand\n\n4. Updated showTemplatesHelp() to include preview in subcommands list\n\n5. Updated file header JSDoc to document templates preview command\n\nImplementation includes:\n- Template name validation (required argument)\n- Template not found error handling\n- Supports --config option for custom templates directory\n- Supports --verbose flag for additional details\n- Follows same patterns as templatesListCommand with proper error handling",
+          "updated_at": "2026-02-20T18:05:00.000Z"
+        },
+        {
+          "id": "subtask-4-3",
+          "description": "Add template apply command to bin/olimpus.ts",
+          "service": "cli",
+          "files_to_modify": [
+            "bin/olimpus.ts"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "bin/olimpus.ts"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "bun run olimpus templates apply python-dev --dry-run",
+            "expected": "Apply preview displayed"
+          },
+          "status": "completed",
+          "notes": "Added templates apply subcommand to bin/olimpus.ts with following implementations:\n\n1. Created templatesApplyCommand() - Displays template apply preview including:\n   - Template name, category, and description\n   - Meta-agent configuration (base_model, delegates_to)\n   - Routing rules summary with matcher types and target agents\n   - Prompt template preview\n   - Documentation and examples\n   - Dry-run mode indicator with application instructions\n\n2. Created showTemplatesApplyHelp() - Help documentation for apply subcommand\n\n3. Updated templatesCommand() to handle 'apply' subcommand\n\n4. Updated showTemplatesHelp() to include apply in subcommands list\n\n5. Updated file header JSDoc to document templates apply command\n\nImplementation includes:\n- Template name validation (required argument)\n- Template not found error handling\n- Supports --config option for custom templates directory\n- Supports --dry-run flag to preview without applying\n- Follows same patterns as templatesListCommand and templatesPreviewCommand with proper error handling",
+          "updated_at": "2026-02-20T19:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "phase-5-documentation",
+      "name": "Documentation",
+      "type": "implementation",
+      "description": "Create comprehensive documentation for templates system",
+      "depends_on": [
+        "phase-4-cli"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-5-1",
+          "description": "Create templates README.md",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "templates/README.md"
+          ],
+          "patterns_from": [
+            "README.md",
+            "docs/tutorials/01-quickstart.md"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Review templates/README.md for completeness and clarity"
+          },
+          "status": "completed",
+          "notes": "Created comprehensive templates/README.md with:\n- Overview of template categories (language, workflow, team, domain)\n- Template structure documentation with JSONC example\n- Detailed reference for all 10 templates with features and examples\n- Usage instructions for copying, merging, and customizing templates\n- Best practices for template adoption (start simple, validate, customize incrementally, use analytics, share)\n- Troubleshooting guide for common issues (template not matching, conflicts, too generic)\n- Contributing guidelines for new templates\n- Cross-references to main documentation\n\nFollows same style patterns as main README.md and quickstart tutorial with proper tables, code blocks, and section structure.",
+          "updated_at": "2026-02-20T17:15:47.530346+00:00"
+        },
+        {
+          "id": "subtask-5-2",
+          "description": "Create templates tutorial in docs/tutorials/",
+          "service": "core",
+          "files_to_modify": [],
+          "files_to_create": [
+            "docs/tutorials/06-using-templates.md"
+          ],
+          "patterns_from": [
+            "docs/tutorials/01-quickstart.md"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Review docs/tutorials/06-using-templates.md for completeness"
+          },
+          "status": "completed",
+          "notes": "Created comprehensive templates tutorial (06-using-templates.md) following the pattern from 01-quickstart.md. Tutorial includes:\n- What templates are and why use them\n- Browsing available templates by category (language, workflow, team, domain)\n- Quick start guide for using templates\n- Detailed coverage of all template categories with examples\n- Merging multiple templates\n- Customizing templates\n- Real-world examples\n- Best practices (start simple, validate, customize incrementally, use analytics, avoid conflicts)\n- Troubleshooting (template not matching, conflicts, too generic, schema validation)\n- Next steps and contributing guidelines\n\nFollows same markdown conventions, table structure, code block formatting, and section organization as 01-quickstart.md.",
+          "updated_at": "2026-02-20T19:10:00.000Z"
+        },
+        {
+          "id": "subtask-5-3",
+          "description": "Update main README.md with templates section",
+          "service": "core",
+          "files_to_modify": [
+            "README.md"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "README.md"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify README.md has templates section with usage instructions"
+          },
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 5,
+    "total_subtasks": 18,
+    "services_involved": [
+      "cli",
+      "core"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 1,
+      "parallel_groups": [],
+      "recommended_workers": 1,
+      "speedup_estimate": "Sequential execution - phases have dependencies"
+    },
+    "startup_command": "No dev server needed - use bun test for verification"
+  },
+  "verification_strategy": {
+    "risk_level": "low",
+    "skip_validation": false,
+    "test_creation_phase": "post_implementation",
+    "test_types_required": [
+      "unit"
+    ],
+    "security_scanning_required": false,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "All templates validate against schema",
+      "Template loader correctly parses JSONC files",
+      "CLI commands (list, preview, apply) work correctly",
+      "Documentation is clear and complete",
+      "At least 10 templates are available"
+    ],
+    "verification_steps": [
+      {
+        "name": "Type Check",
+        "command": "bun run typecheck",
+        "expected_outcome": "No type errors",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Unit Tests",
+        "command": "bun test src/templates/",
+        "expected_outcome": "All tests pass",
+        "type": "test",
+        "required": true,
+        "blocking": false
+      },
+      {
+        "name": "CLI List Command",
+        "command": "bun run olimpus templates list",
+        "expected_outcome": "List of 10+ templates displayed",
+        "type": "command",
+        "required": true,
+        "blocking": false
+      },
+      {
+        "name": "CLI Preview Command",
+        "command": "bun run olimpus templates preview python-dev",
+        "expected_outcome": "Template content displayed",
+        "type": "command",
+        "required": true,
+        "blocking": false
+      },
+      {
+        "name": "Template Validation",
+        "command": "bun run olimpus validate templates/language/python-dev.jsonc",
+        "expected_outcome": "Template is valid",
+        "type": "command",
+        "required": true,
+        "blocking": false
+      }
+    ],
+    "reasoning": "Low risk change - adding new functionality with existing patterns. Templates are configuration files, not core logic. CLI commands follow existing patterns. Unit tests ensure loader and validation work correctly."
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": true,
+      "commands": [
+        "bun test src/templates/"
+      ],
+      "minimum_coverage": null
+    },
+    "integration_tests": {
+      "required": false,
+      "commands": [],
+      "services_to_test": []
+    },
+    "e2e_tests": {
+      "required": false,
+      "commands": [],
+      "flows": []
+    },
+    "browser_verification": {
+      "required": false,
+      "pages": []
+    },
+    "database_verification": {
+      "required": false,
+      "checks": []
+    }
+  },
+  "qa_signoff": null,
+  "status": "in_progress",
+  "planStatus": "in_progress",
+  "xstateState": "backlog",
+  "executionPhase": "coding",
+  "updated_at": "2026-02-20T17:16:08.030Z",
+  "recoveryNote": "Task recovered from stuck state at 2026-02-20T16:01:02.206Z",
+  "last_updated": "2026-02-20T17:15:47.530351+00:00"
+}

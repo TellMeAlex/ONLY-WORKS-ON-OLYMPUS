@@ -1,0 +1,573 @@
+{
+  // ============================================================================
+  // API-First Meta-Agent Template
+  // ============================================================================
+  // This template provides intelligent routing for API-first development projects.
+  // It handles API specification (OpenAPI/Swagger), implementation, testing,
+  // documentation, versioning, and contract testing. Ideal for projects using
+  // REST, GraphQL, gRPC, or any API-first methodology where APIs are designed
+  // before implementation, with contracts as the source of truth.
+
+  "name": "api-first",
+  "description": "Meta-agent template for API-first projects with specification routing, implementation automation, contract testing, and documentation generation",
+  "category": "domain",
+  "tags": ["api", "api-first", "rest", "graphql", "grpc", "openapi", "swagger", "api-spec", "contract-testing", "api-docs"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["oracle", "sisyphus", "atlas", "librarian", "metis", "prometheus"],
+
+    "routing_rules": [
+      // ========================================================================
+      // OpenAPI/Swagger Specification Design
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["openapi.yaml", "openapi.json", "swagger.yaml", "swagger.json", "api/openapi.yaml", "api/swagger.yaml"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "OpenAPI/Swagger architect. Design RESTful APIs following OpenAPI 3.1 specification. Use proper resource modeling, HTTP semantics, status codes, and documentation.",
+          "variant": "openapi"
+        }
+      },
+
+      // ========================================================================
+      // GraphQL Schema Design
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["schema.graphql", "api/schema.graphql", "src/schema.graphql", "*.graphql"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "GraphQL schema architect. Design type-first GraphQL APIs with proper types, queries, mutations, subscriptions, and resolvers. Use schema stitching and federation if applicable.",
+          "variant": "graphql"
+        }
+      },
+
+      // ========================================================================
+      // gRPC Protocol Buffers
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["*.proto", "protos/*.proto", "api/*.proto"]
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "gRPC/Protobuf architect. Design RPC services with proper message definitions, services, streaming, and backward compatibility considerations.",
+          "variant": "grpc"
+        }
+      },
+
+      // ========================================================================
+      // API Specification/Schema Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["openapi", "swagger", "api spec", "specification", "schema design", "api contract"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "API specification architect. Design API contracts before implementation. Focus on resource modeling, HTTP semantics, and consumer needs.",
+          "variant": "specification"
+        }
+      },
+
+      // ========================================================================
+      // Express.js API Implementation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["express", "@types/express"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Express.js API specialist. Implement REST endpoints with Express, TypeScript, and proper error handling. Use middleware, validation, and follow Express patterns.",
+          "variant": "express"
+        }
+      },
+
+      // ========================================================================
+      // Fastify API Implementation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["fastify", "@fastify/core"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Fastify API specialist. Implement REST endpoints with Fastify, TypeScript, JSON schema validation, and proper error handling. Use Fastify plugins and decorators.",
+          "variant": "fastify"
+        }
+      },
+
+      // ========================================================================
+      // NestJS API Implementation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["@nestjs/core", "@nestjs/common"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "NestJS API specialist. Implement REST/GraphQL endpoints with NestJS, TypeScript, modules, controllers, services, and proper dependency injection. Use NestJS patterns.",
+          "variant": "nestjs"
+        }
+      },
+
+      // ========================================================================
+      // Hono API Implementation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["hono"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Hono API specialist. Implement lightweight REST endpoints with Hono, TypeScript, middleware, and proper error handling. Use Hono's edge-ready patterns.",
+          "variant": "hono"
+        }
+      },
+
+      // ========================================================================
+      // tRPC Implementation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["@trpc/server", "@trpc/client"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "tRPC specialist. Implement end-to-end typesafe APIs with tRPC, TypeScript, routers, procedures, and context. Use tRPC patterns for full-stack type safety.",
+          "variant": "trpc"
+        }
+      },
+
+      // ========================================================================
+      // API Implementation Keywords
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["endpoint", "route", "handler", "api implementation", "implement endpoint"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "API implementation specialist. Implement endpoints following the API specification. Use appropriate framework patterns, validation, and error handling.",
+          "variant": "implementation"
+        }
+      },
+
+      // ========================================================================
+      // API Unit Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["unit test", "test endpoint", "test handler", "endpoint test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "API unit testing specialist. Write unit tests for endpoints using supertest, fastify inject, or framework-specific testing. Test success paths, error paths, and edge cases.",
+          "variant": "unit-test"
+        }
+      },
+
+      // ========================================================================
+      // API Integration Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["integration test", "api test", "contract test", "test api"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "API integration testing specialist. Write integration tests that test full request-response cycles. Use test databases, mock external services, and validate contracts.",
+          "variant": "integration-test"
+        }
+      },
+
+      // ========================================================================
+      // Contract Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["contract test", "pact", "consumer test", "provider test", "api contract"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "Contract testing specialist. Set up Pact or similar contract testing. Define consumer expectations and verify provider implementations match contracts.",
+          "variant": "contract-test"
+        }
+      },
+
+      // ========================================================================
+      // API Documentation Generation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["api docs", "documentation", "generate docs", "swagger docs", "openapi docs"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "API documentation specialist. Generate or update API documentation from OpenAPI specs, code annotations, or GraphQL schemas. Use Swagger UI, Redoc, or similar tools.",
+          "variant": "documentation"
+        }
+      },
+
+      // ========================================================================
+      // API Versioning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["versioning", "api version", "v2", "v3", "deprecated", "breaking change"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "API versioning strategist. Design API versioning strategy considering backward compatibility, deprecation timelines, and consumer impact. Use URL versioning, header versioning, or content negotiation.",
+          "variant": "versioning"
+        }
+      },
+
+      // ========================================================================
+      // API Security - Authentication
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["authentication", "auth", "login", "oauth", "jwt", "session"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "API authentication specialist. Implement authentication using JWT, OAuth 2.0, session-based auth, or API keys. Use secure token handling, refresh tokens, and proper middleware.",
+          "variant": "authentication"
+        }
+      },
+
+      // ========================================================================
+      // API Security - Authorization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["authorization", "permission", "rbac", "access control", "role", "scope"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "API authorization specialist. Implement RBAC, ABAC, or custom authorization logic. Use middleware, guards, or decorators. Check permissions before endpoint execution.",
+          "variant": "authorization"
+        }
+      },
+
+      // ========================================================================
+      // API Security - Rate Limiting
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["rate limit", "throttle", "quota", "ddos", "abuse"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "API rate limiting specialist. Implement rate limiting using middleware or services. Consider IP-based, user-based, or API key-based limits with proper headers and backoff strategies.",
+          "variant": "rate-limiting"
+        }
+      },
+
+      // ========================================================================
+      // API Error Handling
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["error handling", "http error", "status code", "4xx", "5xx", "error response"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "API error handling strategist. Design consistent error responses with appropriate HTTP status codes, error codes, messages, and debugging information. Use global error handlers.",
+          "variant": "error-handling"
+        }
+      },
+
+      // ========================================================================
+      // API Validation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["validation", "validate", "schema validation", "input validation", "zod", "joi"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "API validation specialist. Implement request validation using Zod, Joi, AJV, or framework-specific validation. Validate bodies, queries, params, and headers. Return clear validation errors.",
+          "variant": "validation"
+        }
+      },
+
+      // ========================================================================
+      // API Pagination
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pagination", "page", "limit", "offset", "cursor", "infinite scroll"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "API pagination strategist. Design pagination strategy considering offset-based vs cursor-based pagination, default limits, maximum limits, and total counts. Use consistent query parameters.",
+          "variant": "pagination"
+        }
+      },
+
+      // ========================================================================
+      // API Filtering, Sorting, Searching
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["filter", "sort", "search", "query", "where", "order"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "API query strategist. Design filtering, sorting, and search functionality. Use consistent query parameter patterns, support nested filtering, and consider database query optimization.",
+          "variant": "query"
+        }
+      },
+
+      // ========================================================================
+      // API Caching
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["cache", "etag", "if-none-match", "cache-control", "redis"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "API caching specialist. Implement HTTP caching with ETag, Cache-Control headers, and conditional requests. Consider Redis for server-side caching. Cache GET requests appropriately.",
+          "variant": "caching"
+        }
+      },
+
+      // ========================================================================
+      // API Performance Optimization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "optimize", "slow", "latency", "throughput", "response time"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "API performance architect. Analyze and optimize API performance considering database queries, N+1 problems, connection pooling, response compression, and async operations.",
+          "variant": "performance"
+        }
+      },
+
+      // ========================================================================
+      // API Monitoring & Observability
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["monitoring", "logging", "metrics", "observability", "telemetry", "apm"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "API monitoring specialist. Set up structured logging, metrics (request rate, latency, error rate), distributed tracing, and health check endpoints. Use appropriate monitoring tools.",
+          "variant": "monitoring"
+        }
+      },
+
+      // ========================================================================
+      // Webhooks & Callbacks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["webhook", "callback", "event", "notification", "push"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "Webhook specialist. Implement webhook delivery with retry logic, signature verification for security, and proper event payload design. Handle delivery failures gracefully.",
+          "variant": "webhooks"
+        }
+      },
+
+      // ========================================================================
+      // Async API / Event-Driven
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["asyncapi", "event driven", "kafka", "rabbitmq", "sqs", "pubsub"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "AsyncAPI architect. Design event-driven APIs with AsyncAPI specification, message formats, topics/channels, and error handling. Consider message ordering and replay strategies.",
+          "variant": "asyncapi"
+        }
+      },
+
+      // ========================================================================
+      // API Gateway Configuration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["gateway", "api gateway", "kong", "aws api gateway", "apigee", "nginx"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "API gateway specialist. Configure API gateway for routing, rate limiting, authentication, caching, and request/response transformation. Use gateway-specific patterns.",
+          "variant": "gateway"
+        }
+      },
+
+      // ========================================================================
+      // REST Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["rest", "restful", "resource", "crud", "http method"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "REST design strategist. Follow REST principles: resource-based URLs, proper HTTP methods (GET, POST, PUT, PATCH, DELETE), status codes, and HATEOAS if applicable.",
+          "variant": "rest"
+        }
+      },
+
+      // ========================================================================
+      // GraphQL Resolvers
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["resolver", "query resolver", "mutation resolver", "graphql field"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "GraphQL resolver specialist. Implement resolvers with proper data fetching, N+1 prevention (dataloaders), error handling, and authorization checks.",
+          "variant": "resolvers"
+        }
+      },
+
+      // ========================================================================
+      // GraphQL Federation / Apollo Federation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["federation", "@key", "extend type", "apollo federation", "subgraph"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "GraphQL federation architect. Design federated schema with proper @key directives, entity relationships, and subgraph boundaries. Consider data ownership and cross-subgraph queries.",
+          "variant": "federation"
+        }
+      },
+
+      // ========================================================================
+      // High Complexity API Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "high"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "API architect: This is a high-complexity API task. Design considering scalability, maintainability, security, and performance. Analyze from first principles and plan the API strategy.",
+          "variant": "complex"
+        }
+      },
+
+      // ========================================================================
+      // Medium Complexity API Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "complexity",
+          "threshold": "medium"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "API strategist: Plan the implementation considering API best practices, consumer needs, and trade-offs between simplicity and flexibility.",
+          "variant": "medium"
+        }
+      },
+
+      // ========================================================================
+      // Fallback - General API
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "API generalist. Analyze the API task and provide appropriate guidance. Detect which API style (REST, GraphQL, gRPC) and framework is being used.",
+        }
+      }
+    ],
+
+    "prompt_template": "API-First Task: {input}\n\nContext:\n- API-first methodology: Design contracts/specifications before implementation\n- Choose appropriate API style: REST (OpenAPI), GraphQL (schema), or gRPC (protobuf)\n- Use framework patterns: Express, Fastify, NestJS, Hono, or tRPC\n- Implement comprehensive testing: unit, integration, and contract tests\n- Maintain documentation: OpenAPI specs, GraphQL schemas, or generated docs"
+  },
+
+  "documentation": "This meta-agent template provides intelligent routing for API-first development projects. It supports multiple API styles including REST (OpenAPI/Swagger), GraphQL (schema-first), and gRPC (Protocol Buffers). The template handles API specification design, framework-based implementation (Express, Fastify, NestJS, Hono, tRPC), testing (unit, integration, contract), documentation generation, versioning, security (authentication, authorization, rate limiting), and performance optimization. Routing is based on project files, keywords, complexity, and API patterns.",
+  "examples": [
+    "Design an OpenAPI specification for a user management API",
+    "Implement a GET /api/users/:id endpoint with Fastify and TypeScript",
+    "Add JWT authentication middleware to the API",
+    "Create contract tests using Pact for the checkout API",
+    "Design a GraphQL schema for a blog platform with posts and comments",
+    "Implement rate limiting for the public API endpoints",
+    "Add pagination, filtering, and sorting to the product listing API",
+    "Set up API monitoring with request metrics and structured logging",
+    "Design API versioning strategy for v2 with breaking changes"
+  ]
+}
