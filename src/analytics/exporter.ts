@@ -10,8 +10,8 @@
  *   await exporter.exportToFile('output.json', options);
  */
 
-import type { AnalyticsEvent, ExportOptions, AggregationResult } from "./types.js";
-import { AnalyticsAggregator } from "./aggregator.js";
+import type { AnalyticsEvent, ExportOptions } from "./types.js";
+import { AnalyticsAggregator, type AggregationResult } from "./aggregator.js";
 import type { AnalyticsStorage } from "./storage.js";
 
 /**

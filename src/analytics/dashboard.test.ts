@@ -212,11 +212,11 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.top_agents.length).toBe(2);
-      expect(metrics.top_agents[0].name).toBe("code-writer");
-      expect(metrics.top_agents[0].requests).toBe(2);
-      expect(metrics.top_agents[0].success_rate).toBe(1);
-      expect(metrics.top_agents[1].name).toBe("code-reviewer");
-      expect(metrics.top_agents[1].requests).toBe(1);
+      expect(metrics.top_agents[0]!.name).toBe("code-writer");
+      expect(metrics.top_agents[0]!.requests).toBe(2);
+      expect(metrics.top_agents[0]!.success_rate).toBe(1);
+      expect(metrics.top_agents[1]!.name).toBe("code-reviewer");
+      expect(metrics.top_agents[1]!.requests).toBe(1);
     });
 
     test("calculates top matchers sorted by evaluation count", () => {
@@ -228,11 +228,11 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.top_matchers.length).toBe(2);
-      expect(metrics.top_matchers[0].type).toBe("semantic");
-      expect(metrics.top_matchers[0].evaluations).toBe(2);
-      expect(metrics.top_matchers[0].match_rate).toBe(1);
-      expect(metrics.top_matchers[1].type).toBe("keyword");
-      expect(metrics.top_matchers[1].evaluations).toBe(1);
+      expect(metrics.top_matchers[0]!.type).toBe("semantic");
+      expect(metrics.top_matchers[0]!.evaluations).toBe(2);
+      expect(metrics.top_matchers[0]!.match_rate).toBe(1);
+      expect(metrics.top_matchers[1]!.type).toBe("keyword");
+      expect(metrics.top_matchers[1]!.evaluations).toBe(1);
     });
 
     test("includes detailed agent information", () => {
@@ -244,12 +244,12 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.agent_details["code-writer"]).toBeDefined();
-      expect(metrics.agent_details["code-writer"].total_requests).toBe(2);
-      expect(metrics.agent_details["code-writer"].successful_requests).toBe(2);
-      expect(metrics.agent_details["code-writer"].failed_requests).toBe(0);
-      expect(metrics.agent_details["code-writer"].success_rate).toBe(1);
-      expect(metrics.agent_details["code-writer"].last_used).toBe("2024-01-01T11:00:00.000Z");
-      expect(metrics.agent_details["code-writer"].meta_agents["router-main"]).toBe(2);
+      expect(metrics.agent_details["code-writer"]!.total_requests).toBe(2);
+      expect(metrics.agent_details["code-writer"]!.successful_requests).toBe(2);
+      expect(metrics.agent_details["code-writer"]!.failed_requests).toBe(0);
+      expect(metrics.agent_details["code-writer"]!.success_rate).toBe(1);
+      expect(metrics.agent_details["code-writer"]!.last_used).toBe("2024-01-01T11:00:00.000Z");
+      expect(metrics.agent_details["code-writer"]!.meta_agents["router-main"]).toBe(2);
     });
 
     test("includes detailed matcher information", () => {
@@ -261,11 +261,11 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.matcher_details["semantic"]).toBeDefined();
-      expect(metrics.matcher_details["semantic"].total_evaluations).toBe(2);
-      expect(metrics.matcher_details["semantic"].matched_count).toBe(2);
-      expect(metrics.matcher_details["semantic"].not_matched_count).toBe(0);
-      expect(metrics.matcher_details["semantic"].match_rate).toBe(1);
-      expect(metrics.matcher_details["semantic"].target_agents["code-writer"]).toBe(2);
+      expect(metrics.matcher_details["semantic"]!.total_evaluations).toBe(2);
+      expect(metrics.matcher_details["semantic"]!.matched_count).toBe(2);
+      expect(metrics.matcher_details["semantic"]!.not_matched_count).toBe(0);
+      expect(metrics.matcher_details["semantic"]!.match_rate).toBe(1);
+      expect(metrics.matcher_details["semantic"]!.target_agents["code-writer"]).toBe(2);
     });
 
     test("includes unmatched requests", () => {
@@ -277,9 +277,9 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.unmatched_requests.length).toBe(1);
-      expect(metrics.unmatched_requests[0].timestamp).toBe("2024-01-01T13:00:00.000Z");
-      expect(metrics.unmatched_requests[0].user_request).toBe("Make me a sandwich");
-      expect(metrics.unmatched_requests[0].meta_agent).toBe("router-main");
+      expect(metrics.unmatched_requests[0]!.timestamp).toBe("2024-01-01T13:00:00.000Z");
+      expect(metrics.unmatched_requests[0]!.user_request).toBe("Make me a sandwich");
+      expect(metrics.unmatched_requests[0]!.meta_agent).toBe("router-main");
     });
 
     test("handles empty events gracefully", () => {
@@ -508,8 +508,8 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.summary.unique_meta_agents).toBe(2);
-      expect(metrics.agent_details["agent1"].meta_agents["meta1"]).toBe(2);
-      expect(metrics.agent_details["agent1"].meta_agents["meta2"]).toBe(1);
+      expect(metrics.agent_details["agent1"]!.meta_agents["meta1"]).toBe(2);
+      expect(metrics.agent_details["agent1"]!.meta_agents["meta2"]).toBe(1);
     });
 
     test("handles events without meta-agent", () => {
@@ -536,7 +536,7 @@ describe("AnalyticsDashboard", () => {
 
       // Assert
       expect(metrics.summary.unique_meta_agents).toBe(1);
-      expect(metrics.agent_details["agent1"].meta_agents["meta1"]).toBe(1);
+      expect(metrics.agent_details["agent1"]!.meta_agents["meta1"]).toBe(1);
     });
   });
 

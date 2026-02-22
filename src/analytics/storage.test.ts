@@ -39,7 +39,7 @@ describe("AnalyticsStorage", () => {
 
     test("creates storage with custom config", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         max_events: 100,
@@ -57,7 +57,7 @@ describe("AnalyticsStorage", () => {
 
     test("respects enabled flag in config", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -71,7 +71,7 @@ describe("AnalyticsStorage", () => {
 
     test("defaults enabled to true when not specified", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         storage_file: storageFilePath,
       };
 
@@ -84,7 +84,7 @@ describe("AnalyticsStorage", () => {
 
     test("defaults max_events to 10000 when not specified", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         storage_file: storageFilePath,
       };
 
@@ -95,12 +95,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
 
       for (let i = 0; i < 10000; i++) {
@@ -113,7 +109,7 @@ describe("AnalyticsStorage", () => {
 
     test("defaults retention_days to 90 when not specified", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         storage_file: storageFilePath,
         auto_prune: false, // Disable auto-prune to test retention
       };
@@ -127,7 +123,7 @@ describe("AnalyticsStorage", () => {
 
     test("defaults auto_prune to true when not specified", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         storage_file: storageFilePath,
         max_events: 5, // Small limit to test auto-prune
       };
@@ -139,12 +135,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
 
       for (let i = 0; i < 10; i++) {
@@ -158,7 +150,7 @@ describe("AnalyticsStorage", () => {
 
   describe("recordEvent", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false, // Disable for cleaner testing
@@ -171,12 +163,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "test query",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
 
       // Act
@@ -186,7 +174,7 @@ describe("AnalyticsStorage", () => {
       expect(storage.getEventCount()).toBe(1);
       const events = storage.getAllEvents();
       expect(events).toHaveLength(1);
-      expect(events[0]).toEqual(event);
+      expect(events[0]!).toEqual(event);
     });
 
     test("records multiple events", () => {
@@ -195,23 +183,14 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: new Date().toISOString(),
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: new Date().toISOString(),
           type: "unmatched_request",
-          user_query: "query 2",
-          matched_agent: null,
-          target_agent: null,
-          matcher_type: null,
-          confidence: 0,
-          metadata: {},
-        },
+          user_request: "test request",
+          },
       ];
 
       // Act
@@ -223,7 +202,7 @@ describe("AnalyticsStorage", () => {
 
     test("does not record events when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -232,12 +211,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
 
       // Act
@@ -251,7 +226,7 @@ describe("AnalyticsStorage", () => {
     test("handles errors gracefully", () => {
       // Arrange - create storage with invalid path
       const invalidPath = "/invalid/path/that/does/not/exist/analytics.json";
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: invalidPath,
       };
@@ -260,12 +235,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
 
       // Act & Assert - should not throw
@@ -275,7 +246,7 @@ describe("AnalyticsStorage", () => {
 
   describe("getAllEvents", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -297,23 +268,14 @@ describe("AnalyticsStorage", () => {
       const event1: AnalyticsEvent = {
         timestamp: "2024-01-01T00:00:00Z",
         type: "routing_decision",
-        user_query: "query 1",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       const event2: AnalyticsEvent = {
         timestamp: "2024-01-01T01:00:00Z",
         type: "unmatched_request",
-        user_query: "query 2",
-        matched_agent: null,
-        target_agent: null,
-        matcher_type: null,
-        confidence: 0,
-        metadata: {},
-      };
+          user_request: "test request",
+          };
 
       storage.recordEvent(event1);
       storage.recordEvent(event2);
@@ -332,12 +294,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(event);
 
@@ -346,23 +304,19 @@ describe("AnalyticsStorage", () => {
       events1.push({
         timestamp: new Date().toISOString(),
         type: "routing_decision",
-        user_query: "modified",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       });
 
       // Assert - internal state should not be modified
       const events2 = storage.getAllEvents();
       expect(events2).toHaveLength(1);
-      expect(events2[0].user_query).toBe("test");
+      expect(events2[0]!.type).toBe("routing_decision");
     });
 
     test("returns empty array when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -378,7 +332,7 @@ describe("AnalyticsStorage", () => {
 
   describe("getEventsByDateRange", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -392,32 +346,20 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-10T12:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-15T12:00:00Z",
           type: "routing_decision",
-          user_query: "query 2",
-          matched_agent: null,
           target_agent: "agent2",
           matcher_type: "semantic",
-          confidence: 0.8,
-          metadata: {},
         },
         {
           timestamp: "2024-01-20T12:00:00Z",
           type: "routing_decision",
-          user_query: "query 3",
-          matched_agent: null,
           target_agent: "agent3",
           matcher_type: "keyword",
-          confidence: 0.9,
-          metadata: {},
         },
       ];
       events.forEach((e) => storage.recordEvent(e));
@@ -430,7 +372,7 @@ describe("AnalyticsStorage", () => {
 
       // Assert - should only return the middle event
       expect(result).toHaveLength(1);
-      expect(result[0].user_query).toBe("query 2");
+      expect((result[0] as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 2");
     });
 
     test("returns empty array when no events in range", () => {
@@ -438,12 +380,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: "2024-01-10T12:00:00Z",
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(event);
 
@@ -463,32 +401,20 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-15T00:00:00Z",
           type: "routing_decision",
-          user_query: "start",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-20T00:00:00Z",
           type: "routing_decision",
-          user_query: "end",
-          matched_agent: null,
           target_agent: "agent2",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-17T12:00:00Z",
           type: "routing_decision",
-          user_query: "middle",
-          matched_agent: null,
           target_agent: "agent3",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
       ];
       events.forEach((e) => storage.recordEvent(e));
@@ -505,7 +431,7 @@ describe("AnalyticsStorage", () => {
 
     test("returns empty array when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -524,7 +450,7 @@ describe("AnalyticsStorage", () => {
 
   describe("getEventsByAgent", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -538,32 +464,20 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 2",
-          matched_agent: null,
           target_agent: "agent2",
           matcher_type: "semantic",
-          confidence: 0.8,
-          metadata: {},
         },
         {
           timestamp: "2024-01-03T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 3",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 0.9,
-          metadata: {},
         },
       ];
       events.forEach((e) => storage.recordEvent(e));
@@ -573,7 +487,7 @@ describe("AnalyticsStorage", () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(result.every((e) => e.target_agent === "agent1")).toBe(true);
+      expect(result.every((e) => e.type === "routing_decision" && e.target_agent === "agent1")).toBe(true);
     });
 
     test("returns empty array for non-existent agent", () => {
@@ -581,12 +495,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: "2024-01-01T00:00:00Z",
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(event);
 
@@ -603,23 +513,14 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "unmatched_request",
-          user_query: "query 2",
-          matched_agent: null,
-          target_agent: null,
-          matcher_type: null,
-          confidence: 0,
-          metadata: {},
-        },
+          user_request: "test request",
+          },
       ];
       events.forEach((e) => storage.recordEvent(e));
 
@@ -628,12 +529,12 @@ describe("AnalyticsStorage", () => {
 
       // Assert - should only return routing_decision events
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("routing_decision");
+      expect(result[0]!.type).toBe("routing_decision");
     });
 
     test("returns empty array when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -649,7 +550,7 @@ describe("AnalyticsStorage", () => {
 
   describe("getEventsByMatcherType", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -663,32 +564,20 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 2",
-          matched_agent: null,
           target_agent: "agent2",
           matcher_type: "semantic",
-          confidence: 0.8,
-          metadata: {},
         },
         {
           timestamp: "2024-01-03T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 3",
-          matched_agent: null,
           target_agent: "agent3",
           matcher_type: "keyword",
-          confidence: 0.9,
-          metadata: {},
         },
       ];
       events.forEach((e) => storage.recordEvent(e));
@@ -698,7 +587,7 @@ describe("AnalyticsStorage", () => {
 
       // Assert
       expect(result).toHaveLength(2);
-      expect(result.every((e) => e.matcher_type === "keyword")).toBe(true);
+      expect(result.every((e) => e.type === "routing_decision" && e.matcher_type === "keyword")).toBe(true);
     });
 
     test("returns empty array for non-existent matcher type", () => {
@@ -706,12 +595,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: "2024-01-01T00:00:00Z",
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(event);
 
@@ -724,7 +609,7 @@ describe("AnalyticsStorage", () => {
 
     test("returns empty array when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -740,7 +625,7 @@ describe("AnalyticsStorage", () => {
 
   describe("getUnmatchedRequests", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -754,33 +639,19 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "unmatched_request",
-          user_query: "query 2",
-          matched_agent: null,
-          target_agent: null,
-          matcher_type: null,
-          confidence: 0,
-          metadata: {},
-        },
+          user_request: "test request",
+          },
         {
           timestamp: "2024-01-03T00:00:00Z",
           type: "unmatched_request",
-          user_query: "query 3",
-          matched_agent: null,
-          target_agent: null,
-          matcher_type: null,
-          confidence: 0,
-          metadata: {},
-        },
+          user_request: "test request",
+          },
       ];
       events.forEach((e) => storage.recordEvent(e));
 
@@ -797,12 +668,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: "2024-01-01T00:00:00Z",
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(event);
 
@@ -815,7 +682,7 @@ describe("AnalyticsStorage", () => {
 
     test("returns empty array when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -831,7 +698,7 @@ describe("AnalyticsStorage", () => {
 
   describe("getEventCount", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -853,12 +720,8 @@ describe("AnalyticsStorage", () => {
         const event: AnalyticsEvent = {
           timestamp: new Date().toISOString(),
           type: "routing_decision",
-          user_query: `query ${i}`,
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         };
         storage.recordEvent(event);
       }
@@ -872,7 +735,7 @@ describe("AnalyticsStorage", () => {
 
     test("returns 0 when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -888,7 +751,7 @@ describe("AnalyticsStorage", () => {
 
   describe("pruneEvents", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false, // Disable auto-prune to test manual pruning
@@ -908,22 +771,14 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: oldDate.toISOString(),
           type: "routing_decision",
-          user_query: "old query",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: recentDate.toISOString(),
           type: "routing_decision",
-          user_query: "recent query",
-          matched_agent: null,
           target_agent: "agent2",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
       ];
       events.forEach((e) => storage.recordEvent(e));
@@ -934,7 +789,7 @@ describe("AnalyticsStorage", () => {
       // Assert - old event should be removed
       const remaining = storage.getAllEvents();
       expect(remaining).toHaveLength(1);
-      expect(remaining[0].user_query).toBe("recent query");
+      expect((remaining[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("recent query");
     });
 
     test("removes excess events when count exceeds max_events", () => {
@@ -943,12 +798,8 @@ describe("AnalyticsStorage", () => {
         const event: AnalyticsEvent = {
           timestamp: new Date(i * 1000).toISOString(),
           type: "routing_decision",
-          user_query: `query ${i}`,
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         };
         storage.recordEvent(event);
       }
@@ -960,7 +811,7 @@ describe("AnalyticsStorage", () => {
       expect(storage.getEventCount()).toBe(5);
       const remaining = storage.getAllEvents();
       // Should keep the newest 5 events
-      expect(remaining[0].user_query).toBe("query 5");
+      expect((remaining[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 5");
     });
 
     test("does nothing when no events", () => {
@@ -971,7 +822,7 @@ describe("AnalyticsStorage", () => {
 
     test("does nothing when disabled", () => {
       // Arrange - create disabled storage with events (won't actually be recorded)
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -985,7 +836,7 @@ describe("AnalyticsStorage", () => {
 
   describe("clear", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -999,12 +850,8 @@ describe("AnalyticsStorage", () => {
         const event: AnalyticsEvent = {
           timestamp: new Date().toISOString(),
           type: "routing_decision",
-          user_query: `query ${i}`,
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         };
         storage.recordEvent(event);
       }
@@ -1026,7 +873,7 @@ describe("AnalyticsStorage", () => {
 
     test("does nothing when disabled", () => {
       // Arrange - create disabled storage
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -1039,7 +886,7 @@ describe("AnalyticsStorage", () => {
 
   describe("exportData", () => {
     beforeEach(() => {
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -1069,23 +916,14 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "unmatched_request",
-          user_query: "query 2",
-          matched_agent: null,
-          target_agent: null,
-          matcher_type: null,
-          confidence: 0,
-          metadata: {},
-        },
+          user_request: "test request",
+          },
       ];
       events.forEach((e) => storage.recordEvent(e));
 
@@ -1108,32 +946,20 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-03T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 3",
-          matched_agent: null,
           target_agent: "agent3",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 2",
-          matched_agent: null,
           target_agent: "agent2",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
       ];
       events.forEach((e) => storage.recordEvent(e));
@@ -1142,16 +968,16 @@ describe("AnalyticsStorage", () => {
       const data = storage.exportData();
 
       // Assert - should be sorted
-      expect(data.events[0].timestamp).toBe("2024-01-01T00:00:00Z");
-      expect(data.events[1].timestamp).toBe("2024-01-02T00:00:00Z");
-      expect(data.events[2].timestamp).toBe("2024-01-03T00:00:00Z");
+      expect(data.events[0]!.timestamp).toBe("2024-01-01T00:00:00Z");
+      expect(data.events[1]!.timestamp).toBe("2024-01-02T00:00:00Z");
+      expect(data.events[2]!.timestamp).toBe("2024-01-03T00:00:00Z");
     });
   });
 
   describe("isEnabled", () => {
     test("returns true when enabled", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
       };
@@ -1163,7 +989,7 @@ describe("AnalyticsStorage", () => {
 
     test("returns false when disabled", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: false,
         storage_file: storageFilePath,
       };
@@ -1175,7 +1001,7 @@ describe("AnalyticsStorage", () => {
 
     test("returns true by default", () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         storage_file: storageFilePath,
       };
       storage = new AnalyticsStorage(config);
@@ -1188,7 +1014,7 @@ describe("AnalyticsStorage", () => {
   describe("persistence", () => {
     test("saves events to file and reloads on initialization", async () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -1199,23 +1025,14 @@ describe("AnalyticsStorage", () => {
         {
           timestamp: "2024-01-01T00:00:00Z",
           type: "routing_decision",
-          user_query: "query 1",
-          matched_agent: null,
           target_agent: "agent1",
           matcher_type: "keyword",
-          confidence: 1.0,
-          metadata: {},
         },
         {
           timestamp: "2024-01-02T00:00:00Z",
           type: "unmatched_request",
-          user_query: "query 2",
-          matched_agent: null,
-          target_agent: null,
-          matcher_type: null,
-          confidence: 0,
-          metadata: {},
-        },
+          user_request: "test request",
+          },
       ];
       events.forEach((e) => storage.recordEvent(e));
 
@@ -1229,8 +1046,8 @@ describe("AnalyticsStorage", () => {
       expect(newStorage.getEventCount()).toBe(2);
       const loadedEvents = newStorage.getAllEvents();
       expect(loadedEvents).toHaveLength(2);
-      expect(loadedEvents[0].user_query).toBe("query 1");
-      expect(loadedEvents[1].user_query).toBe("query 2");
+      expect((loadedEvents[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 1");
+      expect((loadedEvents[1]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("query 2");
     });
 
     test("handles invalid storage file gracefully", async () => {
@@ -1238,7 +1055,7 @@ describe("AnalyticsStorage", () => {
       await Bun.write(storageFilePath, "invalid json {{{");
 
       // Act - should not throw
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
       };
@@ -1254,7 +1071,7 @@ describe("AnalyticsStorage", () => {
       expect(existsSync(storageFilePath)).toBe(false);
 
       // Act
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
       };
@@ -1266,7 +1083,7 @@ describe("AnalyticsStorage", () => {
 
     test("persists data in AnalyticsData format", async () => {
       // Arrange
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: false,
@@ -1276,12 +1093,8 @@ describe("AnalyticsStorage", () => {
       const event: AnalyticsEvent = {
         timestamp: "2024-01-01T00:00:00Z",
         type: "routing_decision",
-        user_query: "test",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(event);
 
@@ -1302,7 +1115,7 @@ describe("AnalyticsStorage", () => {
       const oldDate = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000); // 100 days ago
 
       // Create storage with auto_prune enabled and small retention
-      const config: AnalyticsConfig = {
+      const config: Partial<AnalyticsConfig> = {
         enabled: true,
         storage_file: storageFilePath,
         auto_prune: true,
@@ -1314,12 +1127,8 @@ describe("AnalyticsStorage", () => {
       const oldEvent: AnalyticsEvent = {
         timestamp: oldDate.toISOString(),
         type: "routing_decision",
-        user_query: "old query",
-        matched_agent: null,
         target_agent: "agent1",
         matcher_type: "keyword",
-        confidence: 1.0,
-        metadata: {},
       };
       storage.recordEvent(oldEvent);
 

@@ -108,7 +108,7 @@ describe("Analytics End-to-End Data Flow", () => {
       expect(storage.getEventCount()).toBe(1);
       const events = storage.getAllEvents();
       expect(events).toHaveLength(1);
-      expect(events[0].type).toBe("routing_decision");
+      expect(events[0]!.type).toBe("routing_decision");
     });
 
     test("should record unmatched request events", () => {
@@ -127,7 +127,7 @@ describe("Analytics End-to-End Data Flow", () => {
       expect(storage.getEventCount()).toBe(1);
       const events = storage.getAllEvents();
       expect(events).toHaveLength(1);
-      expect(events[0].type).toBe("unmatched_request");
+      expect(events[0]!.type).toBe("unmatched_request");
     });
 
     test("should record multiple routing operations with different agents", () => {
@@ -205,12 +205,12 @@ describe("Analytics End-to-End Data Flow", () => {
       storage.recordEvent(event);
     });
 
-    test("should persist data to file", () => {
+    test("should persist data to file", async () => {
       // Assert
       expect(existsSync(storageFilePath)).toBe(true);
 
       // Verify file contains valid JSON
-      const content = new Bun.File(storageFilePath).text();
+      const content = await Bun.file(storageFilePath).text();
       const data = JSON.parse(content);
       expect(data.events).toBeDefined();
       expect(Array.isArray(data.events)).toBe(true);
@@ -223,7 +223,7 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert - Should have loaded previous data
       expect(storage2.getEventCount()).toBe(1);
-      expect(storage2.getAllEvents()[0].target_agent).toBe("test-agent");
+      expect((storage2.getAllEvents()[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("test-agent");
     });
 
     test("should export data in proper format", () => {
@@ -289,15 +289,15 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert - Top agents
       expect(metrics.top_agents).toHaveLength(2);
-      expect(metrics.top_agents[0].name).toBe("code-reviewer");
-      expect(metrics.top_agents[0].requests).toBe(1);
+      expect(metrics.top_agents[0]!.name).toBe("code-reviewer");
+      expect(metrics.top_agents[0]!.requests).toBe(1);
 
       // Assert - Top matchers
       expect(metrics.top_matchers).toHaveLength(2);
 
       // Assert - Unmatched requests
       expect(metrics.unmatched_requests).toHaveLength(1);
-      expect(metrics.unmatched_requests[0].user_request).toBe("unknown request");
+      expect(metrics.unmatched_requests[0]!.user_request).toBe("unknown request");
     });
 
     test("should display analytics using convenience function", () => {
@@ -325,9 +325,9 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert
       expect(agentDetails["code-reviewer"]).toBeDefined();
-      expect(agentDetails["code-reviewer"].total_requests).toBe(1);
+      expect(agentDetails["code-reviewer"]!.total_requests).toBe(1);
       expect(agentDetails["debug-helper"]).toBeDefined();
-      expect(agentDetails["debug-helper"].total_requests).toBe(1);
+      expect(agentDetails["debug-helper"]!.total_requests).toBe(1);
     });
 
     test("should get matcher details", () => {
@@ -341,9 +341,9 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert
       expect(matcherDetails["keyword"]).toBeDefined();
-      expect(matcherDetails["keyword"].total_evaluations).toBe(1);
+      expect(matcherDetails["keyword"]!.total_evaluations).toBe(1);
       expect(matcherDetails["pattern"]).toBeDefined();
-      expect(matcherDetails["pattern"].total_evaluations).toBe(1);
+      expect(matcherDetails["pattern"]!.total_evaluations).toBe(1);
     });
   });
 
@@ -389,7 +389,7 @@ describe("Analytics End-to-End Data Flow", () => {
       const parsed = JSON.parse(jsonOutput);
 
       // Assert
-      expect(parsed.events[0].type).toBe("routing_decision");
+      expect(parsed.events[0]!.type).toBe("routing_decision");
       expect(parsed.events[0].target_agent).toBe("agent1");
       expect(parsed.events[1].type).toBe("unmatched_request");
       expect(parsed.events[1].user_request).toBe("request1");
@@ -450,7 +450,7 @@ describe("Analytics End-to-End Data Flow", () => {
       expect(lines.length).toBeGreaterThanOrEqual(3); // Header + 2 events
 
       // Verify header
-      const headers = lines[0].split(",");
+      const headers = lines[0]!.split(",");
       expect(headers[0]).toBe("timestamp");
       expect(headers[1]).toBe("type");
       expect(headers[2]).toBe("target_agent");
@@ -530,8 +530,8 @@ describe("Analytics End-to-End Data Flow", () => {
       expect(storage.getEventCount()).toBe(4);
       const unmatched = storage.getUnmatchedRequests();
       expect(unmatched).toHaveLength(2);
-      expect(unmatched[0].user_request).toBe("unknown1");
-      expect(unmatched[1].user_request).toBe("unknown2");
+      expect((unmatched[0]! as import("./types.js").UnmatchedRequestEvent).user_request).toBe("unknown1");
+      expect((unmatched[1]! as import("./types.js").UnmatchedRequestEvent).user_request).toBe("unknown2");
     });
 
     test("should include unmatched requests in dashboard", () => {
@@ -556,8 +556,8 @@ describe("Analytics End-to-End Data Flow", () => {
       // Assert
       expect(metrics.summary.unmatched_requests).toBe(1);
       expect(metrics.unmatched_requests).toHaveLength(1);
-      expect(metrics.unmatched_requests[0].user_request).toBe("unmatched");
-      expect(metrics.unmatched_requests[0].meta_agent).toBe("fallback");
+      expect(metrics.unmatched_requests[0]!.user_request).toBe("unmatched");
+      expect(metrics.unmatched_requests[0]!.meta_agent).toBe("fallback");
     });
 
     test("should export unmatched requests in JSON", () => {
@@ -685,14 +685,14 @@ describe("Analytics End-to-End Data Flow", () => {
       const unmatched = storage.getUnmatchedRequests();
       expect(unmatched).toHaveLength(2);
       expect(metrics.unmatched_requests).toHaveLength(2);
-      expect(metrics.unmatched_requests[0].user_request).toBe("what's the weather like?");
-      expect(metrics.unmatched_requests[1].user_request).toBe("tell me a joke");
+      expect(metrics.unmatched_requests[0]!.user_request).toBe("what's the weather like?");
+      expect(metrics.unmatched_requests[1]!.user_request).toBe("tell me a joke");
 
       // Verify agent usage is tracked correctly
-      expect(metrics.top_agents[0].name).toBe("code-reviewer");
-      expect(metrics.top_agents[0].requests).toBe(2);
-      expect(metrics.top_agents[1].name).toBe("debug-helper");
-      expect(metrics.top_agents[1].requests).toBe(1);
+      expect(metrics.top_agents[0]!.name).toBe("code-reviewer");
+      expect(metrics.top_agents[0]!.requests).toBe(2);
+      expect(metrics.top_agents[1]!.name).toBe("debug-helper");
+      expect(metrics.top_agents[1]!.requests).toBe(1);
     });
   });
 });

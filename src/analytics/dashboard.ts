@@ -323,14 +323,13 @@ export class AnalyticsDashboard {
 
     const displayRequests = this.limitAndSortRequests(requests, options);
 
-    for (let i = 0; i < displayRequests.length; i++) {
-      const request = displayRequests[i];
+    displayRequests.forEach((request, i) => {
       const timestamp = new Date(request.timestamp).toLocaleString();
       const metaAgentInfo = request.meta_agent ? ` (${request.meta_agent})` : "";
 
       console.log(`\n${i + 1}. [${timestamp}]${metaAgentInfo}`);
       console.log(`   ${request.user_request}`);
-    }
+    });
 
     if (requests.length > displayRequests.length) {
       console.log(`\n... and ${requests.length - displayRequests.length} more unmatched requests`);

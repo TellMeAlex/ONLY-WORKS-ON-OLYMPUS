@@ -27,6 +27,7 @@
     "test-e2e/**",
     "dist/**",
     ".test-temp/**",
-    "node_modules/**"
+    "node_modules/**",
+    "web/**"
   ]
 }

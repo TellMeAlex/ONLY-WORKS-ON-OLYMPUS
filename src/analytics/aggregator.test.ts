@@ -66,7 +66,7 @@ describe("AnalyticsAggregator", () => {
       const aggregator = new AnalyticsAggregator(events);
       const routingEvents = aggregator.getRoutingDecisionEvents();
       expect(routingEvents).toHaveLength(1);
-      expect(routingEvents[0].type).toBe("routing_decision");
+      expect(routingEvents[0]!.type).toBe("routing_decision");
     });
 
     test("gets unmatched request events", () => {
@@ -86,7 +86,7 @@ describe("AnalyticsAggregator", () => {
       const aggregator = new AnalyticsAggregator(events);
       const unmatchedEvents = aggregator.getUnmatchedRequestEvents();
       expect(unmatchedEvents).toHaveLength(1);
-      expect(unmatchedEvents[0].type).toBe("unmatched_request");
+      expect(unmatchedEvents[0]!.type).toBe("unmatched_request");
     });
   });
 
@@ -222,12 +222,12 @@ describe("AnalyticsAggregator", () => {
       const stats = aggregator.computeAgentStatistics(events);
 
       expect(stats["agent-1"]).toBeDefined();
-      expect(stats["agent-1"].agent_name).toBe("agent-1");
-      expect(stats["agent-1"].total_requests).toBe(3);
-      expect(stats["agent-1"].successful_requests).toBe(3);
-      expect(stats["agent-1"].failed_requests).toBe(0);
-      expect(stats["agent-1"].success_rate).toBe(1);
-      expect(stats["agent-1"].last_used).toBe("2024-01-01T00:02:00.000Z");
+      expect(stats["agent-1"]!.agent_name).toBe("agent-1");
+      expect(stats["agent-1"]!.total_requests).toBe(3);
+      expect(stats["agent-1"]!.successful_requests).toBe(3);
+      expect(stats["agent-1"]!.failed_requests).toBe(0);
+      expect(stats["agent-1"]!.success_rate).toBe(1);
+      expect(stats["agent-1"]!.last_used).toBe("2024-01-01T00:02:00.000Z");
     });
 
     test("calculates statistics for multiple agents", () => {
@@ -255,9 +255,9 @@ describe("AnalyticsAggregator", () => {
       const stats = aggregator.computeAgentStatistics(events);
 
       expect(stats["agent-1"]).toBeDefined();
-      expect(stats["agent-1"].total_requests).toBe(2);
+      expect(stats["agent-1"]!.total_requests).toBe(2);
       expect(stats["agent-2"]).toBeDefined();
-      expect(stats["agent-2"].total_requests).toBe(1);
+      expect(stats["agent-2"]!.total_requests).toBe(1);
     });
 
     test("tracks meta-agent usage", () => {
@@ -287,8 +287,8 @@ describe("AnalyticsAggregator", () => {
       const aggregator = new AnalyticsAggregator(events);
       const stats = aggregator.computeAgentStatistics(events);
 
-      expect(stats["agent-1"].meta_agents["meta-1"]).toBe(2);
-      expect(stats["agent-1"].meta_agents["meta-2"]).toBe(1);
+      expect(stats["agent-1"]!.meta_agents["meta-1"]).toBe(2);
+      expect(stats["agent-1"]!.meta_agents["meta-2"]).toBe(1);
     });
 
     test("handles empty events array", () => {
@@ -310,7 +310,7 @@ describe("AnalyticsAggregator", () => {
       const aggregator = new AnalyticsAggregator(events);
       const stats = aggregator.computeAgentStatistics(events);
 
-      expect(stats["agent-1"].success_rate).toBe(1);
+      expect(stats["agent-1"]!.success_rate).toBe(1);
     });
 
     test("updates last_used timestamp correctly", () => {
@@ -331,7 +331,7 @@ describe("AnalyticsAggregator", () => {
       const aggregator = new AnalyticsAggregator(events);
       const stats = aggregator.computeAgentStatistics(events);
 
-      expect(stats["agent-1"].last_used).toBe("2024-01-01T00:02:00.000Z");
+      expect(stats["agent-1"]!.last_used).toBe("2024-01-01T00:02:00.000Z");
     });
   });
 
@@ -355,11 +355,11 @@ describe("AnalyticsAggregator", () => {
       const stats = aggregator.computeMatcherStatistics(events);
 
       expect(stats["matcher-1"]).toBeDefined();
-      expect(stats["matcher-1"].matcher_type).toBe("matcher-1");
-      expect(stats["matcher-1"].total_evaluations).toBe(2);
-      expect(stats["matcher-1"].matched_count).toBe(2);
-      expect(stats["matcher-1"].not_matched_count).toBe(0);
-      expect(stats["matcher-1"].match_rate).toBe(1);
+      expect(stats["matcher-1"]!.matcher_type).toBe("matcher-1");
+      expect(stats["matcher-1"]!.total_evaluations).toBe(2);
+      expect(stats["matcher-1"]!.matched_count).toBe(2);
+      expect(stats["matcher-1"]!.not_matched_count).toBe(0);
+      expect(stats["matcher-1"]!.match_rate).toBe(1);
     });
 
     test("tracks target agents for matcher", () => {
@@ -386,8 +386,8 @@ describe("AnalyticsAggregator", () => {
       const aggregator = new AnalyticsAggregator(events);
       const stats = aggregator.computeMatcherStatistics(events);
 
-      expect(stats["matcher-1"].target_agents["agent-1"]).toBe(2);
-      expect(stats["matcher-1"].target_agents["agent-2"]).toBe(1);
+      expect(stats["matcher-1"]!.target_agents["agent-1"]).toBe(2);
+      expect(stats["matcher-1"]!.target_agents["agent-2"]).toBe(1);
     });
 
     test("handles empty events array", () => {
@@ -618,10 +618,10 @@ describe("AnalyticsAggregator", () => {
       const topAgents = aggregator.getTopAgents(2);
 
       expect(topAgents).toHaveLength(2);
-      expect(topAgents[0].agent_name).toBe("agent-1");
-      expect(topAgents[0].total_requests).toBe(2);
-      expect(topAgents[1].agent_name).toBe("agent-2");
-      expect(topAgents[1].total_requests).toBe(1);
+      expect(topAgents[0]!.agent_name).toBe("agent-1");
+      expect(topAgents[0]!.total_requests).toBe(2);
+      expect(topAgents[1]!.agent_name).toBe("agent-2");
+      expect(topAgents[1]!.total_requests).toBe(1);
     });
 
     test("respects limit parameter", () => {
@@ -678,10 +678,10 @@ describe("AnalyticsAggregator", () => {
       const topMatchers = aggregator.getTopMatchers(2);
 
       expect(topMatchers).toHaveLength(2);
-      expect(topMatchers[0].matcher_type).toBe("matcher-1");
-      expect(topMatchers[0].match_count).toBe(2);
-      expect(topMatchers[1].matcher_type).toBe("matcher-2");
-      expect(topMatchers[1].match_count).toBe(1);
+      expect(topMatchers[0]!.matcher_type).toBe("matcher-1");
+      expect(topMatchers[0]!.match_count).toBe(2);
+      expect(topMatchers[1]!.matcher_type).toBe("matcher-2");
+      expect(topMatchers[1]!.match_count).toBe(1);
     });
   });
 });
@@ -799,7 +799,7 @@ describe("convenience functions", () => {
     const stats = computeAgentStatistics(events);
 
     expect(stats["agent-1"]).toBeDefined();
-    expect(stats["agent-1"].total_requests).toBe(1);
+    expect(stats["agent-1"]!.total_requests).toBe(1);
   });
 
   test("computeMatcherStatistics convenience function works", () => {
@@ -814,6 +814,6 @@ describe("convenience functions", () => {
     const stats = computeMatcherStatistics(events);
 
     expect(stats["matcher-1"]).toBeDefined();
-    expect(stats["matcher-1"].total_evaluations).toBe(1);
+    expect(stats["matcher-1"]!.total_evaluations).toBe(1);
   });
 });

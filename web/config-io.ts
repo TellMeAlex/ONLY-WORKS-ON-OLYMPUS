@@ -18,7 +18,7 @@ const CONFIG_URL_PARAM = "c";
 
 /**
  * Parse JSONC (JSON with Comments) string
- * Supports single-line comments (//) and multi-line comments (/* */)
+ * Supports single-line comments (//) and multi-line comments (slash-star ... star-slash)
  *
  * @param content - JSONC string to parse
  * @returns Parsed configuration object

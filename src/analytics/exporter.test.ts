@@ -316,9 +316,9 @@ describe("AnalyticsExporter", () => {
     const lines = result.split("\n").filter((line) => line.trim() !== "");
 
     // Assert
-    const headerColumns = lines[0].split(",").length;
+    const headerColumns = lines[0]!.split(",").length;
     for (let i = 1; i < lines.length; i++) {
-      const rowColumns = lines[i].split(",").length;
+      const rowColumns = lines[i]!.split(",").length;
       expect(rowColumns).toBe(headerColumns);
     }
   });

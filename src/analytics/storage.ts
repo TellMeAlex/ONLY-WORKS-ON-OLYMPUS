@@ -1,6 +1,6 @@
 import type { AnalyticsEvent, AnalyticsConfig } from "./types.js";
 import { dirname } from "path";
-import { mkdirSync, existsSync } from "fs";
+import { mkdirSync, existsSync, readFileSync } from "fs";
 
 const CURRENT_VERSION = "1.0.0";
 
@@ -29,7 +29,7 @@ export class AnalyticsStorage {
   private storageFilePath: string;
   private inMemoryEvents: AnalyticsEvent[] = [];
 
-  constructor(config: AnalyticsConfig = {} as AnalyticsConfig) {
+  constructor(config: Partial<AnalyticsConfig> = {}) {
     // Apply defaults
     this.config = {
       enabled: config.enabled ?? true,
@@ -213,12 +213,10 @@ export class AnalyticsStorage {
       a.timestamp.localeCompare(b.timestamp),
     );
 
-    const firstTimestamp =
-      sortedEvents.length > 0 ? sortedEvents[0].timestamp : undefined;
-    const lastTimestamp =
-      sortedEvents.length > 0
-        ? sortedEvents[sortedEvents.length - 1].timestamp
-        : undefined;
+    const firstEvent = sortedEvents[0];
+    const lastEvent = sortedEvents[sortedEvents.length - 1];
+    const firstTimestamp = firstEvent?.timestamp;
+    const lastTimestamp = lastEvent?.timestamp;
 
     return {
       events: sortedEvents,
@@ -255,9 +253,8 @@ export class AnalyticsStorage {
         return;
       }
 
-      // Read file using Bun.file
-      const file = Bun.file(this.storageFilePath);
-      const content = file.text();
+      // Read file synchronously
+      const content = readFileSync(this.storageFilePath, "utf-8");
 
       // Parse JSON
       const data = JSON.parse(content) as AnalyticsData;
