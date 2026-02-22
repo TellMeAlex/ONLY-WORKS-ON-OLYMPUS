@@ -243,16 +243,14 @@ export class PerformanceMetricsCollector {
     }
 
     const sorted = [...this.latencySamples].sort((a, b) => a - b);
-    const min = sorted[0];
-    const max = sorted[sorted.length - 1];
+    const min = sorted[0] ?? 0;
+    const max = sorted[sorted.length - 1] ?? 0;
     const avg =
       sorted.reduce((sum, val) => sum + val, 0) / sorted.length;
-
     const getPercentile = (p: number): number => {
       const index = Math.floor((p / 100) * (sorted.length - 1));
-      return sorted[index];
+      return sorted[index] ?? 0;
     };
-
     return {
       min_ms: min,
       max_ms: max,

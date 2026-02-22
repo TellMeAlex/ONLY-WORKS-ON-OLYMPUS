@@ -897,7 +897,7 @@ describe("End-to-End: Performance Metrics Collection and Export", () => {
     try {
       // Act
       const response = await fetch("http://127.0.0.1:9092/health");
-      const body = await response.json();
+      const body = await response.json() as Record<string, unknown>;
 
       // Assert
       expect(response.status).toBe(200);
@@ -919,14 +919,14 @@ describe("End-to-End: Performance Metrics Collection and Export", () => {
     try {
       // Act
       const response = await fetch("http://127.0.0.1:9093/");
-      const body = await response.json();
+      const body = await response.json() as Record<string, unknown>;
 
       // Assert
       expect(response.status).toBe(200);
       expect(body.name).toBe("MetricsExportServer");
       expect(body.version).toBe("1.0.0");
-      expect(body.endpoints.metrics).toBe("/metrics");
-      expect(body.endpoints.health).toBe("/health");
+      expect((body.endpoints as Record<string, unknown>).metrics).toBe("/metrics");
+      expect((body.endpoints as Record<string, unknown>).health).toBe("/health");
       expect(body.status).toBeDefined();
       expect(body.prometheus).toBeDefined();
     } finally {

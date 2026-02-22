@@ -348,8 +348,8 @@ describe("PerformanceMetricsCollector", () => {
       // Assert
       const history = collector.getMemoryHistory();
       expect(history).toHaveLength(2);
-      expect(history[0].timestamp).toBeTruthy();
-      expect(history[0].value).toBeGreaterThan(0);
+      expect(history[0]?.timestamp).toBeTruthy();
+      expect(history[0]?.value).toBeGreaterThan(0);
     });
 
     test("does not record when disabled", () => {
@@ -926,7 +926,7 @@ describe("PerformanceMetricsCollector", () => {
   });
 
   describe("collection window trimming", () => {
-    test("trims old samples based on collection window", () => {
+    test("trims old samples based on collection window", async () => {
       // Arrange - create collector with 1 second window
       collector = new PerformanceMetricsCollector(true, 1);
 

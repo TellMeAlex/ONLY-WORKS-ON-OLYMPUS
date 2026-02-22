@@ -2,7 +2,7 @@
  * Unit tests for PrometheusMetricsFormatter
  */
 
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe, beforeEach } from "bun:test";
 import type { PerformanceMetrics } from "./types.js";
 import {
   PrometheusMetricsFormatter,

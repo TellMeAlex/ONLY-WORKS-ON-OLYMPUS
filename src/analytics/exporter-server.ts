@@ -111,7 +111,7 @@ export interface ServerStatus {
  * Uses Bun.serve() to provide a lightweight, performant metrics endpoint
  */
 export class MetricsExportServer {
-  private config: Required<MetricsExportServerConfig>;
+  private config: Omit<Required<MetricsExportServerConfig>, 'customHandler'> & Pick<MetricsExportServerConfig, 'customHandler'>;
   private collector: PerformanceMetricsCollector;
   private formatter: PrometheusMetricsFormatter;
   private server: ReturnType<typeof Bun.serve> | null = null;
@@ -428,9 +428,9 @@ export class MetricsExportServer {
   private createResponse(
     body: string,
     status: number = 200,
-    additionalHeaders: HeadersInit = {},
+    additionalHeaders: Record<string, string> = {},
   ): Response {
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
 
     // Add Content-Type if enabled
     if (this.config.includeContentType && status !== 204) {
