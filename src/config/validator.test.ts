@@ -7,14 +7,18 @@ import {
   checkAgentReferencesInConfig,
   checkRegexPerformance,
   checkRegexPerformanceInConfig,
+  checkRegexFlags,
+  checkRegexFlagsInConfig,
   validateOlimpusConfig,
   createCircularDependencyError,
   createInvalidAgentReferenceError,
   createRegexPerformanceWarning,
+  createInvalidRegexFlagsError,
   createCheckResult,
   type CircularDependencyError,
   type InvalidAgentReferenceError,
   type RegexPerformanceWarning,
+  type InvalidRegexFlagsError,
   type CheckResult,
 } from "./validator.js";
 
@@ -686,6 +690,969 @@ describe("circular dependency", () => {
         expect(error.message).toBe(message);
         expect(error.path).toEqual(path);
         expect(error.reference).toBe(reference);
+      });
+    });
+  });
+
+  describe("regex flags", () => {
+    describe("checkRegexFlags", () => {
+      test("returns empty array for empty meta_agents", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {};
+
+        // Act
+        const errors = checkRegexFlags(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      test("returns empty array when no regex matchers present", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkRegexFlags(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      describe("valid flags", () => {
+        test("accepts single valid flag - g", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "g" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts single valid flag - i", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "i" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts single valid flag - m", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "m" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts single valid flag - s", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "s" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts single valid flag - u", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "u" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts single valid flag - y", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "y" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts single valid flag - d", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "d" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts multiple valid flags - gi", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gi" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts multiple valid flags - gim", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gim" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts all valid flags combined", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gimsuyd" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+      });
+
+      describe("invalid flags", () => {
+        test("detects single invalid flag - x", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "x" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("x");
+          expect(error?.message).toContain("Invalid regex flags");
+        });
+
+        test("detects single invalid flag - a", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "a" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("a");
+        });
+
+        test("detects multiple invalid flags - abc", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "abc" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("abc");
+          expect(error?.message).toContain("abc");
+        });
+
+        test("detects mixed valid and invalid flags - gix", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gix" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("gix");
+          expect(error?.message).toContain("x");
+        });
+
+        test("detects mixed valid and multiple invalid flags - giabc", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "giabc" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("giabc");
+          expect(error?.message).toContain("abc");
+        });
+
+        test("includes list of valid flags in error message", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "x" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.message).toContain("Valid flags are:");
+          expect(error?.message).toContain("g");
+          expect(error?.message).toContain("i");
+        });
+      });
+
+      describe("empty flags", () => {
+        test("accepts regex matcher without flags property", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts empty string flags", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+      });
+
+      describe("duplicate flags", () => {
+        test("accepts duplicate valid flags - gg", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gg" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("accepts multiple duplicate valid flags - giig", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "giig" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("detects duplicate invalid flags - xx", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "xx" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("xx");
+        });
+      });
+
+      describe("multiple rules", () => {
+        test("validates multiple rules with valid flags", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "g" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "example", flags: "i" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "sample", flags: "gm" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("detects invalid flags in one of multiple rules", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "g" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "example", flags: "x" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "sample", flags: "i" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("x");
+          expect(error?.path).toEqual(["meta_agents", "router", "routing_rules", "1", "matcher", "flags"]);
+        });
+
+        test("detects invalid flags in multiple rules", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "g" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "example", flags: "x" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "sample", flags: "yz" },
+                  target_agent: "oracle",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(2);
+          const invalidFlags = errors.map((e) => e.flags);
+          expect(invalidFlags).toContain("x");
+          expect(invalidFlags).toContain("yz");
+        });
+
+        test("handles mix of valid, invalid, and missing flags across multiple rules", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gi" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "example" },
+                  target_agent: "hephaestus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "sample", flags: "xyz" },
+                  target_agent: "oracle",
+                },
+                {
+                  matcher: { type: "regex", pattern: "demo", flags: "" },
+                  target_agent: "librarian",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(1);
+          const error = errors.find((e) => e.type === "invalid_regex_flags");
+          expect(error).toBeDefined();
+          expect(error?.flags).toBe("xyz");
+          expect(error?.path).toEqual(["meta_agents", "router", "routing_rules", "2", "matcher", "flags"]);
+        });
+      });
+
+      describe("multiple meta-agents", () => {
+        test("validates flags across multiple meta-agents", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router_a: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gi" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+            router_b: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "example", flags: "m" },
+                  target_agent: "hephaestus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors).toEqual([]);
+        });
+
+        test("detects invalid flags across multiple meta-agents", () => {
+          // Arrange
+          const metaAgents: Record<string, MetaAgentDef> = {
+            router_a: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "x" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+            router_b: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "example", flags: "yz" },
+                  target_agent: "hephaestus",
+                },
+              ],
+            },
+          };
+
+          // Act
+          const errors = checkRegexFlags(metaAgents);
+
+          // Assert
+          expect(errors.length).toBe(2);
+          const invalidFlags = errors.map((e) => e.flags);
+          expect(invalidFlags).toContain("x");
+          expect(invalidFlags).toContain("yz");
+        });
+      });
+
+      test("sets correct path for invalid regex flags error", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "test", flags: "x" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkRegexFlags(metaAgents);
+
+        // Assert
+        expect(errors.length).toBe(1);
+        const error = errors.find((e) => e.type === "invalid_regex_flags");
+        expect(error).toBeDefined();
+        expect(error?.path).toEqual(["meta_agents", "router", "routing_rules", "0", "matcher", "flags"]);
+      });
+
+      test("does not check non-regex matchers", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+              {
+                matcher: { type: "contains", value: "test" } as any,
+                target_agent: "hephaestus",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkRegexFlags(metaAgents);
+
+        // Assert
+        expect(errors).toEqual([]);
+      });
+
+      test("mixes regex and non-regex matchers correctly", () => {
+        // Arrange
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: [],
+            routing_rules: [
+              {
+                matcher: { type: "always" },
+                target_agent: "sisyphus",
+              },
+              {
+                matcher: { type: "regex", pattern: "test", flags: "x" },
+                target_agent: "hephaestus",
+              },
+              {
+                matcher: { type: "contains", value: "test" } as any,
+                target_agent: "oracle",
+              },
+            ],
+          },
+        };
+
+        // Act
+        const errors = checkRegexFlags(metaAgents);
+
+        // Assert
+        expect(errors.length).toBe(1);
+        const error = errors.find((e) => e.type === "invalid_regex_flags");
+        expect(error).toBeDefined();
+        expect(error?.flags).toBe("x");
+      });
+    });
+
+    describe("checkRegexFlagsInConfig", () => {
+      test("returns passed true when no meta_agents defined", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexFlagsInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+
+      test("returns passed true when meta_agents is empty object", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {},
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexFlagsInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+
+      test("detects invalid regex flags in full config", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "x" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexFlagsInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(false);
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.checkType).toBe("regex_flags");
+      });
+
+      test("passes with valid flags in full config", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gi" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexFlagsInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+
+      test("handles mixed valid and invalid flags in full config", () => {
+        // Arrange
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: [],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "gi" },
+                  target_agent: "sisyphus",
+                },
+                {
+                  matcher: { type: "regex", pattern: "example", flags: "x" },
+                  target_agent: "hephaestus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        // Act
+        const result = checkRegexFlagsInConfig(config);
+
+        // Assert
+        expect(result.passed).toBe(false);
+        expect(result.errors.length).toBe(1);
+        const error = result.errors.find((e) => e.type === "invalid_regex_flags");
+        expect(error?.flags).toBe("x");
+      });
+    });
+
+    describe("createInvalidRegexFlagsError", () => {
+      test("creates valid invalid regex flags error", () => {
+        // Arrange
+        const message = "Invalid regex flags message";
+        const path = ["meta_agents", "router", "routing_rules", "0", "matcher", "flags"];
+        const flags = "x";
+
+        // Act
+        const error = createInvalidRegexFlagsError(message, path, flags);
+
+        // Assert
+        expect(error.type).toBe("invalid_regex_flags");
+        expect(error.message).toBe(message);
+        expect(error.path).toEqual(path);
+        expect(error.flags).toBe(flags);
       });
     });
   });
