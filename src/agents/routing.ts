@@ -9,6 +9,7 @@ import type {
   AlwaysMatcher,
 } from "../config/schema.js";
 import type { RoutingLogger, MatcherEvaluation } from "./logger.js";
+import { error, bold, dim } from "../utils/colors.js";
 
 export interface RoutingContext {
   prompt: string;
@@ -248,8 +249,7 @@ function evaluateRegexMatcher(
     return regex.test(context.prompt);
   } catch (error) {
     console.error(
-      `Invalid regex pattern: ${matcher.pattern}`,
-      error instanceof Error ? error.message : error
+      `${bold("[Olimpus]")} ${error("Invalid regex pattern:")} ${dim(matcher.pattern)} - ${dim(error instanceof Error ? error.message : String(error))}`
     );
     return false;
   }
