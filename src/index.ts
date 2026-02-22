@@ -15,6 +15,9 @@ import { join } from "path";
 /**
  * OlimpusPlugin - Meta-orchestrator plugin for OpenCode
  *
+ * @stable This is the main stable entry point for the Olimpus plugin.
+ * @since 0.1.0
+ *
  * Execution flow:
  * 1. Load olimpus.jsonc from project directory
  * 2. Create MetaAgentRegistry and register all meta-agents (built-in + config)
