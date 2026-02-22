@@ -6,7 +6,12 @@ import { scaffoldOlimpusConfig } from "./scaffolder.js";
 import { validateOlimpusConfig, formatErrors, formatWarnings } from "./validator.js";
 
 /**
- * Options for loading Olimpus configuration
+ * Options for loading Olimpus configuration.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Controls validation and loading behavior for Olimpus configuration files.
  */
 export interface LoadOlimpusConfigOptions {
   /**
@@ -33,6 +38,10 @@ export interface LoadOlimpusConfigOptions {
 
 /**
  * Load olimpus.jsonc from project directory and optional user config directory.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * Search order: project dir first (overrides user config dir if both exist).
  * Returns parsed and validated config with merged defaults.
  *
@@ -41,10 +50,10 @@ export interface LoadOlimpusConfigOptions {
  * - Set OLIMPUS_SKIP_WIZARD=1 environment variable to skip wizard and use silent scaffolding
  *
  * @param projectDir - Path to the project directory containing olimpus.jsonc
-  * @param options - Optional configuration for loading and validation
-  * @returns Parsed and validated Olimpus configuration
-  * @throws Error if config is invalid according to schema or semantic validation
-  */
+ * @param options - Optional configuration for loading and validation
+ * @returns Parsed and validated Olimpus configuration
+ * @throws Error if config is invalid according to schema or semantic validation
+ */
 export async function loadOlimpusConfig(
   projectDir: string,
   options?: LoadOlimpusConfigOptions,
@@ -150,6 +159,10 @@ export async function loadOlimpusConfig(
 
 /**
  * Parse JSONC string and return parsed object or throw error.
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
  */
 function parseJsonc(content: string, filePath: string): unknown {
   const errors: Array<{ error: number; offset: number; length: number }> = [];
@@ -171,6 +184,10 @@ function parseJsonc(content: string, filePath: string): unknown {
 /**
  * Deep merge two objects. Properties from source override target.
  * Arrays are replaced entirely (not merged).
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
  */
 function deepMerge(
   target: Record<string, unknown>,
@@ -193,6 +210,10 @@ function deepMerge(
 
 /**
  * Check if value is a plain object (not array, null, etc.)
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
  */
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

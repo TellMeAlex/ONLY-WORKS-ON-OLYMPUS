@@ -5,6 +5,22 @@ import type { OlimpusConfig, MetaAgentDef } from "./schema.js";
  * Validation Error Types - Discriminated Union
  */
 
+/**
+ * Zod schema for circular dependency validation errors.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * @example
+ * ```ts
+ * const error: CircularDependencyError = {
+ *   type: "circular_dependency",
+ *   message: "Circular dependency detected",
+ *   path: ["meta_agents", "agent_a"],
+ *   meta_agents: ["agent_a", "agent_b"]
+ * };
+ * ```
+ */
 export const CircularDependencyErrorSchema = z.object({
   type: z.literal("circular_dependency"),
   message: z.string(),
@@ -12,6 +28,22 @@ export const CircularDependencyErrorSchema = z.object({
   meta_agents: z.array(z.string()),
 });
 
+/**
+ * Zod schema for invalid agent reference validation errors.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * @example
+ * ```ts
+ * const error: InvalidAgentReferenceError = {
+ *   type: "invalid_agent_reference",
+ *   message: "Invalid agent reference",
+ *   path: ["meta_agents", "agent_a", "delegates_to"],
+ *   reference: "unknown_agent"
+ * };
+ * ```
+ */
 export const InvalidAgentReferenceErrorSchema = z.object({
   type: z.literal("invalid_agent_reference"),
   message: z.string(),
@@ -19,6 +51,22 @@ export const InvalidAgentReferenceErrorSchema = z.object({
   reference: z.string(),
 });
 
+/**
+ * Zod schema for schema validation errors.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * @example
+ * ```ts
+ * const error: SchemaValidationError = {
+ *   type: "schema_validation",
+ *   message: "Schema validation failed",
+ *   path: ["meta_agents", "agent_a"],
+ *   zodIssue: { ... }
+ * };
+ * ```
+ */
 export const SchemaValidationErrorSchema = z.object({
   type: z.literal("schema_validation"),
   message: z.string(),
@@ -26,6 +74,23 @@ export const SchemaValidationErrorSchema = z.object({
   zodIssue: z.any().optional(),
 });
 
+/**
+ * Zod schema for regex performance warnings.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * @example
+ * ```ts
+ * const warning: RegexPerformanceWarning = {
+ *   type: "regex_performance",
+ *   message: "Regex pattern may cause performance issues",
+ *   path: ["meta_agents", "agent_a", "routing_rules", "0", "matcher", "pattern"],
+ *   pattern: ".*",
+ *   reason: "Unbounded .* patterns can match excessively"
+ * };
+ * ```
+ */
 export const RegexPerformanceWarningSchema = z.object({
   type: z.literal("regex_performance"),
   message: z.string(),
@@ -35,9 +100,13 @@ export const RegexPerformanceWarningSchema = z.object({
 });
 
 /**
- * Validation Error Schema - Union of all error types
+ * Validation Error Schema - Union of all error types.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Discriminated union of all validation error types.
  */
-
 export const ValidationErrorSchema = z.discriminatedUnion("type", [
   CircularDependencyErrorSchema,
   InvalidAgentReferenceErrorSchema,
@@ -45,17 +114,25 @@ export const ValidationErrorSchema = z.discriminatedUnion("type", [
 ]);
 
 /**
- * Validation Warning Schema
+ * Validation Warning Schema.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Discriminated union of all validation warning types.
  */
-
 export const ValidationWarningSchema = z.discriminatedUnion("type", [
   RegexPerformanceWarningSchema,
 ]);
 
 /**
- * Validation Result Schema - Aggregate result of validation
+ * Validation Result Schema - Aggregate result of validation.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Contains the final validation status with all errors and warnings.
  */
-
 export const ValidationResultSchema = z.object({
   valid: z.boolean(),
   errors: z.array(ValidationErrorSchema).default([]),
@@ -64,16 +141,24 @@ export const ValidationResultSchema = z.object({
 });
 
 /**
- * Severity Levels for filtering issues
+ * Severity Levels for filtering issues.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Used to categorize validation results by severity.
  */
-
 export const SeveritySchema = z.enum(["error", "warning"]);
 export const Severity = ["error", "warning"] as const;
 
 /**
- * Check Type for categorizing validation checks
+ * Check Type for categorizing validation checks.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Used to categorize different types of validation checks.
  */
-
 export const CheckTypeSchema = z.enum([
   "schema",
   "circular_dependency",
@@ -82,9 +167,13 @@ export const CheckTypeSchema = z.enum([
 ]);
 
 /**
- * Check Result Schema - Result of a single validation check
+ * Check Result Schema - Result of a single validation check.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Contains the result of executing a single validation check.
  */
-
 export const CheckResultSchema = z.object({
   checkType: CheckTypeSchema,
   passed: z.boolean(),
@@ -93,9 +182,13 @@ export const CheckResultSchema = z.object({
 });
 
 /**
- * Validation Context Schema - Context for validation
+ * Validation Context Schema - Context for validation.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Contains options and context for running validation checks.
  */
-
 export const ValidationContextSchema = z.object({
   configPath: z.string().optional(),
   configName: z.string().optional(),
@@ -105,9 +198,13 @@ export const ValidationContextSchema = z.object({
 });
 
 /**
- * Inferred TypeScript types from schemas
+ * Inferred TypeScript types from schemas.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * TypeScript types inferred from the Zod schemas above.
  */
-
 export type CircularDependencyError = z.infer<
   typeof CircularDependencyErrorSchema
 >;
@@ -135,9 +232,13 @@ export type CheckResult = z.infer<typeof CheckResultSchema>;
 export type ValidationContext = z.infer<typeof ValidationContextSchema>;
 
 /**
- * Create a circular dependency error
+ * Create a circular dependency error.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Factory function for creating circular dependency error objects.
  */
-
 export function createCircularDependencyError(
   message: string,
   path: string[],
@@ -152,9 +253,13 @@ export function createCircularDependencyError(
 }
 
 /**
- * Create an invalid agent reference error
+ * Create an invalid agent reference error.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Factory function for creating invalid agent reference error objects.
  */
-
 export function createInvalidAgentReferenceError(
   message: string,
   path: string[],
@@ -169,9 +274,13 @@ export function createInvalidAgentReferenceError(
 }
 
 /**
- * Create a schema validation error
+ * Create a schema validation error.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Factory function for creating schema validation error objects.
  */
-
 export function createSchemaValidationError(
   message: string,
   path: string[],
@@ -186,9 +295,13 @@ export function createSchemaValidationError(
 }
 
 /**
- * Create a regex performance warning
+ * Create a regex performance warning.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Factory function for creating regex performance warning objects.
  */
-
 export function createRegexPerformanceWarning(
   message: string,
   path: string[],
@@ -205,9 +318,13 @@ export function createRegexPerformanceWarning(
 }
 
 /**
- * Create a new validation result
+ * Create a new validation result.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Factory function for creating validation result objects.
  */
-
 export function createValidationResult(
   config?: OlimpusConfig,
 ): ValidationResult {
@@ -220,9 +337,13 @@ export function createValidationResult(
 }
 
 /**
- * Create a validation check result
+ * Create a validation check result.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Factory function for creating check result objects.
  */
-
 export function createCheckResult(
   checkType: CheckType,
   passed: boolean = false,
@@ -236,25 +357,37 @@ export function createCheckResult(
 }
 
 /**
- * Check if a validation result is valid (no errors)
+ * Check if a validation result is valid (no errors).
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Returns true if the validation result has no errors.
  */
-
 export function isValid(result: ValidationResult): boolean {
   return result.errors.length === 0;
 }
 
 /**
- * Check if a validation result has warnings
+ * Check if a validation result has warnings.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Returns true if the validation result has any warnings.
  */
-
 export function hasWarnings(result: ValidationResult): boolean {
   return result.warnings.length > 0;
 }
 
 /**
- * Get a summary of validation result as a human-readable string
+ * Get a summary of validation result as a human-readable string.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Returns a human-readable summary of the validation result.
  */
-
 export function getValidationSummary(result: ValidationResult): string {
   const { errors, warnings } = result;
   const errorCount = errors.length;
@@ -278,9 +411,13 @@ export function getValidationSummary(result: ValidationResult): string {
 }
 
 /**
- * Format validation errors as a string list
+ * Format validation errors as a string list.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Returns an array of formatted error messages.
  */
-
 export function formatErrors(result: ValidationResult): string[] {
   return result.errors.map((error) => {
     const pathStr = error.path.length > 0 ? error.path.join(".") : "root";
@@ -289,9 +426,13 @@ export function formatErrors(result: ValidationResult): string[] {
 }
 
 /**
- * Format validation warnings as a string list
+ * Format validation warnings as a string list.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Returns an array of formatted warning messages.
  */
-
 export function formatWarnings(result: ValidationResult): string[] {
   return result.warnings.map((warning) => {
     const pathStr = warning.path.length > 0 ? warning.path.join(".") : "root";
@@ -301,6 +442,10 @@ export function formatWarnings(result: ValidationResult): string[] {
 
 /**
  * Main validation function for Olimpus configuration.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * Validates an Olimpus configuration against schema and semantic rules.
  * Orchestrates all validation checks and returns aggregated results.
  *
@@ -351,8 +496,13 @@ export function validateOlimpusConfig(
 }
 
 /**
- * Builtin agent names that can be delegation targets
- * Re-exported from schema for use in validation
+ * Builtin agent names that can be delegation targets.
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
+ *
+ * Re-exported from schema for use in validation.
  */
 export const BUILTIN_AGENT_NAMES = [
   "sisyphus",
@@ -368,7 +518,12 @@ export const BUILTIN_AGENT_NAMES = [
 ] as const;
 
 /**
- * Tracks delegation chains to detect circular dependencies
+ * Tracks delegation chains to detect circular dependencies.
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
+ *
  * Key: "from:to", Value: depth level
  */
 interface DelegationTracker {
@@ -376,8 +531,13 @@ interface DelegationTracker {
 }
 
 /**
- * Helper class for circular dependency detection
- * Based on MetaAgentRegistry pattern from src/agents/registry.ts
+ * Helper class for circular dependency detection.
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
+ *
+ * Based on MetaAgentRegistry pattern from src/agents/registry.ts.
  */
 class DelegationGraph {
   private delegations: DelegationTracker = {};
@@ -453,7 +613,11 @@ class DelegationGraph {
 }
 
 /**
- * Check for circular dependencies in meta-agent delegation chains
+ * Check for circular dependencies in meta-agent delegation chains.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * @param metaAgents - Map of meta-agent definitions
  * @param maxDepth - Maximum depth to search for circular dependencies
  * @returns Array of CircularDependencyError for each circular dependency found
@@ -541,7 +705,11 @@ export function checkCircularDependencies(
 }
 
 /**
- * Helper function to check circular dependencies from validation context
+ * Helper function to check circular dependencies from validation context.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * @param config - The Olimpus configuration to validate
  * @param context - Optional validation context
  * @returns CheckResult with circular dependency check status
@@ -571,8 +739,13 @@ export function checkCircularDependenciesInConfig(
 }
 
 /**
- * Check for invalid agent references in meta-agent definitions
- * Validates that all referenced agents exist in BUILTIN_AGENT_NAMES or as other meta-agents
+ * Check for invalid agent references in meta-agent definitions.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Validates that all referenced agents exist in BUILTIN_AGENT_NAMES or as other meta-agents.
+ *
  * @param metaAgents - Map of meta-agent definitions
  * @returns Array of InvalidAgentReferenceError for each invalid reference found
  */
@@ -622,7 +795,11 @@ export function checkAgentReferences(
 }
 
 /**
- * Helper function to check agent references from validation context
+ * Helper function to check agent references from validation context.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * @param config - The Olimpus configuration to validate
  * @param context - Optional validation context
  * @returns CheckResult with agent reference check status
@@ -651,7 +828,11 @@ export function checkAgentReferencesInConfig(
 }
 
 /**
- * Result of analyzing a regex pattern for performance issues
+ * Result of analyzing a regex pattern for performance issues.
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
  */
 interface RegexAnalysisResult {
   hasIssue: boolean;
@@ -659,7 +840,12 @@ interface RegexAnalysisResult {
 }
 
 /**
- * Analyze a regex pattern for common performance anti-patterns
+ * Analyze a regex pattern for common performance anti-patterns.
+ *
+ * @since 0.1.0
+ * @internal
+ * Not intended for external use.
+ *
  * @param pattern - The regex pattern to analyze
  * @returns RegexAnalysisResult indicating if there are performance issues
  */
@@ -727,8 +913,13 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
 }
 
 /**
- * Check for regex performance issues in meta-agent routing rules
- * Analyzes regex patterns in matchers for potential performance anti-patterns
+ * Check for regex performance issues in meta-agent routing rules.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Analyzes regex patterns in matchers for potential performance anti-patterns.
+ *
  * @param metaAgents - Map of meta-agent definitions
  * @returns Array of RegexPerformanceWarning for each performance issue found
  */
@@ -767,7 +958,11 @@ export function checkRegexPerformance(
 }
 
 /**
- * Helper function to check regex performance from validation context
+ * Helper function to check regex performance from validation context.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * @param config - The Olimpus configuration to validate
  * @param context - Optional validation context
  * @returns CheckResult with regex performance check status (always passes, warnings only)

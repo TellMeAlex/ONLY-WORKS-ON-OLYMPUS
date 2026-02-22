@@ -7,6 +7,10 @@ import type {
 
 /**
  * Translate OlimpusConfig to oh-my-opencode compatible config format.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * Extracts only oh-my-opencode passthrough fields (agents, categories, disabled_hooks).
  * Strips olimpus-specific fields (meta_agents, settings, skills).
  * Output is compatible with oh-my-opencode's PluginConfigSchema shape.
@@ -21,6 +25,10 @@ export function translateToOMOConfig(config: OlimpusConfig): OMOPluginConfig {
 
 /**
  * Extract Olimpus-specific meta-agent definitions from config.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * Returns only the meta_agents section (olimpus-specific extension).
  */
 export function extractMetaAgentDefs(
@@ -31,6 +39,10 @@ export function extractMetaAgentDefs(
 
 /**
  * OMOPluginConfig represents the oh-my-opencode compatible config shape.
+ *
+ * @since 0.1.0
+ * @stable
+ *
  * This is a subset of OhMyOpenCodeConfig containing only the fields
  * that plugins can set via JSONC config.
  */
