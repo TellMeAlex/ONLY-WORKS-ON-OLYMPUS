@@ -9,6 +9,7 @@ import type {
   AlwaysMatcher,
 } from "../config/schema.js";
 import type { RoutingLogger, MatcherEvaluation } from "./logger.js";
+import { deprecationWarn } from "../utils/deprecation.js";
 
 /**
  * Context information for evaluating routing rules.
@@ -199,6 +200,53 @@ function getMatchedContent(matcher: Matcher, context: RoutingContext): string {
 }
 
 /**
+ * Checks if a matcher type is deprecated and emits a deprecation warning.
+ *
+ * @since 0.4.0
+ * @internal
+ *
+ * This function checks the deprecated matcher registry and emits a warning
+ * if the matcher type has been marked as deprecated. Each deprecated matcher
+ * type will only emit a warning once per session.
+ *
+ * @param matcherType - The matcher type to check
+ * @see {@link https://github.com/anthropics/olimpus/blob/main/docs/STABILITY.md | STABILITY.md} for deprecation policy
+ */
+function checkDeprecatedMatcher(matcherType: string): void {
+  // Registry of deprecated matcher types.
+  // Add entries here when deprecating matcher types following STABILITY.md guidelines.
+  const deprecatedMatchers: Record<
+    string,
+    {
+      deprecatedSince: string;
+      removal: string;
+      replacement?: string;
+      docsUrl?: string;
+    }
+  > = {
+    // Example: "old_matcher_type": {
+    //   deprecatedSince: "0.4.0",
+    //   removal: "1.0.0",
+    //   replacement: "new_matcher_type",
+    //   docsUrl: "./docs/migration-v0.4.0.md"
+    // }
+  };
+
+  const deprecationInfo = deprecatedMatchers[matcherType];
+
+  if (deprecationInfo) {
+    deprecationWarn({
+      api: `Matcher type "${matcherType}"`,
+      version: deprecationInfo.deprecatedSince,
+      replacement: deprecationInfo.replacement,
+      removal: deprecationInfo.removal,
+      docsUrl: deprecationInfo.docsUrl,
+      message: `This matcher type is deprecated and will be removed in ${deprecationInfo.removal}. Please update your routing configuration.`,
+    });
+  }
+}
+
+/**
  * Evaluates a single matcher against the routing context.
  *
  * @since 0.1.0
@@ -223,6 +271,9 @@ export function evaluateMatcher(
   matcher: Matcher,
   context: RoutingContext
 ): boolean {
+  // Check if this matcher type is deprecated
+  checkDeprecatedMatcher(matcher.type);
+
   switch (matcher.type) {
     case "keyword":
       return evaluateKeywordMatcher(matcher, context);
