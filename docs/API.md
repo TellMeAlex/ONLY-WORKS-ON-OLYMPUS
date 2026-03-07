@@ -4,6 +4,10 @@
 
 This document describes all exported types, functions, and classes available when using the Olimpus Plugin.
 
+**Documentation Stability:** `@stable` `@since 0.1.0`
+
+All APIs documented below are subject to the [API Stability Policy](./STABILITY.md). Each API includes stability markers indicating its maturity level and the version it was introduced in.
+
 ---
 
 ## Table of Contents
@@ -45,6 +49,13 @@ Main plugin entry point for oh-my-opencode integration.
 **Type:** `Plugin`
 
 **Location:** `src/index.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Backward compatible within 0.x versions
+- ✅ Migration guides provided for any breaking changes
+- ✅ Configuration schema remains backward compatible
 
 ```typescript
 import OlimpusPlugin from "olimpus-plugin";
@@ -98,6 +109,13 @@ Creates the merged plugin interface combining oh-my-opencode with Olimpus extens
 
 **Location:** `src/plugin/wrapper.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Backward compatible within 0.x versions
+- ✅ Merge strategy remains stable
+- ✅ Return type `PluginInterface` remains compatible
+
 ```typescript
 import { createOlimpusWrapper } from "olimpus-plugin/plugin/wrapper";
 
@@ -137,6 +155,13 @@ Merges two PluginInterfaces into one combined interface.
 
 **Location:** `src/plugin/wrapper.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Merge strategy remains stable
+- ✅ Return type `PluginInterface` remains compatible
+- ✅ Parameter types remain compatible
+
 ```typescript
 import { mergePluginInterfaces, type PluginInterface } from "olimpus-plugin/plugin/wrapper";
 
@@ -160,6 +185,10 @@ Type alias for the Hooks type returned by plugins. Defines the contract between 
 
 **Location:** `src/plugin/wrapper.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Note:** This type is imported from `@opencode-ai/plugin`. Stability guarantees depend on that library.
+
 ```typescript
 import type { PluginInterface } from "olimpus-plugin/plugin/wrapper";
 
@@ -180,6 +209,13 @@ const interface: PluginInterface = {
 Registry for meta-agents with delegation tracking and circular dependency detection.
 
 **Location:** `src/agents/registry.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All public methods remain compatible
+- ✅ Delegation tracking behavior remains stable
+- ✅ Error handling for circular dependencies remains consistent
 
 ```typescript
 import { MetaAgentRegistry } from "olimpus-plugin/agents/registry";
@@ -208,6 +244,8 @@ new MetaAgentRegistry(maxDepth?: number, loggerConfig?: RoutingLoggerConfig)
 
 Register a meta-agent definition.
 
+**Stability:** `@stable` `@since 0.1.0`
+
 **Parameters:**
 
 | Name | Type | Description |
@@ -234,11 +272,15 @@ registry.register("my-agent", {
 
 Get all registered meta-agent definitions.
 
+**Stability:** `@stable` `@since 0.1.0`
+
 **Returns:** `Record<string, MetaAgentDef>` - Map of agent names to definitions
 
 ##### `resolve(name: string, context: RoutingContext): AgentConfig | null`
 
 Resolve a meta-agent to its AgentConfig by evaluating routing rules.
+
+**Stability:** `@stable` `@since 0.1.0`
 
 **Parameters:**
 
@@ -255,6 +297,8 @@ Resolve a meta-agent to its AgentConfig by evaluating routing rules.
 
 Track a delegation from one agent to another. Used for circular dependency detection.
 
+**Stability:** `@stable` `@since 0.1.0`
+
 **Parameters:**
 
 | Name | Type | Description |
@@ -265,6 +309,8 @@ Track a delegation from one agent to another. Used for circular dependency detec
 ##### `checkCircular(from: string, to: string, maxDepth?: number): boolean`
 
 Check if a delegation would create a circular dependency.
+
+**Stability:** `@stable` `@since 0.1.0`
 
 **Parameters:**
 
@@ -280,6 +326,8 @@ Check if a delegation would create a circular dependency.
 
 Get current delegation depth (longest chain tracked).
 
+**Stability:** `@stable` `@since 0.1.0`
+
 **Returns:** `number` - Maximum depth of tracked delegation chains
 
 ---
@@ -291,6 +339,13 @@ Get current delegation depth (longest chain tracked).
 Evaluates routing rules in order and returns the first matching route.
 
 **Location:** `src/agents/routing.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ First-match-win semantics remain stable
+- ✅ Matcher evaluation order is preserved
+- ✅ Return type `ResolvedRoute | null` remains compatible
 
 ```typescript
 import { evaluateRoutingRules } from "olimpus-plugin/agents/routing";
@@ -324,6 +379,13 @@ Evaluates a single matcher against the routing context.
 
 **Location:** `src/agents/routing.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Matcher evaluation behavior remains consistent
+- ✅ All matcher types (keyword, complexity, regex, project_context, always) are stable
+- ✅ Return type `boolean` remains compatible
+
 ```typescript
 import { evaluateMatcher } from "olimpus-plugin/agents/routing";
 
@@ -344,6 +406,13 @@ const matched = evaluateMatcher(matcher, context);
 Context passed to routing evaluation functions.
 
 **Location:** `src/agents/routing.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
 
 ```typescript
 interface RoutingContext {
@@ -368,6 +437,13 @@ interface RoutingContext {
 Result of successful routing evaluation.
 
 **Location:** `src/agents/routing.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
 
 ```typescript
 interface ResolvedRoute {
@@ -397,6 +473,14 @@ interface ResolvedRoute {
 Loads and validates `olimpus.jsonc` configuration from project or user config directory.
 
 **Location:** `src/config/loader.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Backward compatible configuration loading
+- ✅ Schema validation behavior remains stable
+- ✅ Config search order (project → user) is preserved
+- ✅ Merge behavior (project overrides user) is stable
 
 ```typescript
 import { loadOlimpusConfig } from "olimpus-plugin/config/loader";
@@ -443,6 +527,13 @@ Options for loading Olimpus configuration.
 
 **Location:** `src/config/loader.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Default values remain stable
+- ✅ New properties are optional (if added)
+
 ```typescript
 interface LoadOlimpusConfigOptions {
   validate?: boolean;
@@ -466,6 +557,16 @@ interface LoadOlimpusConfigOptions {
 Complete Olimpus configuration type.
 
 **Location:** `src/config/schema.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
+- ✅ Configuration structure remains backward compatible
+
+**Note:** This is the main configuration schema for `olimpus.jsonc`. See [STABILITY.md](./STABILITY.md) for detailed guarantees on configuration stability.
 
 ```typescript
 interface OlimpusConfig {
@@ -503,6 +604,14 @@ interface OlimpusConfig {
 Loads Olimpus skills from specified markdown file paths.
 
 **Location:** `src/skills/loader.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Skill loading behavior remains stable
+- ✅ YAML frontmatter format is backward compatible
+- ✅ `olimpus:` namespace prefix is applied consistently
+- ✅ Return type `SkillDefinition[]` remains compatible
 
 ```typescript
 import { loadOlimpusSkills } from "olimpus-plugin/skills/loader";
@@ -551,6 +660,13 @@ Merges base skills (from oh-my-opencode) with Olimpus skills.
 
 **Location:** `src/skills/loader.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ Merge strategy (Olimpus appended, no overwrites) remains stable
+- ✅ Duplicate removal behavior is consistent
+- ✅ Return type `SkillDefinition[]` remains compatible
+
 ```typescript
 import { mergeSkills } from "olimpus-plugin/skills/loader";
 
@@ -577,6 +693,15 @@ const mergedSkills = mergeSkills(baseSkills, olimpusSkills);
 Loaded skill definition with metadata and scope.
 
 **Location:** `src/skills/types.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
+
+**Note:** This type is compatible with the oh-my-opencode skill format.
 
 ```typescript
 interface SkillDefinition {
@@ -616,6 +741,13 @@ Discriminated union of all matcher types.
 
 **Location:** `src/config/schema.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All matcher types (keyword, complexity, regex, project_context, always) are stable
+- ✅ Matcher evaluation behavior remains consistent
+- ✅ New matcher types (if added) will be optional additions
+
 #### KeywordMatcher
 
 ```typescript
@@ -625,6 +757,8 @@ interface KeywordMatcher {
   mode: "any" | "all";
 }
 ```
+
+**Stability:** `@stable` `@since 0.1.0`
 
 Matches if prompt contains specified keywords (case-insensitive).
 
@@ -636,6 +770,8 @@ interface ComplexityMatcher {
   threshold: "low" | "medium" | "high";
 }
 ```
+
+**Stability:** `@stable` `@since 0.1.0`
 
 Routes based on heuristic complexity scoring (line count + keyword density).
 
@@ -649,6 +785,8 @@ interface RegexMatcher {
 }
 ```
 
+**Stability:** `@stable` `@since 0.1.0`
+
 Routes based on regex pattern matching.
 
 #### ProjectContextMatcher
@@ -661,6 +799,8 @@ interface ProjectContextMatcher {
 }
 ```
 
+**Stability:** `@stable` `@since 0.1.0`
+
 Routes based on project structure (files and dependencies).
 
 #### AlwaysMatcher
@@ -671,6 +811,8 @@ interface AlwaysMatcher {
 }
 ```
 
+**Stability:** `@stable` `@since 0.1.0`
+
 Catch-all fallback (matches everything).
 
 ### RoutingRule
@@ -678,6 +820,13 @@ Catch-all fallback (matches everything).
 Routing rule definition.
 
 **Location:** `src/config/schema.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
 
 ```typescript
 interface RoutingRule {
@@ -705,6 +854,13 @@ interface RoutingRule {
 Meta-agent definition.
 
 **Location:** `src/config/schema.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
 
 ```typescript
 interface MetaAgentDef {
@@ -736,6 +892,13 @@ Olimpus plugin settings.
 
 **Location:** `src/config/schema.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Default values remain stable
+- ✅ New properties are optional (if added)
+
 ```typescript
 interface Settings {
   namespace_prefix?: string;
@@ -766,6 +929,13 @@ Routing logger configuration for debugging.
 
 **Location:** `src/config/schema.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Default values remain stable
+- ✅ New properties are optional (if added)
+
 ```typescript
 interface RoutingLoggerConfig {
   enabled?: boolean;
@@ -781,6 +951,12 @@ Scope of a skill definition.
 
 **Location:** `src/skills/types.ts`
 
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All enum values remain available
+- ✅ New enum values (if added) will preserve existing values
+
 ```typescript
 type SkillScope = "builtin" | "config" | "user" | "project" | "olimpus";
 ```
@@ -790,6 +966,15 @@ type SkillScope = "builtin" | "config" | "user" | "project" | "olimpus";
 Command/skill definition compatible with oh-my-opencode format.
 
 **Location:** `src/skills/types.ts`
+
+**Stability:** `@stable` `@since 0.1.0`
+
+**Guarantees:**
+- ✅ All properties remain compatible
+- ✅ Property types remain stable
+- ✅ New properties are optional (if added)
+
+**Note:** This type is imported from `@opencode-ai/plugin`. Stability guarantees depend on that library.
 
 ```typescript
 interface CommandDefinition {
@@ -807,6 +992,10 @@ interface CommandDefinition {
 ---
 
 ## Error Handling
+
+**Stability:** `@stable` `@since 0.1.0`
+
+Error types and messages are part of the public API contract. Error handling behavior remains stable within 0.x versions.
 
 ### Common Errors
 
