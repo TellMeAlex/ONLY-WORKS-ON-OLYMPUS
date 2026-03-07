@@ -112,89 +112,6 @@ var AnalyticsConfigSchema = z.object({
     include_percentiles: z.boolean().optional()
   }).optional()
 });
-var ProjectOverrideSchema = z.object({
-  // Meta-agent overrides
-  meta_agents: z.record(z.string(), MetaAgentSchema.partial()).optional(),
-  // Provider configuration overrides
-  providers: ProviderConfigSchema.partial().optional(),
-  // Settings overrides
-  settings: SettingsSchema.partial().optional(),
-  // Agent overrides (passthrough for oh-my-opencode compatibility)
-  agents: AgentOverridesSchema.optional(),
-  // Category overrides
-  categories: CategoriesSchema.optional(),
-  // Skills overrides
-  skills: z.array(z.string()).optional()
-});
-var ProjectConfigSchema = z.object({
-  // Unique project identifier
-  project_id: z.string().min(1),
-  // Optional project display name
-  name: z.string().optional(),
-  // Path to the project directory
-  path: z.string().optional(),
-  // Project-specific overrides
-  overrides: ProjectOverrideSchema.optional(),
-  // Project metadata
-  metadata: z.object({
-    description: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional()
-  }).optional(),
-  // Analytics configuration for this project
-  analytics_enabled: z.boolean().default(true)
-});
-var SharedConfigSchema = z.object({
-  // Base configuration that all projects inherit
-  base_config: OlimpusConfigSchema.optional(),
-  // Default project configuration template
-  default_project: ProjectConfigSchema.partial().optional(),
-  // Global routing rules that apply to all projects
-  global_routing_rules: z.array(RoutingRuleSchema).optional(),
-  // Shared meta-agents available to all projects
-  shared_meta_agents: z.record(z.string(), MetaAgentSchema).optional()
-});
-var PortfolioConfigSchema = z.object({
-  // Enable cross-project analytics aggregation
-  enable_aggregation: z.boolean().default(true),
-  // Enable cross-project agent delegation
-  enable_cross_project_delegation: z.boolean().default(true),
-  // Agent namespace format for cross-project delegation
-  agent_namespace_format: z.string().default("{project_id}:{agent_name}"),
-  // Default project to use when no project is specified
-  default_project_id: z.string().optional(),
-  // Maximum delegation depth across projects
-  max_cross_project_depth: z.number().int().positive().default(5),
-  // Analytics aggregation settings
-  aggregation_settings: z.object({
-    // Minimum confidence threshold for portfolio-wide metrics
-    min_confidence_threshold: z.number().min(0).max(1).default(0.8),
-    // Window for rolling aggregation (in days)
-    aggregation_window_days: z.number().int().positive().default(30),
-    // Include anonymized project-level data in portfolio stats
-    include_project_anonymization: z.boolean().default(true)
-  }).optional()
-});
-var ProjectRegistryConfigSchema = z.object({
-  // Portfolio-wide settings
-  portfolio: PortfolioConfigSchema.optional(),
-  // Shared configurations available to all projects
-  shared_config: SharedConfigSchema.optional(),
-  // Individual project configurations
-  projects: z.record(z.string(), ProjectConfigSchema).default({}),
-  // Registry metadata
-  registry: z.object({
-    // Registry version
-    version: z.string().default("1.0.0"),
-    // Registry identifier
-    registry_id: z.string().optional(),
-    // Timestamp when registry was created
-    created_at: z.string().optional(),
-    // Timestamp when registry was last updated
-    updated_at: z.string().optional()
-  }).optional()
-});
 var SettingsSchema = z.object({
   namespace_prefix: z.string().default("olimpus"),
   max_delegation_depth: z.number().int().positive().default(3),
@@ -233,6 +150,65 @@ var OlimpusConfigSchema = z.object({
   agents: AgentOverridesSchema,
   categories: CategoriesSchema,
   disabled_hooks: z.array(z.string()).optional()
+});
+var ProjectOverrideSchema = z.object({
+  // Meta-agent overrides
+  meta_agents: z.record(z.string(), MetaAgentSchema.partial()).optional(),
+  providers: ProviderConfigSchema.partial().optional(),
+  settings: SettingsSchema.partial().optional(),
+  agents: AgentOverridesSchema.optional(),
+  categories: CategoriesSchema.optional(),
+  skills: z.array(z.string()).optional()
+});
+var ProjectConfigSchema = z.object({
+  // Unique project identifier
+  project_id: z.string().min(1),
+  name: z.string().optional(),
+  path: z.string().optional(),
+  overrides: ProjectOverrideSchema.optional(),
+  metadata: z.object({
+    description: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional()
+  }).optional(),
+  // Analytics configuration for this project
+  analytics_enabled: z.boolean().default(true)
+});
+var SharedConfigSchema = z.object({
+  // Base configuration that all projects inherit
+  base_config: OlimpusConfigSchema.optional(),
+  default_project: ProjectConfigSchema.partial().optional(),
+  global_routing_rules: z.array(RoutingRuleSchema).optional(),
+  shared_meta_agents: z.record(z.string(), MetaAgentSchema).optional()
+});
+var PortfolioConfigSchema = z.object({
+  // Enable cross-project analytics aggregation
+  enable_aggregation: z.boolean().default(true),
+  enable_cross_project_delegation: z.boolean().default(true),
+  agent_namespace_format: z.string().default("{project_id}:{agent_name}"),
+  default_project_id: z.string().optional(),
+  max_cross_project_depth: z.number().int().positive().default(5),
+  aggregation_settings: z.object({
+    // Minimum confidence threshold for portfolio-wide metrics
+    min_confidence_threshold: z.number().min(0).max(1).default(0.8),
+    aggregation_window_days: z.number().int().positive().default(30),
+    include_project_anonymization: z.boolean().default(true)
+  }).optional()
+});
+var ProjectRegistryConfigSchema = z.object({
+  // Portfolio-wide settings
+  portfolio: PortfolioConfigSchema.optional(),
+  shared_config: SharedConfigSchema.optional(),
+  projects: z.record(z.string(), ProjectConfigSchema).default({}),
+  registry: z.object({
+    // Registry version
+    version: z.string().default("1.0.0"),
+    registry_id: z.string().optional(),
+    created_at: z.string().optional(),
+    // Timestamp when registry was last updated
+    updated_at: z.string().optional()
+  }).optional()
 });
 
 // src/config/scaffolder.ts
@@ -2305,12 +2281,56 @@ var MetaAgentRegistry = class {
   maxDepth;
   logger;
   analyticsStorage;
-  constructor(maxDepth = 3, loggerConfig, analyticsStorage) {
+  projectRegistry;
+  constructor(maxDepth = 3, loggerConfig, analyticsStorage, projectRegistry) {
     this.maxDepth = maxDepth;
     this.analyticsStorage = analyticsStorage;
+    this.projectRegistry = projectRegistry;
     if (loggerConfig) {
       this.logger = new RoutingLogger(loggerConfig);
     }
+  }
+  /**
+   * Format an agent name with project namespace
+   * Uses ProjectRegistry's format if available, otherwise defaults to "project:agent"
+   */
+  formatAgentName(projectId, agentName) {
+    if (this.projectRegistry) {
+      return this.projectRegistry.formatAgentName(projectId, agentName);
+    }
+    return `${projectId}:${agentName}`;
+  }
+  /**
+   * Parse a namespaced agent name
+   * Returns { projectId, agentName } or null if not a valid namespaced name
+   */
+  parseAgentName(namespacedName) {
+    if (this.projectRegistry) {
+      return this.projectRegistry.parseAgentName(namespacedName);
+    }
+    const parts = namespacedName.split(":");
+    if (parts.length === 2) {
+      return { projectId: parts[0] ?? "", agentName: parts[1] ?? "" };
+    }
+    return null;
+  }
+  /**
+   * Check if a name is a namespaced agent name
+   */
+  isNamespacedName(name) {
+    return name.includes(":");
+  }
+  /**
+   * Check if cross-project delegation is enabled
+   */
+  isCrossProjectDelegationEnabled() {
+    return this.projectRegistry?.isCrossProjectDelegationEnabled() ?? false;
+  }
+  /**
+   * Get the maximum cross-project delegation depth
+   */
+  getMaxCrossProjectDepth() {
+    return this.projectRegistry?.getMaxCrossProjectDepth() ?? this.maxDepth;
   }
   /**
    * Register a meta-agent definition
@@ -2342,6 +2362,7 @@ var MetaAgentRegistry = class {
   /**
    * Track a delegation from one agent to another
    * Used for circular dependency detection
+   * Supports both local and cross-project agent delegation with namespacing
    */
   trackDelegation(from, to) {
     const key = `${from}:${to}`;
@@ -2351,13 +2372,20 @@ var MetaAgentRegistry = class {
    * Check if a delegation would create a circular dependency
    * Returns true if circular, false if safe
    */
-  checkCircular(from, to, maxDepth = this.maxDepth) {
-    return this.hasCircle(from, to, maxDepth, /* @__PURE__ */ new Set());
+  checkCircular(from, to, maxDepth) {
+    const effectiveMaxDepth = maxDepth ?? this.maxDepth;
+    const fromProjectId = this.parseAgentName(from)?.projectId;
+    const toProjectId = this.parseAgentName(to)?.projectId;
+    const isCrossProject = fromProjectId && toProjectId && fromProjectId !== toProjectId;
+    if (isCrossProject && this.isCrossProjectDelegationEnabled()) {
+      return this.hasCircle(from, to, this.getMaxCrossProjectDepth(), /* @__PURE__ */ new Set());
+    }
+    return this.hasCircle(from, to, effectiveMaxDepth, /* @__PURE__ */ new Set());
   }
   /**
    * Recursively check for circular paths in delegation chain
-   * @param current - Current agent in the chain
-   * @param target - Target agent we're trying to reach
+   * @param current - Current agent in the chain (may be namespaced)
+   * @param target - Target agent we're trying to reach (may be namespaced)
    * @param depth - Remaining depth to search
    * @param visited - Set of visited nodes to detect cycles
    * @returns true if a circular path exists, false otherwise
@@ -2784,7 +2812,7 @@ function loadOlimpusSkills(skillPaths, projectDir) {
 
 // src/analytics/storage.ts
 import { dirname as dirname4 } from "path";
-import { mkdirSync as mkdirSync4, existsSync as existsSync6 } from "fs";
+import { mkdirSync as mkdirSync4, existsSync as existsSync6, readFileSync as readFileSync3, writeFileSync as writeFileSync3 } from "fs";
 var CURRENT_VERSION = "1.0.0";
 var AnalyticsStorage = class {
   config;
@@ -2930,8 +2958,10 @@ var AnalyticsStorage = class {
     const sortedEvents = [...this.inMemoryEvents].sort(
       (a, b) => a.timestamp.localeCompare(b.timestamp)
     );
-    const firstTimestamp = sortedEvents.length > 0 ? sortedEvents[0].timestamp : void 0;
-    const lastTimestamp = sortedEvents.length > 0 ? sortedEvents[sortedEvents.length - 1].timestamp : void 0;
+    const firstEvent = sortedEvents[0];
+    const lastEvent = sortedEvents[sortedEvents.length - 1];
+    const firstTimestamp = firstEvent?.timestamp;
+    const lastTimestamp = lastEvent?.timestamp;
     return {
       events: sortedEvents,
       agent_metrics: {},
@@ -2962,8 +2992,7 @@ var AnalyticsStorage = class {
         this.inMemoryEvents = [];
         return;
       }
-      const file = Bun.file(this.storageFilePath);
-      const content = file.text();
+      const content = readFileSync3(this.storageFilePath, "utf-8");
       const data = JSON.parse(content);
       if (Array.isArray(data.events)) {
         this.inMemoryEvents = data.events;
@@ -2993,7 +3022,7 @@ var AnalyticsStorage = class {
       }
       const data = this.exportData();
       const json = JSON.stringify(data, null, 2);
-      Bun.write(this.storageFilePath, json);
+      writeFileSync3(this.storageFilePath, json, "utf-8");
     } catch {
     }
   }
@@ -3083,8 +3112,8 @@ var OlimpusPlugin = async (input) => {
   }
   return pluginInterface;
 };
-var index_default = OlimpusPlugin;
+var src_default = OlimpusPlugin;
 export {
-  index_default as default
+  src_default as default
 };
 //# sourceMappingURL=index.js.map

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "jsonc-parser";
-import { OlimpusConfigSchema, type OlimpusConfig } from "./schema.js";
+import { OlimpusConfigSchema, SharedConfigSchema, type OlimpusConfig, type SharedConfig } from "./schema.js";
 import { scaffoldOlimpusConfig } from "./scaffolder.js";
 import { validateOlimpusConfig, formatErrors, formatWarnings } from "./validator.js";
 
@@ -143,6 +143,43 @@ export async function loadOlimpusConfig(
       // For now, warnings are silently ignored to avoid breaking changes
       // but available for callers to check via the returned config if needed
     }
+  }
+
+  return result.data;
+}
+
+/**
+ * Load shared configuration from a file.
+ *
+ * Loads a shared configuration registry that contains base configurations
+ * shared across multiple projects. This is typically stored at
+ * ~/.config/opencode/registry.jsonc or at a custom path.
+ *
+ * @param filePath - Path to the shared config file. Defaults to ~/.config/opencode/registry.jsonc
+ * @returns Parsed and validated SharedConfig
+ * @throws Error if file doesn't exist or config is invalid according to schema
+ */
+export async function loadSharedConfig(filePath?: string): Promise<SharedConfig> {
+  const homeDir = process.env.HOME ?? ".";
+  const defaultPath = path.join(homeDir, ".config", "opencode", "registry.jsonc");
+  const sharedConfigPath = filePath ?? defaultPath;
+
+  // Check if file exists
+  if (!fs.existsSync(sharedConfigPath)) {
+    throw new Error(`Shared config file not found: ${sharedConfigPath}`);
+  }
+
+  // Read and parse the shared config
+  const content = fs.readFileSync(sharedConfigPath, "utf-8");
+  const parsed = parseJsonc(content, sharedConfigPath);
+
+  // Validate against SharedConfigSchema
+  const result = SharedConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    const errors = result.error.issues
+      .map((issue) => `  ${issue.path.join(".")} - ${issue.message}`)
+      .join("\n");
+    throw new Error(`Invalid shared config:\n${errors}`);
   }
 
   return result.data;
