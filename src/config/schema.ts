@@ -286,7 +286,7 @@ export const ProjectConfigSchema = z.object({
     })
     .optional(),
   // Analytics configuration for this project
-  analytics_enabled: z.boolean().default(true),
+  analytics_enabled: z.boolean().optional().default(true),
 });
 
 /**
@@ -307,11 +307,11 @@ export const SharedConfigSchema = z.object({
  */
 export const PortfolioConfigSchema = z.object({
   // Enable cross-project analytics aggregation
-  enable_aggregation: z.boolean().default(true),
-  enable_cross_project_delegation: z.boolean().default(true),
-  agent_namespace_format: z.string().default("{project_id}:{agent_name}"),
+  enable_aggregation: z.boolean().optional().default(true),
+  enable_cross_project_delegation: z.boolean().optional().default(true),
+  agent_namespace_format: z.string().optional().default("{project_id}:{agent_name}"),
   default_project_id: z.string().optional(),
-  max_cross_project_depth: z.number().int().positive().default(5),
+  max_cross_project_depth: z.number().int().positive().optional().default(5),
   aggregation_settings: z
     .object({
       // Minimum confidence threshold for portfolio-wide metrics
@@ -330,7 +330,7 @@ export const ProjectRegistryConfigSchema = z.object({
   // Portfolio-wide settings
   portfolio: PortfolioConfigSchema.optional(),
   shared_config: SharedConfigSchema.optional(),
-  projects: z.record(z.string(), ProjectConfigSchema).default({}),
+  projects: z.record(z.string(), ProjectConfigSchema).optional().default({}),
   registry: z
     .object({
       // Registry version
