@@ -158,6 +158,73 @@ export class AnalyticsStorage {
   }
 
   /**
+   * Retrieves events for a specific project
+   * Filters routing decisions by namespaced target agent (e.g., "project:agent")
+   * Filters portfolio events by portfolio_id
+   */
+  getEventsByProject(projectId: string): AnalyticsEvent[] {
+    if (!this.enabled) {
+      return [];
+    }
+
+    return this.inMemoryEvents.filter((event) => {
+      // Check routing decisions for namespaced agent names
+      if (event.type === "routing_decision") {
+        return event.target_agent.startsWith(`${projectId}:`);
+      }
+      // Check portfolio events for matching portfolio_id
+      if (
+        event.type === "portfolio_creation" ||
+        event.type === "portfolio_update" ||
+        event.type === "portfolio_value" ||
+        event.type === "asset_added" ||
+        event.type === "asset_removed" ||
+        event.type === "rebalancing"
+      ) {
+        return event.portfolio_id === projectId;
+      }
+      // Unmatched requests don't belong to a specific project
+      return false;
+    });
+  }
+
+  /**
+   * Returns all unique project IDs from stored events
+   * Extracts project IDs from namespaced agent names and portfolio IDs
+   */
+  getProjectIds(): string[] {
+    if (!this.enabled) {
+      return [];
+    }
+
+    const projectIds = new Set<string>();
+
+    for (const event of this.inMemoryEvents) {
+      // Extract project ID from namespaced agent names in routing decisions
+      if (event.type === "routing_decision") {
+        const colonIndex = event.target_agent.indexOf(":");
+        if (colonIndex > 0) {
+          const projectId = event.target_agent.slice(0, colonIndex);
+          projectIds.add(projectId);
+        }
+      }
+      // Extract portfolio IDs from portfolio events
+      else if (
+        event.type === "portfolio_creation" ||
+        event.type === "portfolio_update" ||
+        event.type === "portfolio_value" ||
+        event.type === "asset_added" ||
+        event.type === "asset_removed" ||
+        event.type === "rebalancing"
+      ) {
+        projectIds.add(event.portfolio_id);
+      }
+    }
+
+    return Array.from(projectIds).sort();
+  }
+
+  /**
    * Prunes events based on retention days and max_events limit
    * Removes events older than retention_days
    * Removes excess events if count exceeds max_events
