@@ -93,6 +93,7 @@ describe("ProjectRegistry", () => {
           default_project_id: "project1",
           max_cross_project_depth: 5,
         },
+        projects: {},
       };
 
       // Act
@@ -243,14 +244,17 @@ describe("ProjectRegistry", () => {
         project1: {
           project_id: "project1",
           name: "Project 1",
+          analytics_enabled: true,
         },
         project2: {
           project_id: "project2",
           name: "Project 2",
+          analytics_enabled: true,
         },
         project3: {
           project_id: "project3",
           name: "Project 3",
+          analytics_enabled: true,
         },
       };
 
@@ -322,6 +326,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         overrides: {
           meta_agents: {
             router: {
@@ -376,6 +381,7 @@ describe("ProjectRegistry", () => {
 
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         overrides: {
           meta_agents: {
             router: {
@@ -461,6 +467,7 @@ describe("ProjectRegistry", () => {
 
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         overrides: {
           agents: {
             hephaestus: {
@@ -575,6 +582,9 @@ describe("ProjectRegistry", () => {
       // Arrange
       const portfolioConfig: PortfolioConfig = {
         enable_aggregation: false,
+        enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
         default_project_id: "project1",
       };
       registry.setPortfolioConfig(portfolioConfig);
@@ -594,6 +604,9 @@ describe("ProjectRegistry", () => {
       // Arrange
       const portfolioConfig: PortfolioConfig = {
         enable_aggregation: true,
+        enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
       };
 
       // Act
@@ -615,7 +628,12 @@ describe("ProjectRegistry", () => {
 
     test("returns null when portfolio config has no default project", () => {
       // Arrange
-      registry.setPortfolioConfig({ enable_aggregation: true });
+      registry.setPortfolioConfig({
+        enable_aggregation: true,
+        enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
+      });
 
       // Act
       const result = registry.getDefaultProjectId();
@@ -628,6 +646,9 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.setPortfolioConfig({
         enable_aggregation: true,
+        enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
         default_project_id: "my_project",
       });
 
@@ -651,7 +672,10 @@ describe("ProjectRegistry", () => {
     test("returns false when explicitly disabled", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
         enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
       });
 
       // Act
@@ -664,7 +688,10 @@ describe("ProjectRegistry", () => {
     test("returns true when explicitly enabled", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
         enable_cross_project_delegation: true,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
       });
 
       // Act
@@ -688,6 +715,9 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.setPortfolioConfig({
         enable_aggregation: false,
+        enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
+        max_cross_project_depth: 5,
       });
 
       // Act
@@ -710,6 +740,9 @@ describe("ProjectRegistry", () => {
     test("returns configured max depth", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
+        enable_cross_project_delegation: false,
+        agent_namespace_format: "{project_id}:{agent_name}",
         max_cross_project_depth: 10,
       });
 
@@ -733,7 +766,10 @@ describe("ProjectRegistry", () => {
     test("returns configured format", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
+        enable_cross_project_delegation: false,
         agent_namespace_format: "{project_id}_{agent_name}",
+        max_cross_project_depth: 5,
       });
 
       // Act
@@ -756,7 +792,10 @@ describe("ProjectRegistry", () => {
     test("formats agent name with custom format", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
+        enable_cross_project_delegation: false,
         agent_namespace_format: "{project_id}/{agent_name}",
+        max_cross_project_depth: 5,
       });
 
       // Act
@@ -769,7 +808,10 @@ describe("ProjectRegistry", () => {
     test("handles different format patterns", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
+        enable_cross_project_delegation: false,
         agent_namespace_format: "[{agent_name}]@{project_id}",
+        max_cross_project_depth: 5,
       });
 
       // Act
@@ -815,7 +857,10 @@ describe("ProjectRegistry", () => {
     test("handles custom format with registered projects", () => {
       // Arrange
       registry.setPortfolioConfig({
+        enable_aggregation: false,
+        enable_cross_project_delegation: false,
         agent_namespace_format: "{project_id}_{agent_name}",
+        max_cross_project_depth: 5,
       });
       registry.register("project1", { project_id: "project1", analytics_enabled: true });
 
@@ -892,6 +937,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
       });
 
       // Act
@@ -905,6 +951,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         metadata: {
           description: "Test project",
           tags: ["test", "demo"],
@@ -936,18 +983,21 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         metadata: {
           tags: ["test", "demo"],
         },
       });
       registry.register("project2", {
         project_id: "project2",
+        analytics_enabled: true,
         metadata: {
           tags: ["production"],
         },
       });
       registry.register("project3", {
         project_id: "project3",
+        analytics_enabled: true,
         metadata: {
           tags: ["test", "urgent"],
         },
@@ -967,6 +1017,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         metadata: {
           tags: ["test"],
         },
@@ -983,12 +1034,14 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         metadata: {
           tags: ["test"],
         },
       });
       registry.register("project2", {
         project_id: "project2",
+        analytics_enabled: true,
       });
 
       // Act
@@ -1016,6 +1069,7 @@ describe("ProjectRegistry", () => {
       registry.register("project1", {
         project_id: "project1",
         name: "Original",
+        analytics_enabled: true,
       });
 
       // Act
@@ -1035,6 +1089,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
       });
 
       // Act
@@ -1051,6 +1106,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         overrides: {
           meta_agents: {
             agent1: {
@@ -1095,6 +1151,7 @@ describe("ProjectRegistry", () => {
       // Arrange
       registry.register("project1", {
         project_id: "project1",
+        analytics_enabled: true,
         metadata: {
           description: "Original",
           created_at: "2024-01-01T00:00:00Z",
@@ -1129,8 +1186,8 @@ describe("ProjectRegistry", () => {
     test("returns correct count after registrations", () => {
       // Arrange
       registry.register("project1", { project_id: "project1", analytics_enabled: true });
-      registry.register("project2", { project_id: "project2" });
-      registry.register("project3", { project_id: "project3" });
+      registry.register("project2", { project_id: "project2", analytics_enabled: true });
+      registry.register("project3", { project_id: "project3", analytics_enabled: true });
 
       // Act & Assert
       expect(registry.getProjectCount()).toBe(3);
@@ -1139,7 +1196,7 @@ describe("ProjectRegistry", () => {
     test("returns correct count after unregister", () => {
       // Arrange
       registry.register("project1", { project_id: "project1", analytics_enabled: true });
-      registry.register("project2", { project_id: "project2" });
+      registry.register("project2", { project_id: "project2", analytics_enabled: true });
 
       // Act
       registry.unregister("project1");
@@ -1151,7 +1208,7 @@ describe("ProjectRegistry", () => {
     test("returns correct count after overwriting registration", () => {
       // Arrange
       registry.register("project1", { project_id: "project1", analytics_enabled: true });
-      registry.register("project2", { project_id: "project2" });
+      registry.register("project2", { project_id: "project2", analytics_enabled: true });
 
       // Act - overwriting project1 doesn't change count
       registry.register("project1", { project_id: "project1", analytics_enabled: true });
