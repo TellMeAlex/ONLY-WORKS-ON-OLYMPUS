@@ -3,13 +3,13 @@
   "spec": "015-api-stability-guarantee",
   "state": "building",
   "subtasks": {
-    "completed": 9,
+    "completed": 14,
     "total": 18,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Deprecation Support",
+    "current": "Documentation Integration",
     "id": null,
     "total": 3
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 8,
     "started_at": "2026-03-07T21:08:42.669959"
   },
-  "last_update": "2026-03-07T21:14:44.436880"
+  "last_update": "2026-03-07T21:44:30.132375"
 }
