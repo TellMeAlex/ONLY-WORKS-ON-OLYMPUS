@@ -1,7 +1,7 @@
 import type { Plugin, PluginInput } from "@opencode-ai/plugin";
 /** Minimal Config type — mirrors @opencode-ai/sdk without the broken dependency */
 type Config = { agent?: Record<string, unknown>; [key: string]: unknown };
-import { loadOlimpusConfig } from "./config/loader.js";
+import { loadOlimpusConfig, loadProjectRegistryConfig } from "./config/loader.js";
 import { extractMetaAgentDefs } from "./config/translator.js";
 import {
   createOlimpusWrapper,
@@ -11,6 +11,7 @@ import { MetaAgentRegistry } from "./agents/registry.js";
 import { ateneo, hermes, hades } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
 import { AnalyticsStorage } from "./analytics/storage.js";
+import { ProjectRegistry } from "./registry/project-registry.js";
 import { join } from "path";
 
 /**
@@ -18,11 +19,13 @@ import { join } from "path";
  *
  * Execution flow:
  * 1. Load olimpus.jsonc from project directory
- * 2. Create MetaAgentRegistry and register all meta-agents (built-in + config)
- * 3. Call createOlimpusWrapper() to get merged PluginInterface
- * 4. Enhance config handler to register meta-agent AgentConfigs
- * 5. Load and merge Olimpus skills if configured
- * 6. Return final PluginInterface
+ * 2. Load project registry configuration if available
+ * 3. Create ProjectRegistry instance with loaded config
+ * 4. Create MetaAgentRegistry and register all meta-agents (built-in + config)
+ * 5. Call createOlimpusWrapper() to get merged PluginInterface
+ * 6. Enhance config handler to register meta-agent AgentConfigs
+ * 7. Load and merge Olimpus skills if configured
+ * 8. Return final PluginInterface
  *
  * Error handling:
  * - If olimpus.jsonc not found: logs warning, falls through to oh-my-opencode defaults
@@ -61,7 +64,20 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
     });
   }
 
-  const registry = new MetaAgentRegistry(maxDepth, loggerConfig, analyticsStorage);
+  // Load project registry configuration
+  let projectRegistry: ProjectRegistry | undefined;
+  try {
+    const registryConfig = await loadProjectRegistryConfig();
+    projectRegistry = new ProjectRegistry(registryConfig, analyticsStorage);
+  } catch (error) {
+    console.warn(
+      `[Olimpus] Failed to load project registry config: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
+  const registry = new MetaAgentRegistry(maxDepth, loggerConfig, analyticsStorage, projectRegistry);
 
   const configMetaAgents = extractMetaAgentDefs(config);
   for (const [name, def] of Object.entries(configMetaAgents)) {
