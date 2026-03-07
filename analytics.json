@@ -1,0 +1,16 @@
+{
+  "events": [
+    {
+      "type": "routing_decision",
+      "timestamp": "2026-02-22T17:29:52.327Z",
+      "target_agent": "test-agent",
+      "matcher_type": "keyword"
+    }
+  ],
+  "agent_metrics": {},
+  "matcher_metrics": {},
+  "total_events": 1,
+  "first_event_timestamp": "2026-02-22T17:29:52.327Z",
+  "last_event_timestamp": "2026-02-22T17:29:52.327Z",
+  "version": "1.0.0"
+}

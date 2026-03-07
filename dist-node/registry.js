@@ -1,37 +1,13 @@
-import type { MetaAgentDef, RoutingLoggerConfig } from "../config/schema.js";
-import type { RoutingContext } from "./routing.js";
 import { createMetaAgentConfig } from "./meta-agent.js";
 import { RoutingLogger } from "./logger.js";
-import type { AgentConfig } from "./meta-agent.js";
-import type { AnalyticsStorage } from "../analytics/storage.js";
-import type { ProjectRegistry } from "../registry/project-registry.js";
-
-/**
- * Tracks delegation chains to detect circular dependencies
- * Key: "from:to", Value: depth level
- */
-interface DelegationTracker {
-  [key: string]: number;
-}
-
-/**
- * Registry for meta-agents with delegation tracking, circular dependency detection,
- * and cross-project agent delegation support
- */
-export class MetaAgentRegistry {
-  private definitions: Map<string, MetaAgentDef> = new Map();
-  private delegations: DelegationTracker = {};
-  private maxDepth: number;
-  private logger?: RoutingLogger;
-  private analyticsStorage?: AnalyticsStorage;
-  private projectRegistry?: ProjectRegistry;
-
-  constructor(
-    maxDepth: number = 3,
-    loggerConfig?: RoutingLoggerConfig,
-    analyticsStorage?: AnalyticsStorage,
-    projectRegistry?: ProjectRegistry,
-  ) {
+class MetaAgentRegistry {
+  definitions = /* @__PURE__ */ new Map();
+  delegations = {};
+  maxDepth;
+  logger;
+  analyticsStorage;
+  projectRegistry;
+  constructor(maxDepth = 3, loggerConfig, analyticsStorage, projectRegistry) {
     this.maxDepth = maxDepth;
     this.analyticsStorage = analyticsStorage;
     this.projectRegistry = projectRegistry;
@@ -39,23 +15,21 @@ export class MetaAgentRegistry {
       this.logger = new RoutingLogger(loggerConfig);
     }
   }
-
   /**
    * Format an agent name with project namespace
    * Uses ProjectRegistry's format if available, otherwise defaults to "project:agent"
    */
-  formatAgentName(projectId: string, agentName: string): string {
+  formatAgentName(projectId, agentName) {
     if (this.projectRegistry) {
       return this.projectRegistry.formatAgentName(projectId, agentName);
     }
     return `${projectId}:${agentName}`;
   }
-
   /**
    * Parse a namespaced agent name
    * Returns { projectId, agentName } or null if not a valid namespaced name
    */
-  parseAgentName(namespacedName: string): { projectId: string; agentName: string } | null {
+  parseAgentName(namespacedName) {
     if (this.projectRegistry) {
       return this.projectRegistry.parseAgentName(namespacedName);
     }
@@ -65,92 +39,74 @@ export class MetaAgentRegistry {
     }
     return null;
   }
-
   /**
    * Check if a name is a namespaced agent name
    */
-  isNamespacedName(name: string): boolean {
+  isNamespacedName(name) {
     return name.includes(":");
   }
-
   /**
    * Check if cross-project delegation is enabled
    */
-  isCrossProjectDelegationEnabled(): boolean {
+  isCrossProjectDelegationEnabled() {
     return this.projectRegistry?.isCrossProjectDelegationEnabled() ?? false;
   }
-
   /**
    * Get the maximum cross-project delegation depth
    */
-  getMaxCrossProjectDepth(): number {
+  getMaxCrossProjectDepth() {
     return this.projectRegistry?.getMaxCrossProjectDepth() ?? this.maxDepth;
   }
-
   /**
    * Register a meta-agent definition
    */
-  register(name: string, def: MetaAgentDef): void {
+  register(name, def) {
     this.definitions.set(name, def);
   }
-
   /**
    * Get all registered meta-agent definitions
    */
-  getAll(): Record<string, MetaAgentDef> {
-    const result: Record<string, MetaAgentDef> = {};
+  getAll() {
+    const result = {};
     for (const [name, def] of this.definitions.entries()) {
       result[name] = def;
     }
     return result;
   }
-
   /**
    * Resolve a meta-agent to its AgentConfig by evaluating routing rules
    * Returns null if no route matches
    */
-  resolve(name: string, context: RoutingContext): AgentConfig | null {
+  resolve(name, context) {
     const def = this.definitions.get(name);
     if (!def) {
       throw new Error(`Meta-agent "${name}" not registered`);
     }
-
     return createMetaAgentConfig(def, context, name, this.logger);
   }
-
   /**
    * Track a delegation from one agent to another
    * Used for circular dependency detection
    * Supports both local and cross-project agent delegation with namespacing
    */
-  trackDelegation(from: string, to: string): void {
+  trackDelegation(from, to) {
     const key = `${from}:${to}`;
     this.delegations[key] = (this.delegations[key] ?? 0) + 1;
   }
-
   /**
    * Check if a delegation would create a circular dependency
    * Returns true if circular, false if safe
    */
-  checkCircular(
-    from: string,
-    to: string,
-    maxDepth?: number,
-  ): boolean {
-    // Determine appropriate max depth
+  checkCircular(from, to, maxDepth) {
     const effectiveMaxDepth = maxDepth ?? this.maxDepth;
     const fromProjectId = this.parseAgentName(from)?.projectId;
     const toProjectId = this.parseAgentName(to)?.projectId;
-
-    // Use cross-project max depth if delegating across projects and delegation is enabled
     const isCrossProject = fromProjectId && toProjectId && fromProjectId !== toProjectId;
     if (isCrossProject && this.isCrossProjectDelegationEnabled()) {
-      return this.hasCircle(from, to, this.getMaxCrossProjectDepth(), new Set());
+      return this.hasCircle(from, to, this.getMaxCrossProjectDepth(), /* @__PURE__ */ new Set());
     }
-
-    return this.hasCircle(from, to, effectiveMaxDepth, new Set());
+    return this.hasCircle(from, to, effectiveMaxDepth, /* @__PURE__ */ new Set());
   }
-
   /**
    * Recursively check for circular paths in delegation chain
    * @param current - Current agent in the chain (may be namespaced)
@@ -159,29 +115,17 @@ export class MetaAgentRegistry {
    * @param visited - Set of visited nodes to detect cycles
    * @returns true if a circular path exists, false otherwise
    */
-  private hasCircle(
-    current: string,
-    target: string,
-    depth: number,
-    visited: Set<string>,
-  ): boolean {
+  hasCircle(current, target, depth, visited) {
     if (depth <= 0) {
       return false;
     }
-
     if (visited.has(current)) {
-      // Already visited this node in this path - potential cycle
       return true;
     }
-
     if (current === target) {
-      // Direct connection found (including namespaced names)
       return true;
     }
-
     visited.add(current);
-
-    // Check all known delegations from current agent
     for (const [delegation, _count] of Object.entries(this.delegations)) {
       const [from, next] = delegation.split(":");
       if (from === current && next) {
@@ -190,23 +134,18 @@ export class MetaAgentRegistry {
         }
       }
     }
-
     return false;
   }
-
   /**
    * Get current delegation depth (longest chain tracked)
    */
-  getMaxTrackedDepth(): number {
+  getMaxTrackedDepth() {
     let maxDepth = 0;
-
     for (const delegation of Object.keys(this.delegations)) {
       const parts = delegation.split(":");
       if (parts.length === 2) {
-        // Count how many hops from this starting point
         let depth = 1;
         let current = parts[1];
-
         while (true) {
           let found = false;
           for (const next of Object.keys(this.delegations)) {
@@ -220,11 +159,12 @@ export class MetaAgentRegistry {
           }
           if (!found) break;
         }
-
         maxDepth = Math.max(maxDepth, depth);
       }
     }
-
     return maxDepth;
   }
 }
+export {
+  MetaAgentRegistry
+};
