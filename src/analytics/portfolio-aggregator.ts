@@ -326,16 +326,13 @@ export class PortfolioAggregator {
    */
   filterByUser(userId: string): AnalyticsEvent[] {
     return this.events.filter((event) => {
-      const eventsWithUser: Array<AnalyticsEvent & { user_id?: string }> = [
-        "portfolio_creation",
-        "portfolio_update",
-        "asset_added",
-        "asset_removed",
-        "rebalancing",
-      ].includes(event.type)
-        ? event
-        : { ...event, user_id: undefined };
-      return eventsWithUser.user_id === userId;
+      const hasUserId =
+        event.type === "portfolio_creation" ||
+        event.type === "portfolio_update" ||
+        event.type === "asset_added" ||
+        event.type === "asset_removed" ||
+        event.type === "rebalancing";
+      return hasUserId && (event as any).user_id === userId;
     });
   }
 
@@ -463,11 +460,14 @@ export class PortfolioAggregator {
           event.portfolio_name,
         );
       }
-      portfolioMetrics[event.portfolio_id].created_at = event.timestamp;
-      portfolioMetrics[event.portfolio_id].initial_value = event.initial_value;
-      portfolioMetrics[event.portfolio_id].currency = event.currency;
-      if (event.strategy) {
-        portfolioMetrics[event.portfolio_id].strategy = event.strategy;
+      const metrics = portfolioMetrics[event.portfolio_id];
+      if (metrics) {
+        metrics.created_at = event.timestamp;
+        metrics.initial_value = event.initial_value;
+        metrics.currency = event.currency;
+        if (event.strategy) {
+          metrics.strategy = event.strategy;
+        }
       }
     }
 
@@ -489,18 +489,21 @@ export class PortfolioAggregator {
         );
       }
 
-      portfolioMetrics[event.portfolio_id].current_value = event.total_value;
-      portfolioMetrics[event.portfolio_id].currency = event.currency;
-      portfolioMetrics[event.portfolio_id].asset_count = event.asset_count;
+      const metrics = portfolioMetrics[event.portfolio_id];
+      if (metrics) {
+        metrics.current_value = event.total_value;
+        metrics.currency = event.currency;
+        metrics.asset_count = event.asset_count;
 
-      if (event.daily_return !== undefined) {
-        portfolioMetrics[event.portfolio_id].daily_return = event.daily_return;
-      }
-      if (event.total_return !== undefined) {
-        portfolioMetrics[event.portfolio_id].total_return = event.total_return;
-      }
+        if (event.daily_return !== undefined) {
+          metrics.daily_return = event.daily_return;
+        }
+        if (event.total_return !== undefined) {
+          metrics.total_return = event.total_return;
+        }
 
-      portfolioMetrics[event.portfolio_id].last_updated = event.timestamp;
+        metrics.last_updated = event.timestamp;
+      }
     }
 
     // Apply asset counts to portfolios that don't have value events
@@ -539,8 +542,11 @@ export class PortfolioAggregator {
       if (!assetsByType[event.asset_type]) {
         assetsByType[event.asset_type] = {};
       }
-      assetsByType[event.asset_type][event.asset_name] =
-        (assetsByType[event.asset_type][event.asset_name] ?? 0) + event.total_value;
+      const typeAssets = assetsByType[event.asset_type];
+      if (typeAssets) {
+        typeAssets[event.asset_name] =
+          (typeAssets[event.asset_name] ?? 0) + event.total_value;
+      }
     }
 
     // Subtract removed assets
@@ -549,8 +555,11 @@ export class PortfolioAggregator {
       assetCounts[event.asset_type] = (assetCounts[event.asset_type] ?? 0) - 1;
 
       if (assetsByType[event.asset_type]) {
-        assetsByType[event.asset_type][event.asset_name] =
-          (assetsByType[event.asset_type][event.asset_name] ?? 0) - event.total_value;
+        const typeAssets = assetsByType[event.asset_type];
+        if (typeAssets) {
+          typeAssets[event.asset_name] =
+            (typeAssets[event.asset_name] ?? 0) - event.total_value;
+        }
       }
     }
 
@@ -601,19 +610,21 @@ export class PortfolioAggregator {
       }
 
       const metrics = rebalancingMetrics[event.portfolio_id];
-      metrics.total_rebalances += 1;
-      metrics.total_trades_executed += event.trades_executed;
+      if (metrics) {
+        metrics.total_rebalances += 1;
+        metrics.total_trades_executed += event.trades_executed;
 
-      // Track by trigger reason
-      metrics.by_trigger_reason[event.trigger_reason] =
-        (metrics.by_trigger_reason[event.trigger_reason] ?? 0) + 1;
+        // Track by trigger reason
+        metrics.by_trigger_reason[event.trigger_reason] =
+          (metrics.by_trigger_reason[event.trigger_reason] ?? 0) + 1;
 
-      // Track by strategy
-      metrics.by_strategy[event.strategy] = (metrics.by_strategy[event.strategy] ?? 0) + 1;
+        // Track by strategy
+        metrics.by_strategy[event.strategy] = (metrics.by_strategy[event.strategy] ?? 0) + 1;
 
-      // Update last rebalanced timestamp
-      if (!metrics.last_rebalanced || event.timestamp > metrics.last_rebalanced) {
-        metrics.last_rebalanced = event.timestamp;
+        // Update last rebalanced timestamp
+        if (!metrics.last_rebalanced || event.timestamp > metrics.last_rebalanced) {
+          metrics.last_rebalanced = event.timestamp;
+        }
       }
     }
 
@@ -663,7 +674,10 @@ export class PortfolioAggregator {
       if (!timeSeriesByPortfolio[event.portfolio_id]) {
         timeSeriesByPortfolio[event.portfolio_id] = {};
       }
-      timeSeriesByPortfolio[event.portfolio_id][timeKey] = event.total_value;
+      const portfolioSeries = timeSeriesByPortfolio[event.portfolio_id];
+      if (portfolioSeries) {
+        portfolioSeries[timeKey] = event.total_value;
+      }
     }
 
     // Also aggregate across all portfolios
@@ -889,12 +903,18 @@ export class PortfolioAggregator {
           value: 0,
         };
       }
-      assetValues[event.asset_name].value += event.total_value;
+      const assetValue = assetValues[event.asset_name];
+      if (assetValue) {
+        assetValue.value += event.total_value;
+      }
     }
 
     for (const event of assetRemovedEvents) {
       if (assetValues[event.asset_name]) {
-        assetValues[event.asset_name].value -= event.total_value;
+        const assetValue = assetValues[event.asset_name];
+        if (assetValue) {
+          assetValue.value -= event.total_value;
+        }
       }
     }
 

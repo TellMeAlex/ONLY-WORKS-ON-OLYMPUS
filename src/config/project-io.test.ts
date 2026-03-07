@@ -138,6 +138,7 @@ describe("project-io", () => {
             router: {
               // Missing required delegates_to
               base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus"],
               routing_rules: [
                 {
                   matcher: { type: "always" },
@@ -159,6 +160,7 @@ describe("project-io", () => {
             router: {
               // Missing delegates_to - would fail schema validation
               base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus"],
               routing_rules: [
                 {
                   matcher: { type: "always" },
@@ -379,6 +381,7 @@ describe("project-io", () => {
             router: {
               // Missing delegates_to field
               base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus"],
               routing_rules: [
                 {
                   matcher: { type: "always" },
@@ -717,6 +720,7 @@ describe("project-io", () => {
           },
           settings: {
             namespace_prefix: "test-namespace",
+            max_delegation_depth: 3,
           },
         };
 

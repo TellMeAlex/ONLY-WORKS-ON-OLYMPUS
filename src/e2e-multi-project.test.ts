@@ -35,16 +35,17 @@ import type {
   PortfolioConfig,
   OlimpusConfig,
   MetaAgentDef,
-  RoutingContext,
+} from "./config/schema.js";
+import type {
+  ProjectRegistryConfig,
+} from "./config/schema.js";
+import type {
   AnalyticsEvent,
   PortfolioCreationEvent,
   PortfolioValueEvent,
   AssetAddedEvent,
   RebalancingEvent,
-} from "./config/schema.js";
-import type {
-  ProjectRegistryConfig,
-} from "./config/schema.js";
+} from "./analytics/types.js";
 
 describe("Multi-Project Orchestration End-to-End", () => {
   let tempDir: string;
@@ -52,7 +53,6 @@ describe("Multi-Project Orchestration End-to-End", () => {
   let analyticsStorage: AnalyticsStorage;
   let projectRegistry: ProjectRegistry;
   let agentRegistry: MetaAgentRegistry;
-  let routingContext: RoutingContext;
 
   beforeEach(() => {
     // Create temp directory
@@ -67,14 +67,6 @@ describe("Multi-Project Orchestration End-to-End", () => {
       retention_days: 90,
       auto_prune: false,
     });
-
-    // Create routing context
-    routingContext = {
-      prompt: "test prompt",
-      projectDir: tempDir,
-      projectFiles: [],
-      projectDeps: [],
-    };
   });
 
   afterEach(() => {
@@ -1130,6 +1122,7 @@ describe("Multi-Project Orchestration End-to-End", () => {
       const olimpusConfig: OlimpusConfig = {
         settings: {
           namespace_prefix: "olimpus",
+          max_delegation_depth: 3,
         },
         agents: {},
         categories: {},
@@ -1149,7 +1142,10 @@ describe("Multi-Project Orchestration End-to-End", () => {
     test("should create parent directories on export", async () => {
       // Arrange
       const olimpusConfig: OlimpusConfig = {
-        settings: { namespace_prefix: "olimpus" },
+        settings: {
+          namespace_prefix: "olimpus",
+          max_delegation_depth: 3,
+        },
         agents: {},
         categories: {},
       };

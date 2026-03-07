@@ -1,13 +1,15 @@
 import { test, expect, describe, beforeEach } from "bun:test";
 import {
   ProjectRegistry,
-  type ProjectRegistryConfig,
-  type ProjectConfig,
-  type SharedConfig,
-  type PortfolioConfig,
-  type OlimpusConfig,
 } from "./project-registry.js";
-import type { MetaAgentDef } from "../config/schema.js";
+import type {
+  ProjectRegistryConfig,
+  ProjectConfig,
+  SharedConfig,
+  PortfolioConfig,
+  OlimpusConfig,
+  MetaAgentDef,
+} from "../config/schema.js";
 
 describe("ProjectRegistry", () => {
   let registry: ProjectRegistry;
@@ -69,6 +71,7 @@ describe("ProjectRegistry", () => {
             },
           },
         },
+        projects: {},
       };
 
       // Act
@@ -88,6 +91,7 @@ describe("ProjectRegistry", () => {
           enable_cross_project_delegation: false,
           agent_namespace_format: "{project_id}_{agent_name}",
           default_project_id: "project1",
+          max_cross_project_depth: 5,
         },
       };
 
@@ -107,12 +111,16 @@ describe("ProjectRegistry", () => {
       const config: ProjectRegistryConfig = {
         portfolio: {
           enable_aggregation: true,
+          enable_cross_project_delegation: false,
+          agent_namespace_format: "{project_id}:{agent_name}",
           default_project_id: "default_project",
+          max_cross_project_depth: 5,
         },
         shared_config: {
           base_config: {
             settings: {
               namespace_prefix: "test",
+              max_delegation_depth: 3,
             },
           },
         },
@@ -120,6 +128,7 @@ describe("ProjectRegistry", () => {
           project1: {
             project_id: "project1",
             name: "Project 1",
+            analytics_enabled: true,
           },
         },
       };
@@ -156,10 +165,12 @@ describe("ProjectRegistry", () => {
       const project1: ProjectConfig = {
         project_id: "test_project",
         name: "Original",
+        analytics_enabled: true,
       };
       const project2: ProjectConfig = {
         project_id: "test_project",
         name: "Updated",
+        analytics_enabled: true,
       };
 
       // Act
@@ -177,6 +188,7 @@ describe("ProjectRegistry", () => {
       const projectConfig: ProjectConfig = {
         project_id: "wrong_id",
         name: "Test",
+        analytics_enabled: true,
       };
 
       // Act
@@ -194,6 +206,7 @@ describe("ProjectRegistry", () => {
       const projectConfig: ProjectConfig = {
         project_id: "test_project",
         name: "Test Project",
+        analytics_enabled: true,
       };
       registry.register("test_project", projectConfig);
 
@@ -260,7 +273,7 @@ describe("ProjectRegistry", () => {
   describe("has", () => {
     test("returns true for registered project", () => {
       // Arrange
-      registry.register("test_project", { project_id: "test_project" });
+      registry.register("test_project", { project_id: "test_project", analytics_enabled: true });
 
       // Act & Assert
       expect(registry.has("test_project")).toBe(true);
@@ -275,7 +288,7 @@ describe("ProjectRegistry", () => {
   describe("unregister", () => {
     test("removes registered project", () => {
       // Arrange
-      registry.register("test_project", { project_id: "test_project" });
+      registry.register("test_project", { project_id: "test_project", analytics_enabled: true });
       expect(registry.has("test_project")).toBe(true);
 
       // Act
@@ -351,6 +364,7 @@ describe("ProjectRegistry", () => {
         },
         settings: {
           namespace_prefix: "shared",
+          max_delegation_depth: 3,
         },
       };
 
@@ -377,6 +391,7 @@ describe("ProjectRegistry", () => {
           },
           settings: {
             namespace_prefix: "project1",
+            max_delegation_depth: 3,
           },
         },
       });
@@ -412,7 +427,7 @@ describe("ProjectRegistry", () => {
       };
 
       registry.setSharedConfig(sharedConfig);
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
 
       // Act
       const result = registry.getMergedConfig("project1");
@@ -489,6 +504,7 @@ describe("ProjectRegistry", () => {
         base_config: {
           settings: {
             namespace_prefix: "test",
+            max_delegation_depth: 3,
           },
         },
       };
@@ -523,6 +539,7 @@ describe("ProjectRegistry", () => {
         base_config: {
           settings: {
             namespace_prefix: "first",
+            max_delegation_depth: 3,
           },
         },
       };
@@ -530,6 +547,7 @@ describe("ProjectRegistry", () => {
         base_config: {
           settings: {
             namespace_prefix: "second",
+            max_delegation_depth: 3,
           },
         },
       };
@@ -765,7 +783,7 @@ describe("ProjectRegistry", () => {
   describe("parseAgentName", () => {
     test("parses agent name with default format", () => {
       // Arrange
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
 
       // Act
       const result = registry.parseAgentName("project1:agent1");
@@ -799,7 +817,7 @@ describe("ProjectRegistry", () => {
       registry.setPortfolioConfig({
         agent_namespace_format: "{project_id}_{agent_name}",
       });
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
 
       // Act
       const result = registry.parseAgentName("project1_agent1");
@@ -1110,7 +1128,7 @@ describe("ProjectRegistry", () => {
 
     test("returns correct count after registrations", () => {
       // Arrange
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
       registry.register("project2", { project_id: "project2" });
       registry.register("project3", { project_id: "project3" });
 
@@ -1120,7 +1138,7 @@ describe("ProjectRegistry", () => {
 
     test("returns correct count after unregister", () => {
       // Arrange
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
       registry.register("project2", { project_id: "project2" });
 
       // Act
@@ -1132,11 +1150,11 @@ describe("ProjectRegistry", () => {
 
     test("returns correct count after overwriting registration", () => {
       // Arrange
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
       registry.register("project2", { project_id: "project2" });
 
       // Act - overwriting project1 doesn't change count
-      registry.register("project1", { project_id: "project1" });
+      registry.register("project1", { project_id: "project1", analytics_enabled: true });
 
       // Assert
       expect(registry.getProjectCount()).toBe(2);
