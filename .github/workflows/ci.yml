@@ -27,3 +27,6 @@ jobs:
 
       - name: Tests
         run: bun test
+
+      - name: Compatibility Tests
+        run: bun test --test-name-pattern="compatibility"
