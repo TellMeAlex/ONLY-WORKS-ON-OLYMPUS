@@ -533,7 +533,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -566,7 +566,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -591,7 +591,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeNull();
@@ -619,7 +619,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -650,7 +650,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -674,7 +674,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -702,7 +702,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -731,7 +731,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -756,7 +756,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -780,7 +780,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -814,11 +814,11 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert - 11 lines = Math.ceil(11/10) = 2, which is >= 2 (low threshold)
       expect(result).toBeDefined();
-      const route = "route" in result ? (result as RoutingResult).route : result as ResolvedRoute;
+      const route = "route" in result ? (result as unknown as RoutingResult).route : result as ResolvedRoute;
       expect(route?.matched_content).toContain("complexity score");
     });
 
@@ -836,7 +836,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeDefined();
@@ -973,7 +973,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const docsResult = evaluateRoutingRules(rules, docsContext);
+      const docsResult = evaluateRoutingRules(rules, docsContext) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(docsResult?.target_agent).toBe("librarian");
@@ -1007,7 +1007,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const simpleResult = evaluateRoutingRules(rules, simpleContext);
+      const simpleResult = evaluateRoutingRules(rules, simpleContext) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(simpleResult?.target_agent).toBe("metis");
@@ -1043,7 +1043,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const designResult = evaluateRoutingRules(rules, designContext);
+      const designResult = evaluateRoutingRules(rules, designContext) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(designResult?.target_agent).toBe("hephaestus");
@@ -1060,7 +1060,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeNull();
@@ -1103,7 +1103,7 @@ describe("Routing Behavior Backward Compatibility", () => {
       };
 
       // Act
-      const result = evaluateRoutingRules(rules, context);
+      const result = evaluateRoutingRules(rules, context) as unknown as ResolvedRoute | null;
 
       // Assert
       expect(result).toBeNull();
