@@ -42,6 +42,7 @@
     "schema:validate": "bun scripts/validate-schema.ts",
     "olimpus": "bun bin/olimpus.ts",
     "test": "bun test",
+    "test:compatibility": "bun test --pattern compatibility",
     "publish:github": "npm publish"
   },
   "dependencies": {
