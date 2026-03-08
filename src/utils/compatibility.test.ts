@@ -294,8 +294,8 @@ describe("checkConfigCompatibility", () => {
     // Assert
     expect(result.compatible).toBe(false);
     expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].type).toBe("removed_field");
-    expect(result.issues[0].path).toEqual(["settings", "old_option"]);
+    expect(result.issues[0]!.type).toBe("removed_field");
+    expect(result.issues[0]!.path).toEqual(["settings", "old_option"]);
   });
 
   test("detects deprecated fields when includeDeprecated is true", () => {
@@ -328,7 +328,7 @@ describe("checkConfigCompatibility", () => {
     // Assert
     expect(result.compatible).toBe(true); // deprecated fields don't affect compatibility
     expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].type).toBe("deprecated_field");
+    expect(result.issues[0]!.type).toBe("deprecated_field");
     expect(result.migrations).toHaveLength(1);
     expect(result.autoMigratable).toBe(true);
   });
@@ -477,7 +477,7 @@ describe("checkConfigCompatibility - hasConfigValue", () => {
 
     // Assert
     expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].path).toEqual(["settings"]);
+    expect(result.issues[0]!.path).toEqual(["settings"]);
   });
 
   test("detects value at nested path", () => {
@@ -494,7 +494,7 @@ describe("checkConfigCompatibility - hasConfigValue", () => {
 
     // Assert
     expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].path).toEqual(["settings", "namespace_prefix"]);
+    expect(result.issues[0]!.path).toEqual(["settings", "namespace_prefix"]);
   });
 
   test("returns false for undefined path", () => {
@@ -534,7 +534,7 @@ describe("checkConfigCompatibility - hasConfigValue", () => {
 
     // Assert
     expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].path).toEqual(["meta_agents", "agent", "temperature"]);
+    expect(result.issues[0]!.path).toEqual(["meta_agents", "agent", "temperature"]);
   });
 });
 
