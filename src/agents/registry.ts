@@ -13,6 +13,31 @@ interface DelegationTracker {
   [key: string]: number;
 }
 
+function createDelegationKey(from: string, to: string): string {
+  return JSON.stringify([from, to]);
+}
+
+function parseDelegationKey(key: string): [string, string] | null {
+  try {
+    const parsed = JSON.parse(key);
+    if (
+      Array.isArray(parsed) &&
+      parsed.length === 2 &&
+      typeof parsed[0] === "string" &&
+      typeof parsed[1] === "string"
+    ) {
+      return [parsed[0], parsed[1]];
+    }
+  } catch {
+    const separatorIndex = key.indexOf(":");
+    if (separatorIndex >= 0) {
+      return [key.slice(0, separatorIndex), key.slice(separatorIndex + 1)];
+    }
+  }
+
+  return null;
+}
+
 /**
  * Registry for meta-agents with delegation tracking and circular dependency detection
  */
@@ -24,7 +49,7 @@ export class MetaAgentRegistry {
   private analyticsStorage?: AnalyticsStorage;
 
   constructor(
-    maxDepth: number = 3,
+    maxDepth = 3,
     loggerConfig?: RoutingLoggerConfig,
     analyticsStorage?: AnalyticsStorage,
   ) {
@@ -71,7 +96,7 @@ export class MetaAgentRegistry {
    * Used for circular dependency detection
    */
   trackDelegation(from: string, to: string): void {
-    const key = `${from}:${to}`;
+    const key = createDelegationKey(from, to);
     this.delegations[key] = (this.delegations[key] ?? 0) + 1;
   }
 
@@ -119,8 +144,13 @@ export class MetaAgentRegistry {
 
     // Check all known delegations from current agent
     for (const [delegation, _count] of Object.entries(this.delegations)) {
-      const [from, next] = delegation.split(":");
-      if (from === current && next) {
+      const parsed = parseDelegationKey(delegation);
+      if (!parsed) {
+        continue;
+      }
+
+      const [from, next] = parsed;
+      if (from === current) {
         if (this.hasCircle(next, target, depth - 1, new Set(visited))) {
           return true;
         }
@@ -137,16 +167,21 @@ export class MetaAgentRegistry {
     let maxDepth = 0;
 
     for (const delegation of Object.keys(this.delegations)) {
-      const parts = delegation.split(":");
-      if (parts.length === 2) {
+      const parsed = parseDelegationKey(delegation);
+      if (parsed) {
         // Count how many hops from this starting point
         let depth = 1;
-        let current = parts[1];
+        let current = parsed[1];
 
         while (true) {
           let found = false;
           for (const next of Object.keys(this.delegations)) {
-            const [from, to] = next.split(":");
+            const nextParsed = parseDelegationKey(next);
+            if (!nextParsed) {
+              continue;
+            }
+
+            const [from, to] = nextParsed;
             if (from === current) {
               depth++;
               current = to;
@@ -162,5 +197,32 @@ export class MetaAgentRegistry {
     }
 
     return maxDepth;
+  }
+
+  /**
+   * Export the current delegation chain as a directed graph in DOT format
+   * Useful for visualization with tools like Graphviz
+   * @returns DOT format string representing the delegation graph
+   */
+  exportDelegationGraph(): string {
+    if (Object.keys(this.delegations).length === 0) {
+      return "digraph {\n}\n";
+    }
+
+    let dot = "digraph {\n";
+
+    // Add edges for each delegation
+    for (const [delegation] of Object.entries(this.delegations)) {
+      const parsed = parseDelegationKey(delegation);
+      if (!parsed) {
+        continue;
+      }
+
+      const [from, to] = parsed;
+      dot += `  "${from}" -> "${to}";\n`;
+    }
+
+    dot += "}\n";
+    return dot;
   }
 }
