@@ -1223,6 +1223,10 @@ const config = loadOlimpusConfig(projectDir);
 ## Documentation
 
 - [API Reference](./docs/API.md) - Complete API documentation
+- [Implementation Playbook](./docs/IMPLEMENTATION_PLAYBOOK.md) - Architecture
+  diagrams, rollout strategy, and scenario-based implementation guides
+- [Playbook de Implementacion (ES)](./docs/IMPLEMENTATION_PLAYBOOK.es.md) - Guia
+  en espanol con diagramas Mermaid y patrones de adopcion
 - [Tutorials](./docs/tutorials/) - Step-by-step guides for common tasks
 - [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
 - [Migration Guide](./docs/migration.md) - Upgrading from previous versions

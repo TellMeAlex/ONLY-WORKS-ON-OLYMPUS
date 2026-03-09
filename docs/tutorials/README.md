@@ -2,7 +2,8 @@
 
 **Step-by-step guides for common Olimpus Plugin tasks and workflows.**
 
-This directory contains practical tutorials that walk you through using Olimpus Plugin effectively, from getting started to advanced routing patterns.
+This directory contains practical tutorials that walk you through using Olimpus
+Plugin effectively, from getting started to advanced routing patterns.
 
 ---
 
@@ -23,6 +24,7 @@ The tutorials are organized by complexity and cover real-world scenarios:
 **Get started with Olimpus Plugin in 5 minutes.**
 
 Learn how to:
+
 - Install Olimpus Plugin
 - Configure your first meta-agent
 - Set up basic routing rules
@@ -37,6 +39,7 @@ Learn how to:
 **Configure intelligent routing for monorepo projects.**
 
 Learn how to:
+
 - Route requests based on package context
 - Handle shared dependencies and libraries
 - Set up package-specific meta-agents
@@ -51,6 +54,7 @@ Learn how to:
 **Set up Olimpus for collaborative development.**
 
 Learn how to:
+
 - Share configuration across teams
 - Define team-specific meta-agents
 - Handle code review and debugging workflows
@@ -65,6 +69,7 @@ Learn how to:
 **Create routing rules for different programming languages.**
 
 Learn how to:
+
 - Detect project languages from dependencies
 - Set up language-specific matchers
 - Configure optimal models per language
@@ -79,6 +84,7 @@ Learn how to:
 **Master complex routing and meta-agent patterns.**
 
 Learn how to:
+
 - Implement cascading routing rules
 - Use project context for dynamic routing
 - Build custom matcher combinations
@@ -90,13 +96,17 @@ Learn how to:
 
 ## Getting Started
 
-If you're new to Olimpus, start with the **[Quickstart Guide](./01-quickstart.md)**. It covers everything you need to get up and running with your first meta-agent.
+If you're new to Olimpus, start with the
+**[Quickstart Guide](./01-quickstart.md)**. It covers everything you need to get
+up and running with your first meta-agent.
 
-For more experienced users, jump directly to the tutorial that matches your use case:
+For more experienced users, jump directly to the tutorial that matches your use
+case:
 
 - **Monorepo projects** → [Monorepo Routing](./02-monorepo-routing.md)
 - **Team setup** → [Team Workflows](./03-team-workflows.md)
-- **Multi-language codebases** → [Language-Specific Routing](./04-language-specific-routing.md)
+- **Multi-language codebases** →
+  [Language-Specific Routing](./04-language-specific-routing.md)
 - **Complex routing needs** → [Advanced Patterns](./05-advanced-patterns.md)
 
 ---
@@ -116,9 +126,13 @@ Each tutorial follows a consistent format:
 
 ## Related Documentation
 
-- [Configuration](../README.md#configuration) - Full configuration reference
-- [Meta-Agents](../README.md#meta-agents) - Meta-agent system overview
-- [Routing Rules](../README.md#routing-rules) - Matcher types and usage
+- [Implementation Playbook](../IMPLEMENTATION_PLAYBOOK.md) - End-to-end
+  implementation patterns with Mermaid diagrams
+- [Playbook de Implementacion (ES)](../IMPLEMENTATION_PLAYBOOK.es.md) - Guia en
+  espanol para adopcion y operaciones
+- [Configuration](../../README.md#configuration) - Full configuration reference
+- [Meta-Agents](../../README.md#meta-agents) - Meta-agent system overview
+- [Routing Rules](../../README.md#routing-rules) - Matcher types and usage
 - [API Reference](../API.md) - Complete API documentation
 - [Troubleshooting](../troubleshooting.md) - Common issues and solutions
 
@@ -134,6 +148,8 @@ Each tutorial follows a consistent format:
 
 ## See Also
 
-- [oh-my-opencode](https://github.com/opencode-ai/oh-my-opencode) - Base plugin framework
-- [example/olimpus.jsonc](../../example/olimpus.jsonc) - Full configuration example
+- [oh-my-opencode](https://github.com/opencode-ai/oh-my-opencode) - Base plugin
+  framework
+- [example/olimpus.jsonc](../../example/olimpus.jsonc) - Full configuration
+  example
 - [src/config/schema.ts](../../src/config/schema.ts) - Zod v4 config schema

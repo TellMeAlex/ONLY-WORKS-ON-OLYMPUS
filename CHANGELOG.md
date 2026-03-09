@@ -93,6 +93,41 @@ Changes are marked with stability indicators to help you understand impact:
 
 ---
 
+## [0.4.1] - 2026-03-09
+
+### Added
+
+- New implementation playbook with architecture diagrams and scenario-driven
+  guidance (`docs/IMPLEMENTATION_PLAYBOOK.md`) - `@stable`, `@since 0.4.1`
+- Spanish implementation playbook for team onboarding
+  (`docs/IMPLEMENTATION_PLAYBOOK.es.md`) - `@stable`, `@since 0.4.1`
+
+### Changed
+
+- Expanded documentation index in `README.md` to surface implementation
+  playbooks directly
+- Updated tutorials index links and related-documentation navigation
+  (`docs/tutorials/README.md`)
+
+### Deprecated
+
+- None
+
+### Removed
+
+- None
+
+### Fixed
+
+- Fixed tutorial documentation links that pointed to non-existing
+  `docs/README.md`
+
+### Security
+
+- None
+
+---
+
 ## [0.4.0] - 2026-03-09
 
 ### Added
