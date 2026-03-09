@@ -1,0 +1,318 @@
+{
+  // ============================================================================
+  // Enterprise Team Meta-Agent Template
+  // ============================================================================
+  // This template is designed for large enterprise organizations with complex
+  // teams, multiple departments, and sophisticated requirements. It provides
+  // comprehensive role-based routing, compliance-aware workflows, and
+  // structured processes suitable for regulated industries and large-scale
+  // software development.
+
+  "name": "enterprise",
+  "description": "Meta-agent template optimized for enterprise organizations with complex teams, compliance requirements, role-based specialization, and structured workflows",
+  "category": "team",
+  "tags": ["enterprise", "large", "compliance", "security", "scalability", "organization"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "metis", "atlas", "prometheus", "explore", "librarian"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Frontend Team Specialization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["frontend", "ui", "component", "interface", "react", "vue", "angular", "design system"],
+          "mode": "any"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise frontend team. Build production-grade UI components that comply with accessibility standards (WCAG 2.1+), follow the enterprise design system, and integrate with the company's component library. Ensure code is maintainable by the broader frontend organization. Include comprehensive documentation.",
+          "variant": "enterprise-frontend"
+        }
+      },
+
+      // ========================================================================
+      // Backend Team Specialization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["backend", "api", "endpoint", "service", "microservice", "rest", "graphql"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise backend team. Build production APIs with comprehensive error handling, rate limiting, and observability (logging, metrics, tracing). Follow enterprise API standards and versioning conventions. Ensure proper authentication and authorization at all endpoints.",
+          "variant": "enterprise-backend"
+        }
+      },
+
+      // ========================================================================
+      // Security and Compliance
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["security", "auth", "authorization", "audit", "compliance", "gdpr", "soc2", "pci", "hipaa", "vulnerability"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise security team. Ensure all implementations comply with relevant security standards and regulatory requirements. Implement defense-in-depth strategies, proper encryption, audit logging, and secure coding practices. Consider threat modeling and security testing.",
+          "variant": "security"
+        }
+      },
+
+      // ========================================================================
+      // Database and Data Engineering
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["database", "migration", "schema", "sql", "nosql", "data warehouse", "etl", "pipeline"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise data team. Design schemas that support enterprise data requirements including scalability, backup/recovery, and compliance (data retention, GDPR). Write backward-compatible migrations with rollback procedures. Implement proper indexing and query optimization.",
+          "variant": "data-engineering"
+        }
+      },
+
+      // ========================================================================
+      // DevOps and Platform Engineering
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["devops", "cicd", "pipeline", "kubernetes", "k8s", "docker", "infrastructure", "terraform", "ansible"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise DevOps team. Build production infrastructure with IaC (Infrastructure as Code) principles. Implement comprehensive CI/CD pipelines with security scanning, automated testing, and staged deployments (dev, staging, production). Ensure high availability, disaster recovery, and proper monitoring.",
+          "variant": "platform-engineering"
+        }
+      },
+
+      // ========================================================================
+      // Testing and Quality Assurance (Enterprise Scale)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "testing", "qa", "quality", "e2e", "integration", "contract test", "performance test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise QA team. Write comprehensive test suites including unit tests, integration tests, contract tests (using Pact), and end-to-end tests. Ensure test coverage meets enterprise standards. Implement test automation in CI/CD pipelines. Include performance and security testing where appropriate.",
+          "variant": "enterprise-testing"
+        }
+      },
+
+      // ========================================================================
+      // Architecture and System Design
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["architecture", "design", "system design", "scalability", "microservice", "event-driven", "cqrs", "saga"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise architecture team. Design systems that handle enterprise scale (high availability, fault tolerance, horizontal scalability). Consider service boundaries, data consistency patterns, and integration strategies. Document architectural decisions (ADRs) for the organization.",
+          "variant": "architecture"
+        }
+      },
+
+      // ========================================================================
+      // Code Review and Quality Gates
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["review", "code review", "pr", "pull request", "merge request", "quality gate", "lint"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are conducting enterprise code reviews. Evaluate code against organizational standards: security best practices, performance implications, maintainability, and test coverage. Provide constructive feedback aligned with company guidelines. Consider the impact on other teams and systems.",
+          "variant": "code-review"
+        }
+      },
+
+      // ========================================================================
+      // Documentation and Knowledge Management
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["docs", "documentation", "knowledge base", "wiki", "runbook", "playbook", "sop"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are part of enterprise documentation and knowledge management. Create comprehensive documentation following company standards. Include architecture decisions, runbooks for operations, API documentation, and onboarding guides. Ensure documentation is discoverable and kept up-to-date.",
+          "variant": "enterprise-docs"
+        }
+      },
+
+      // ========================================================================
+      // Observability and Monitoring
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["monitor", "logging", "metrics", "alerting", "observability", "dashboard", "slo", "sli"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are part of an enterprise observability team. Implement comprehensive monitoring including structured logging, metrics (business and operational), distributed tracing, and alerting. Define SLOs and SLIs. Create actionable dashboards for operations teams. Ensure monitoring coverage across all services.",
+          "variant": "observability"
+        }
+      },
+
+      // ========================================================================
+      // API Design and Integration
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["api design", "api specification", "openapi", "swagger", "graphql schema", "contract"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are designing enterprise APIs. Follow OpenAPI or GraphQL schema standards. Design APIs that are versioned, backward-compatible, and well-documented. Include rate limiting, pagination, error response standards, and integration guidelines. Implement contract testing.",
+          "variant": "api-design"
+        }
+      },
+
+      // ========================================================================
+      // Legacy System Maintenance
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["legacy", "migration", "refactor", "modernize", "cobol", "mainframe", "monolith"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are working with enterprise legacy systems. Approach with caution - ensure thorough testing and understanding before making changes. Plan migrations with rollback strategies. Document business logic carefully. Consider strangler pattern for gradual modernization.",
+          "variant": "legacy-modernization"
+        }
+      },
+
+      // ========================================================================
+      // Debugging and Incident Response
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["debug", "incident", "outage", "sev", "production issue", "root cause", "postmortem"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are responding to an enterprise incident. Follow incident response procedures. Provide systematic debugging using logs, metrics, and traces. Help identify root cause with proper evidence. Suggest remediation and prevention measures. Document findings for postmortem.",
+          "variant": "incident-response"
+        }
+      },
+
+      // ========================================================================
+      // Performance and Scalability
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "scalability", "optimization", "load test", "capacity planning", "bottleneck"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are optimizing enterprise system performance. Analyze metrics and profiling data. Identify bottlenecks at all layers: application, database, network, and infrastructure. Propose solutions that scale to production traffic. Consider caching strategies, database optimization, and horizontal scaling.",
+          "variant": "performance-engineering"
+        }
+      },
+
+      // ========================================================================
+      // Project Context: Enterprise Monorepo
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["nx.json", "turbo.json", "lerna.json", "rush.json"],
+          "has_deps": ["typescript", "jest", "vitest", "@nx/*", "@turbo/*"]
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are working in an enterprise monorepo. Respect the monorepo structure and build system (Nx, Turborepo, Lerna, etc.). Understand inter-package dependencies. Run tasks through the monorepo's task runner. Consider impact on other packages when making changes.",
+          "variant": "monorepo"
+        }
+      },
+
+      // ========================================================================
+      // Project Context: Enterprise Multi-Tier Application
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json", "docker-compose.yml", "kubernetes"],
+          "has_deps": ["express", "nestjs", "typeorm", "typeorm", "prisma"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are working on an enterprise multi-tier application. Understand the architecture: presentation layer, business logic layer, and data layer. Follow separation of concerns principles. Implement proper transaction management and error handling across tiers.",
+          "variant": "enterprise-tiered"
+        }
+      },
+
+      // ========================================================================
+      // Feature Flagging and Progressive Rollout
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["feature flag", "feature toggle", "progressive rollout", "a/b test", "canary"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are implementing feature flags for an enterprise. Use the company's feature flag platform. Design flags that support safe rollouts and instant rollback. Include kill switches for critical features. Consider permissions and targeting capabilities.",
+          "variant": "feature-flagging"
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Enterprise Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are working in an enterprise environment. Follow organizational standards, security best practices, and compliance requirements. Write production-quality code with proper error handling, logging, and documentation. Consider the impact on other teams and systems. Ensure changes are testable and deployable through established processes."
+        }
+      }
+    ],
+
+    "prompt_template": "Enterprise Development Task: {input}\n\nApproach:\n- Follow enterprise standards and compliance\n- Write production-quality, secure code\n- Consider cross-team impact\n- Document thoroughly\n- Ensure proper testing and review processes\n- Implement observability and monitoring"
+  },
+
+  "documentation": "This meta-agent template is optimized for enterprise organizations with complex development environments. It provides comprehensive role-based routing across frontend, backend, security, DevOps, QA, architecture, and data engineering teams. The configuration supports compliance requirements, structured processes, and large-scale software development practices suitable for regulated industries.",
+  "examples": [
+    "Build a production API endpoint with auth, rate limiting, and observability",
+    "Design a microservice architecture for the payment system",
+    "Set up enterprise-grade CI/CD with security scanning and staged deployments",
+    "Implement comprehensive monitoring with SLOs and alerting",
+    "Conduct security review of authentication implementation"
+  ]
+}

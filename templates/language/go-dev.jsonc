@@ -1,0 +1,259 @@
+{
+  // ============================================================================
+  // Go Development Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for Go (Golang) development
+  // tasks. It handles concurrency patterns, interfaces, popular Go frameworks,
+  // and idiomatic Go programming.
+
+  "name": "go-dev",
+  "description": "Specialized meta-agent for Go development including goroutines, channels, interfaces, Gin, Echo, and cloud-native patterns",
+  "category": "language",
+  "tags": ["go", "golang", "goroutine", "channel", "interface", "gin", "echo", "grpc", "kubernetes"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "librarian", "explore", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Web Framework Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["gin", "gin-gonic", "handler", "context", "middleware", "binding"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Gin expert. Follow Gin patterns including proper middleware chaining, handler organization, context usage, and validation with binding tags. Use idiomatic error handling."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["echo", "echo framework", "handler", "context", "middleware", "validator"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an Echo expert. Follow Echo patterns including proper middleware implementation, handler conventions, context handling, and validation. Use Echo's error handling mechanisms."
+        }
+      },
+
+      // ========================================================================
+      // gRPC and Microservices
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["grpc", "protoc", "protobuf", "proto", "stream", "unary"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a gRPC expert. Follow gRPC best practices including proper protobuf design, streaming RPC patterns, error handling with status codes, and interceptor implementation for cross-cutting concerns."
+        }
+      },
+
+      // ========================================================================
+      // Go Concurrency Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["goroutine", "go func", "channel", "select", "buffered", "unbuffered", "close"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Go concurrency expert. Focus on goroutine patterns, channel usage (including select statements), avoiding goroutine leaks, proper synchronization, and worker pool patterns. Emphasize data races and deadlock prevention."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["sync", "mutex", "rwmutex", "waitgroup", "once", "cond", "atomic", "pool"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Go synchronization expert. Provide guidance on using sync package primitives: Mutex, RWMutex, WaitGroup, Once, Cond, atomic operations, and sync.Pool. Focus on performance and correctness."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["context", "ctx", "deadline", "cancel", "timeout", "value", "withcancel", "withdeadline", "withtimeout"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Go context expert. Focus on proper context propagation, cancellation patterns, timeout handling, and context.Value usage for request-scoped data. Explain when to create derived contexts."
+        }
+      },
+
+      // ========================================================================
+      // Go Project Context Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["go.mod", "go.sum"],
+          "has_deps": ["testing"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TDD-focused Go developer. Write comprehensive table-driven tests first, use testify for assertions, test concurrency properly, and ensure test isolation. Follow Go testing conventions.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["go.mod"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Go developer. Follow Go conventions, use idiomatic patterns, handle errors explicitly, and structure code with proper package organization. Use gofmt formatting."
+        }
+      },
+
+      // ========================================================================
+      // Interfaces and Design Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["interface", "embedding", "type assertion", "interface satisfaction", "empty interface"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Go interfaces expert. Provide guidance on interface design, composition over inheritance, implicit interface satisfaction, type assertions, and avoiding empty interfaces except where necessary."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["error", "error wrapping", "fmt.errorf", "errors.is", "errors.as", "custom error", "wrap"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Go error handling expert. Focus on explicit error handling, error wrapping with fmt.Errorf or errors.Wrap, error inspection with errors.Is/As, and designing custom error types with useful information."
+        }
+      },
+
+      // ========================================================================
+      // Standard Library and Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["defer", "panic", "recover", "io", "reader", "writer", "closer"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a Go patterns expert. Provide guidance on defer usage, when to use panic/recover (rarely), io.Reader/Writer interfaces, and proper resource cleanup patterns."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["json", "xml", "yaml", "encoding", "marshal", "unmarshal", "tag"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a Go encoding expert. Focus on struct tags for JSON/XML/YAML, custom MarshalJSON/UnmarshalJSON, handling omitempty, and dealing with common encoding edge cases."
+        }
+      },
+
+      // ========================================================================
+      // Database and Storage
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["sql", "database", "gorm", "sqlx", "pgx", "migrate", "transaction"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Go database expert. Follow database best practices including proper transaction handling, connection pooling, prepared statements, and using ORM tools like GORM or sqlx effectively. Handle nil values and NULL properly."
+        }
+      },
+
+      // ========================================================================
+      // Performance and Optimization
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "benchmark", "b.N", "pprof", "memory", "profiling", "trace"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a Go performance expert. Focus on benchmarking with testing.B, using pprof for CPU/memory profiling, reducing allocations, and understanding GC behavior. Balance performance with readability."
+        }
+      },
+
+      // ========================================================================
+      // Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "testify", "mock", "httpexpect", "httptest", "table driven"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Go testing expert. Write table-driven tests, use testify for assertions and mocking, httptest for HTTP handlers, and ensure tests are fast and reliable. Follow Go testing conventions."
+        }
+      },
+
+      // ========================================================================
+      // Documentation
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["doc", "godoc", "example", "comment", "package comment", "exported"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are a Go documentation expert. Follow godoc conventions, write clear package and function comments, include usage examples, and ensure documentation is properly formatted. Document exported types."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Go Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are a Go developer. Write idiomatic Go code following 'Effective Go' guidelines. Handle errors explicitly, use goroutines and channels appropriately, design clean APIs with interfaces, and follow standard package conventions. Use gofmt and golint."
+        }
+      }
+    ],
+
+    "prompt_template": "Go Development Task: {input}\n\nConsider:\n- Go idioms and conventions (Effective Go)\n- Proper error handling (explicit, not exceptions)\n- Concurrency patterns with goroutines and channels\n- Interface design and composition\n- Context for cancellation and timeouts"
+  },
+
+  "documentation": "This meta-agent template is designed for Go development workflows. It specializes in concurrency patterns (goroutines, channels), web frameworks (Gin, Echo), gRPC, and idiomatic Go programming. The template emphasizes explicit error handling, proper use of the context package, and following Go's philosophy of simplicity and clarity.",
+  "examples": [
+    "Create a REST API using Gin with proper middleware",
+    "Implement a worker pool with goroutines and channels",
+    "Add comprehensive table-driven tests for this package",
+    "Design an interface for this database abstraction"
+  ]
+}

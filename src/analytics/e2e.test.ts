@@ -11,23 +11,26 @@
  * 7. Verify unmatched requests are tracked
  */
 
-import { test, expect, describe, beforeEach, afterEach } from "bun:test";
-import { rmSync, existsSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { mkdtempSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import {
-  AnalyticsStorage,
   AnalyticsDashboard,
-  exportToJson,
-  exportToCsv,
+  AnalyticsStorage,
+  MetricsExportServer,
+  PerformanceMetricsCollector,
+  PrometheusMetricsFormatter,
   displayAnalytics,
+  exportToCsv,
+  exportToJson,
 } from "./index.js";
 import type {
+  AnalyticsConfig,
   AnalyticsEvent,
   RoutingDecisionEvent,
   UnmatchedRequestEvent,
-  AnalyticsConfig,
 } from "./types.js";
 
 describe("Analytics End-to-End Data Flow", () => {
@@ -179,7 +182,7 @@ describe("Analytics End-to-End Data Flow", () => {
         if (event.type === "routing_decision") {
           agentCounts.set(
             event.target_agent,
-            (agentCounts.get(event.target_agent) || 0) + 1
+            (agentCounts.get(event.target_agent) || 0) + 1,
           );
         }
       });
@@ -223,7 +226,11 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert - Should have loaded previous data
       expect(storage2.getEventCount()).toBe(1);
-      expect((storage2.getAllEvents()[0]! as import("./types.js").RoutingDecisionEvent).target_agent).toBe("test-agent");
+      expect(
+        (
+          storage2.getAllEvents()[0]! as import("./types.js").RoutingDecisionEvent
+        ).target_agent,
+      ).toBe("test-agent");
     });
 
     test("should export data in proper format", () => {
@@ -297,7 +304,9 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert - Unmatched requests
       expect(metrics.unmatched_requests).toHaveLength(1);
-      expect(metrics.unmatched_requests[0]!.user_request).toBe("unknown request");
+      expect(metrics.unmatched_requests[0]!.user_request).toBe(
+        "unknown request",
+      );
     });
 
     test("should display analytics using convenience function", () => {
@@ -461,7 +470,7 @@ describe("Analytics End-to-End Data Flow", () => {
       storage.recordEvent({
         type: "unmatched_request",
         timestamp: new Date().toISOString(),
-        user_request: "request with, comma and \"quotes\"",
+        user_request: 'request with, comma and "quotes"',
       });
 
       // Act
@@ -530,8 +539,14 @@ describe("Analytics End-to-End Data Flow", () => {
       expect(storage.getEventCount()).toBe(4);
       const unmatched = storage.getUnmatchedRequests();
       expect(unmatched).toHaveLength(2);
-      expect((unmatched[0]! as import("./types.js").UnmatchedRequestEvent).user_request).toBe("unknown1");
-      expect((unmatched[1]! as import("./types.js").UnmatchedRequestEvent).user_request).toBe("unknown2");
+      expect(
+        (unmatched[0]! as import("./types.js").UnmatchedRequestEvent)
+          .user_request,
+      ).toBe("unknown1");
+      expect(
+        (unmatched[1]! as import("./types.js").UnmatchedRequestEvent)
+          .user_request,
+      ).toBe("unknown2");
     });
 
     test("should include unmatched requests in dashboard", () => {
@@ -574,7 +589,7 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert
       const unmatchedEvent = parsed.events.find(
-        (e: AnalyticsEvent) => e.type === "unmatched_request"
+        (e: AnalyticsEvent) => e.type === "unmatched_request",
       );
       expect(unmatchedEvent).toBeDefined();
       expect(unmatchedEvent.user_request).toBe("test unmatched");
@@ -594,7 +609,7 @@ describe("Analytics End-to-End Data Flow", () => {
 
       // Assert
       const unmatchedLine = lines.find((line) =>
-        line.includes("unmatched_request")
+        line.includes("unmatched_request"),
       );
       expect(unmatchedLine).toBeDefined();
       expect(unmatchedLine).toContain("test unmatched");
@@ -685,8 +700,12 @@ describe("Analytics End-to-End Data Flow", () => {
       const unmatched = storage.getUnmatchedRequests();
       expect(unmatched).toHaveLength(2);
       expect(metrics.unmatched_requests).toHaveLength(2);
-      expect(metrics.unmatched_requests[0]!.user_request).toBe("what's the weather like?");
-      expect(metrics.unmatched_requests[1]!.user_request).toBe("tell me a joke");
+      expect(metrics.unmatched_requests[0]!.user_request).toBe(
+        "what's the weather like?",
+      );
+      expect(metrics.unmatched_requests[1]!.user_request).toBe(
+        "tell me a joke",
+      );
 
       // Verify agent usage is tracked correctly
       expect(metrics.top_agents[0]!.name).toBe("code-reviewer");
@@ -694,5 +713,330 @@ describe("Analytics End-to-End Data Flow", () => {
       expect(metrics.top_agents[1]!.name).toBe("debug-helper");
       expect(metrics.top_agents[1]!.requests).toBe(1);
     });
+  });
+});
+
+/**
+ * End-to-end tests for performance metrics collection, Prometheus formatting, and server endpoint
+ *
+ * Tests the complete flow:
+ * 1. Create PerformanceMetricsCollector instance
+ * 2. Record sample metrics (latency, memory, match rates, errors)
+ * 3. Format metrics with PrometheusMetricsFormatter
+ * 4. Verify Prometheus format is valid
+ * 5. Start MetricsExportServer
+ * 6. Hit /metrics endpoint
+ * 7. Verify response contains expected Prometheus metrics
+ */
+
+describe("End-to-End: Performance Metrics Collection and Export", () => {
+  test("complete flow from collection to HTTP endpoint", async () => {
+    // Step 1: Create PerformanceMetricsCollector instance
+    const collector = new PerformanceMetricsCollector(true, 60, 100);
+    expect(collector).toBeDefined();
+    expect(collector.isEnabled()).toBe(true);
+
+    // Step 2: Record sample metrics (latency, memory, match rates, errors)
+    // Record routing latencies
+    collector.recordRoutingLatency(100);
+    collector.recordRoutingLatency(150);
+    collector.recordRoutingLatency(125);
+    collector.recordRoutingLatency(200);
+    collector.recordRoutingLatency(80);
+
+    // Record errors of different types
+    collector.recordError("timeout");
+    collector.recordError("connection_error");
+    collector.recordError("validation_error");
+    collector.recordError("timeout");
+
+    // Record match evaluations
+    collector.recordMatchEvaluation(true);
+    collector.recordMatchEvaluation(true);
+    collector.recordMatchEvaluation(false);
+    collector.recordMatchEvaluation(true);
+    collector.recordMatchEvaluation(false);
+
+    // Record memory usage
+    collector.recordMemoryUsage();
+
+    // Verify metrics were recorded
+    expect(collector.getSampleCount()).toBe(5);
+
+    // Step 3: Get metrics from collector
+    const metrics = collector.getMetrics();
+    expect(metrics).toBeDefined();
+    expect(metrics.routing_latency.total_samples).toBe(5);
+    expect(metrics.errors.total_errors).toBe(4);
+    expect(metrics.match_rates.total_evaluations).toBe(5);
+
+    // Step 4: Format metrics with PrometheusMetricsFormatter
+    const formatter = new PrometheusMetricsFormatter();
+    const prometheusText = formatter.format(metrics);
+
+    // Step 5: Verify Prometheus format is valid
+    expect(prometheusText).toBeDefined();
+    expect(typeof prometheusText).toBe("string");
+    expect(prometheusText.length).toBeGreaterThan(0);
+
+    // Check for HELP and TYPE comments
+    expect(prometheusText).toContain("# HELP");
+    expect(prometheusText).toContain("# TYPE");
+
+    // Check for metric names (latency, throughput, errors, memory, match rates)
+    expect(prometheusText).toContain("routing_latency_min_milliseconds");
+    expect(prometheusText).toContain("routing_latency_avg_milliseconds");
+    expect(prometheusText).toContain("routing_latency_max_milliseconds");
+    expect(prometheusText).toContain("routing_requests_total");
+    expect(prometheusText).toContain("routing_errors_total");
+    expect(prometheusText).toContain("routing_error_rate");
+    expect(prometheusText).toContain("routing_memory_usage_bytes");
+    expect(prometheusText).toContain("routing_match_rate");
+
+    // Check for error type labels
+    expect(prometheusText).toContain('error_type="timeout"');
+    expect(prometheusText).toContain('error_type="connection_error"');
+    expect(prometheusText).toContain('error_type="validation_error"');
+
+    // Step 6: Start MetricsExportServer
+    const server = new MetricsExportServer(collector, {
+      port: 9090,
+      metricsPath: "/metrics",
+      hostname: "127.0.0.1",
+    });
+    await server.start();
+
+    try {
+      expect(server.isRunning()).toBe(true);
+      const status = server.getStatus();
+      expect(status.running).toBe(true);
+      expect(status.port).toBe(9090);
+      expect(status.metricsPath).toBe("/metrics");
+
+      // Step 7: Hit /metrics endpoint
+      const metricsUrl = server.getServerUrl();
+      const response = await fetch(metricsUrl);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Content-Type")).toBe(
+        "text/plain; version=0.0.4; charset=utf-8",
+      );
+
+      const responseBody = await response.text();
+
+      // Step 8: Verify response contains expected Prometheus metrics
+      expect(responseBody.length).toBeGreaterThan(0);
+
+      // Verify HELP comments
+      expect(responseBody).toContain("# HELP routing_latency_min_milliseconds");
+      expect(responseBody).toContain("# HELP routing_errors_total");
+      expect(responseBody).toContain("# HELP routing_match_rate");
+
+      // Verify TYPE comments
+      expect(responseBody).toContain(
+        "# TYPE routing_latency_min_milliseconds gauge",
+      );
+      expect(responseBody).toContain("# TYPE routing_errors_total counter");
+      expect(responseBody).toContain("# TYPE routing_requests_total counter");
+
+      // Verify metric values
+      expect(responseBody).toContain("routing_latency_min_milliseconds");
+      expect(responseBody).toContain("routing_latency_avg_milliseconds");
+      expect(responseBody).toContain("routing_latency_max_milliseconds");
+      expect(responseBody).toContain("routing_requests_total 5");
+      expect(responseBody).toContain("routing_errors_total 4");
+      expect(responseBody).toContain("routing_match_evaluations_total 5");
+      expect(responseBody).toContain("routing_match_successes_total 3");
+
+      // Verify error metrics with labels
+      expect(responseBody).toContain('error_type="timeout"');
+      expect(responseBody).toContain('error_type="connection_error"');
+      expect(responseBody).toContain('error_type="validation_error"');
+
+      // Verify memory metrics
+      expect(responseBody).toContain("routing_memory_usage_bytes");
+      expect(responseBody).toContain("routing_memory_peak_bytes");
+
+      // Verify the response from HTTP matches the formatter output
+      // (Both should contain the same metric names and structure)
+      const httpMetrics = responseBody
+        .split("\n")
+        .filter((line) => line && !line.startsWith("#"));
+      const formatterMetrics = prometheusText
+        .split("\n")
+        .filter((line) => line && !line.startsWith("#"));
+      expect(httpMetrics.length).toBe(formatterMetrics.length);
+    } finally {
+      // Clean up: stop server
+      await server.stop();
+      expect(server.isRunning()).toBe(false);
+    }
+  });
+
+  test("server with custom formatter options", async () => {
+    // Arrange
+    const collector = new PerformanceMetricsCollector();
+    collector.recordRoutingLatency(50);
+    collector.recordRoutingLatency(75);
+
+    const server = new MetricsExportServer(collector, {
+      port: 9091,
+      formatterOptions: {
+        includeHelp: false,
+        includeType: false,
+        includeTimestamp: false,
+        metricPrefix: "custom_",
+      },
+    });
+    await server.start();
+
+    try {
+      // Act
+      const response = await fetch("http://127.0.0.1:9091/metrics");
+      const responseBody = await response.text();
+
+      // Assert
+      expect(responseBody).not.toContain("# HELP");
+      expect(responseBody).not.toContain("# TYPE");
+      expect(responseBody).toContain("custom_latency_min_milliseconds");
+      expect(responseBody).toContain("custom_requests_total");
+      expect(responseBody).not.toContain("routing_");
+
+      // Without timestamps, lines should have only metric name and value
+      const lines = responseBody
+        .split("\n")
+        .filter((line) => line && !line.startsWith("#"));
+      for (const line of lines) {
+        const parts = line.trim().split(" ");
+        expect(parts.length).toBe(2);
+      }
+    } finally {
+      await server.stop();
+    }
+  });
+
+  test("health endpoint works correctly", async () => {
+    // Arrange
+    const collector = new PerformanceMetricsCollector();
+    const server = new MetricsExportServer(collector, { port: 9092 });
+    await server.start();
+
+    try {
+      // Act
+      const response = await fetch("http://127.0.0.1:9092/health");
+      const body = (await response.json()) as Record<string, unknown>;
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Content-Type")).toBe("application/json");
+      expect(body.status).toBe("healthy");
+      expect(body.uptime).toBeGreaterThanOrEqual(0);
+      expect(body.timestamp).toBeTruthy();
+    } finally {
+      await server.stop();
+    }
+  });
+
+  test("root endpoint returns usage information", async () => {
+    // Arrange
+    const collector = new PerformanceMetricsCollector();
+    const server = new MetricsExportServer(collector, { port: 9093 });
+    await server.start();
+
+    try {
+      // Act
+      const response = await fetch("http://127.0.0.1:9093/");
+      const body = (await response.json()) as Record<string, unknown>;
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(body.name).toBe("MetricsExportServer");
+      expect(body.version).toBe("1.0.0");
+      expect((body.endpoints as Record<string, unknown>).metrics).toBe(
+        "/metrics",
+      );
+      expect((body.endpoints as Record<string, unknown>).health).toBe(
+        "/health",
+      );
+      expect(body.status).toBeDefined();
+      expect(body.prometheus).toBeDefined();
+    } finally {
+      await server.stop();
+    }
+  });
+
+  test("404 for unknown endpoints", async () => {
+    // Arrange
+    const collector = new PerformanceMetricsCollector();
+    const server = new MetricsExportServer(collector, { port: 9094 });
+    await server.start();
+
+    try {
+      // Act
+      const response = await fetch("http://127.0.0.1:9094/unknown");
+
+      // Assert
+      expect(response.status).toBe(404);
+    } finally {
+      await server.stop();
+    }
+  });
+
+  test("405 for non-GET requests to metrics endpoint", async () => {
+    // Arrange
+    const collector = new PerformanceMetricsCollector();
+    const server = new MetricsExportServer(collector, { port: 9095 });
+    await server.start();
+
+    try {
+      // Act
+      const response = await fetch("http://127.0.0.1:9095/metrics", {
+        method: "POST",
+      });
+
+      // Assert
+      expect(response.status).toBe(405);
+      expect(response.headers.get("Allow")).toBe("GET");
+    } finally {
+      await server.stop();
+    }
+  });
+
+  test("disabled collector returns empty metrics", async () => {
+    // Arrange
+    const collector = new PerformanceMetricsCollector(false);
+    // Try to record metrics (should be ignored)
+    collector.recordRoutingLatency(100);
+    collector.recordError("test_error");
+
+    const formatter = new PrometheusMetricsFormatter();
+    const metrics = collector.getMetrics();
+
+    // Act
+    const prometheusText = formatter.format(metrics);
+
+    // Assert - all values should be zero
+    expect(prometheusText).toContain("routing_latency_samples_total 0");
+    expect(prometheusText).toContain("routing_requests_total 0");
+    expect(prometheusText).toContain("routing_errors_total 0");
+    expect(prometheusText).toContain("routing_match_evaluations_total 0");
+    expect(prometheusText).toContain("routing_memory_usage_bytes 0");
+  });
+
+  test("handles empty metrics", () => {
+    // Arrange - collector with no data
+    const collector = new PerformanceMetricsCollector();
+    const formatter = new PrometheusMetricsFormatter();
+    const metrics = collector.getMetrics();
+
+    // Act
+    const prometheusText = formatter.format(metrics);
+
+    // Assert - should produce valid Prometheus output with zeros
+    expect(prometheusText).toBeDefined();
+    expect(prometheusText).toContain("# HELP");
+    expect(prometheusText).toContain("# TYPE");
+    expect(prometheusText).toContain("routing_latency_samples_total 0");
+    expect(prometheusText).toContain("routing_requests_total 0");
+    expect(prometheusText).toContain("routing_errors_total 0");
   });
 });
