@@ -1,26 +1,38 @@
 # Olimpus Plugin
 
-**A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules.**
+**A meta-orchestrator for oh-my-opencode that routes requests to specialized
+agents using intelligent matching rules.**
 
-Olimpus sits on top of oh-my-opencode and adds a routing layer. Instead of directly using builtin agents (sisyphus, oracle, librarian, etc.), you define **meta-agents** that intelligently decide which builtin agent to delegate to based on the user's request.
+Olimpus sits on top of oh-my-opencode and adds a routing layer. Instead of
+directly using builtin agents (sisyphus, oracle, librarian, etc.), you define
+**meta-agents** that intelligently decide which builtin agent to delegate to
+based on the user's request.
 
-Think of it as: **Meta-agents = smart routers | Builtin agents = specialized workers**
+Think of it as: **Meta-agents = smart routers | Builtin agents = specialized
+workers**
 
 ---
 
 ## Overview
 
-Olimpus is a plugin for [oh-my-opencode](https://github.com/opencode-ai/oh-my-opencode) that enables **intelligent request routing** through customizable meta-agents.
+Olimpus is a plugin for
+[oh-my-opencode](https://github.com/opencode-ai/oh-my-opencode) that enables
+**intelligent request routing** through customizable meta-agents.
 
 ### The Problem It Solves
 
-Oh-my-opencode provides powerful builtin agents (sisyphus for implementation, oracle for analysis, librarian for research, etc.), but selecting the right agent for each task is a manual decision. Olimpus automates this decision through **routing rules**.
+Oh-my-opencode provides powerful builtin agents (sisyphus for implementation,
+oracle for analysis, librarian for research, etc.), but selecting the right
+agent for each task is a manual decision. Olimpus automates this decision
+through **routing rules**.
 
 ### The Solution
 
-1. **Define meta-agents** with routing rules (e.g., "Atenea" for strategic planning)
+1. **Define meta-agents** with routing rules (e.g., "Atenea" for strategic
+   planning)
 2. **Configure matchers** (keyword, complexity, regex, project context)
-3. **Set delegation targets** (which builtin agents can handle this type of request)
+3. **Set delegation targets** (which builtin agents can handle this type of
+   request)
 4. **Olimpus automatically routes** user requests to the best agent
 
 ---
@@ -28,22 +40,27 @@ Oh-my-opencode provides powerful builtin agents (sisyphus for implementation, or
 ## Features
 
 ### 🎯 Intelligent Routing
+
 - **5 matcher types**: keyword, complexity, regex, project_context, always
 - **First-match-wins semantics**: rules evaluated in order
 - **Type-safe configuration**: Zod v4 schema validation
 
 ### 🔌 Meta-Agent System
-- **Atenea**: Strategic planning & architecture analysis (routes to oracle, prometheus, atlas)
+
+- **Atenea**: Strategic planning & architecture analysis (routes to oracle,
+  prometheus, atlas)
 - **Hermes**: Communication & research (routes to librarian, explore, oracle)
 - **Hefesto**: Implementation & building (routes to sisyphus, hephaestus)
 - **Custom meta-agents**: Define your own routing logic
 
 ### 📦 Skill Bundling
+
 - Load custom skills from project files
 - Automatic namespace prefixing (`olimpus:` prefix)
 - Conflict-free merging with oh-my-opencode skills
 
 ### 🛡️ Safety Features
+
 - Circular dependency detection
 - Max delegation depth enforcement
 - Comprehensive error handling
@@ -55,14 +72,21 @@ Oh-my-opencode provides powerful builtin agents (sisyphus for implementation, or
 ### 1. Install Dependencies
 
 Using Bun (recommended):
+
 ```bash
 bun install olimpus-plugin
 ```
 
 Or npm:
+
 ```bash
 npm install olimpus-plugin
 ```
+
+### Compatibility
+
+- Olimpus `v0.4.0` is validated against `oh-my-opencode@^3.11.2`.
+- For best results, update your host project before installing this release.
 
 ### 2. Add to oh-my-opencode
 
@@ -106,6 +130,7 @@ Full example available in [example/olimpus.jsonc](./example/olimpus.jsonc).
 ### Config File Location
 
 Olimpus searches for configuration in this order (first found wins):
+
 1. **Project root**: `./olimpus.jsonc` (highest priority)
 2. **User config**: `~/.config/opencode/olimpus.jsonc`
 
@@ -118,7 +143,7 @@ Olimpus searches for configuration in this order (first found wins):
     "agent_name": {
       "base_model": "claude-3-5-sonnet-20241022",
       "delegates_to": ["builtin_agent1", "builtin_agent2"],
-      "routing_rules": [ /* see below */ ]
+      "routing_rules": [/* see below */]
     }
   },
 
@@ -150,11 +175,14 @@ Olimpus searches for configuration in this order (first found wins):
 
 ## Configuration Validation
 
-Olimpus provides a built-in configuration validator that checks your `olimpus.jsonc` file for errors, circular dependencies, invalid agent references, and performance issues.
+Olimpus provides a built-in configuration validator that checks your
+`olimpus.jsonc` file for errors, circular dependencies, invalid agent
+references, and performance issues.
 
 ### Using the Validator
 
-The `olimpus validate` command checks your configuration file and reports any issues:
+The `olimpus validate` command checks your configuration file and reports any
+issues:
 
 ```bash
 # Validate your configuration file
@@ -173,7 +201,9 @@ bun run bin/olimpus.ts validate olimpus.jsonc
 ### What Gets Validated
 
 #### 1. Circular Dependencies
-Detects when meta-agents delegate to each other in a loop, which would cause infinite routing:
+
+Detects when meta-agents delegate to each other in a loop, which would cause
+infinite routing:
 
 ```jsonc
 // ❌ INVALID - Circular dependency
@@ -181,11 +211,15 @@ Detects when meta-agents delegate to each other in a loop, which would cause inf
   "meta_agents": {
     "agent_a": {
       "delegates_to": ["agent_b"],
-      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "agent_b" }]
+      "routing_rules": [
+        { "matcher": { "type": "always" }, "target_agent": "agent_b" }
+      ]
     },
     "agent_b": {
       "delegates_to": ["agent_a"],
-      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "agent_a" }]
+      "routing_rules": [
+        { "matcher": { "type": "always" }, "target_agent": "agent_a" }
+      ]
     }
   }
 }
@@ -196,7 +230,9 @@ Error: Circular dependency detected: "agent_a" can route to "agent_b" which can 
 ```
 
 #### 2. Invalid Agent References
-Verifies that all referenced agents are either builtin agents or other defined meta-agents:
+
+Verifies that all referenced agents are either builtin agents or other defined
+meta-agents:
 
 ```jsonc
 // ❌ INVALID - Unknown agent
@@ -204,7 +240,9 @@ Verifies that all referenced agents are either builtin agents or other defined m
   "meta_agents": {
     "my_agent": {
       "delegates_to": ["oracle", "unknown_agent"],
-      "routing_rules": [{ "matcher": { "type": "always" }, "target_agent": "unknown_agent" }]
+      "routing_rules": [
+        { "matcher": { "type": "always" }, "target_agent": "unknown_agent" }
+      ]
     }
   }
 }
@@ -216,7 +254,9 @@ Valid agents are: sisyphus, hephaestus, oracle, librarian, explore, multimodal-l
 ```
 
 #### 3. Regex Performance Warnings
-Analyzes regex patterns in routing rules for potential performance anti-patterns:
+
+Analyzes regex patterns in routing rules for potential performance
+anti-patterns:
 
 ```jsonc
 // ⚠️ WARNING - Nested quantifiers
@@ -226,7 +266,7 @@ Analyzes regex patterns in routing rules for potential performance anti-patterns
       "routing_rules": [{
         "matcher": {
           "type": "regex",
-          "pattern": "(a+)+"  // Nested quantifier - can cause catastrophic backtracking
+          "pattern": "(a+)+" // Nested quantifier - can cause catastrophic backtracking
         },
         "target_agent": "oracle"
       }]
@@ -270,7 +310,9 @@ bun run olimpus validate olimpus.jsonc || exit 1
 
 ## Analytics
 
-Olimpus provides a built-in analytics system that tracks routing effectiveness, agent usage patterns, and matcher performance. All data is stored locally with no external telemetry.
+Olimpus provides a built-in analytics system that tracks routing effectiveness,
+agent usage patterns, and matcher performance. All data is stored locally with
+no external telemetry.
 
 ### What Analytics Tracks
 
@@ -318,29 +360,29 @@ Add the analytics configuration to your `olimpus.jsonc`:
 
 #### Storage
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `type` | `"memory"` \| `"file"` | `"file"` | Storage backend type |
-| `path` | `string` | `".olimpus/analytics.json"` | File path for JSON storage |
-| `retention_days` | `number` | `90` | Days to keep old data |
+| Setting          | Type                   | Default                     | Description                |
+| ---------------- | ---------------------- | --------------------------- | -------------------------- |
+| `type`           | `"memory"` \| `"file"` | `"file"`                    | Storage backend type       |
+| `path`           | `string`               | `".olimpus/analytics.json"` | File path for JSON storage |
+| `retention_days` | `number`               | `90`                        | Days to keep old data      |
 
 #### Metrics
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `track_routing_decisions` | `boolean` | `true` | Track agent selection |
-| `track_execution_time` | `boolean` | `true` | Track request duration |
-| `track_agent_usage` | `boolean` | `true` | Track usage patterns per agent |
-| `track_model_costs` | `boolean` | `true` | Track token/cost metrics |
-| `track_success_rates` | `boolean` | `true` | Track success/failure rates |
+| Setting                   | Type      | Default | Description                    |
+| ------------------------- | --------- | ------- | ------------------------------ |
+| `track_routing_decisions` | `boolean` | `true`  | Track agent selection          |
+| `track_execution_time`    | `boolean` | `true`  | Track request duration         |
+| `track_agent_usage`       | `boolean` | `true`  | Track usage patterns per agent |
+| `track_model_costs`       | `boolean` | `true`  | Track token/cost metrics       |
+| `track_success_rates`     | `boolean` | `true`  | Track success/failure rates    |
 
 #### Aggregation
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `enabled` | `boolean` | `true` | Enable time-based aggregation |
-| `window_minutes` | `number` | `60` | Time window for aggregation |
-| `include_percentiles` | `boolean` | `true` | Include p50/p75/p95/p99 |
+| Setting               | Type      | Default | Description                   |
+| --------------------- | --------- | ------- | ----------------------------- |
+| `enabled`             | `boolean` | `true`  | Enable time-based aggregation |
+| `window_minutes`      | `number`  | `60`    | Time window for aggregation   |
+| `include_percentiles` | `boolean` | `true`  | Include p50/p75/p95/p99       |
 
 ### CLI Commands
 
@@ -359,6 +401,7 @@ bun run olimpus analytics show
 ```
 
 This displays:
+
 - Total events and routing decisions
 - Unmatched requests count
 - Top agents by usage
@@ -459,38 +502,45 @@ Analytics data helps optimize your routing configuration:
 
 ## Meta-Agents
 
-Each meta-agent is a routing coordinator that decides which builtin agent to delegate to.
+Each meta-agent is a routing coordinator that decides which builtin agent to
+delegate to.
 
 ### Built-in Meta-Agents
 
 #### Atenea (Strategic Planning)
+
 ```
 Routes based on complexity: high → oracle | medium → prometheus | low → atlas
 ```
 
 Handles:
+
 - Architecture decisions
 - System design analysis
 - Strategic planning
 - Complex technical problems
 
 #### Hermes (Communication & Research)
+
 ```
 Routes based on keywords: docs → librarian | code → explore | analyze → oracle
 ```
 
 Handles:
+
 - Documentation research
 - Codebase exploration
 - Information synthesis
 - Comparative analysis
 
 #### Hefesto (Implementation)
+
 ```
 Routes based on project context: has_tests → sisyphus | else → hephaestus
 ```
 
 Handles:
+
 - Feature implementation
 - Bug fixes
 - Code refactoring
@@ -506,10 +556,10 @@ Handles:
       "delegates_to": ["oracle", "hephaestus"],
       "temperature": 0.3,
       "prompt_template": "Custom system prompt...",
-      
+
       "routing_rules": [
         {
-          "matcher": { /* see matcher types */ },
+          "matcher": {/* see matcher types */},
           "target_agent": "oracle",
           "config_overrides": {
             "prompt": "Override system prompt for this route",
@@ -528,60 +578,66 @@ Handles:
 
 ## Templates
 
-Templates are pre-configured meta-agent definitions that save you time by providing battle-tested routing configurations for common development patterns, languages, workflows, team sizes, and project domains.
+Templates are pre-configured meta-agent definitions that save you time by
+providing battle-tested routing configurations for common development patterns,
+languages, workflows, team sizes, and project domains.
 
 ### Why Use Templates?
 
-| Benefit | Description |
-|---------|-------------|
-| **Immediate productivity** | Start with working configurations |
-| **Best practices** | Templates follow proven patterns |
-| **Reduced complexity** | No need to design routing rules from scratch |
-| **Consistency** | Standardized approaches across projects |
+| Benefit                    | Description                                  |
+| -------------------------- | -------------------------------------------- |
+| **Immediate productivity** | Start with working configurations            |
+| **Best practices**         | Templates follow proven patterns             |
+| **Reduced complexity**     | No need to design routing rules from scratch |
+| **Consistency**            | Standardized approaches across projects      |
 
 ### Available Templates
 
 Templates are organized into four categories in the `templates/` directory:
 
 #### 📝 Language Templates
+
 Specialized meta-agents for programming languages and their ecosystems.
 
-| Template | Description | Frameworks |
-|----------|-------------|------------|
-| [python-dev.jsonc](./templates/language/python-dev.jsonc) | Python development | Django, FastAPI, Flask, Pandas, PyTorch |
-| [typescript-dev.jsonc](./templates/language/typescript-dev.jsonc) | TypeScript/JavaScript | React, Next.js, Node.js, Express |
-| [rust-dev.jsonc](./templates/language/rust-dev.jsonc) | Rust development | Tokio, Actix, Axum |
-| [go-dev.jsonc](./templates/language/go-dev.jsonc) | Go development | Gin, Echo, standard library |
+| Template                                                          | Description           | Frameworks                              |
+| ----------------------------------------------------------------- | --------------------- | --------------------------------------- |
+| [python-dev.jsonc](./templates/language/python-dev.jsonc)         | Python development    | Django, FastAPI, Flask, Pandas, PyTorch |
+| [typescript-dev.jsonc](./templates/language/typescript-dev.jsonc) | TypeScript/JavaScript | React, Next.js, Node.js, Express        |
+| [rust-dev.jsonc](./templates/language/rust-dev.jsonc)             | Rust development      | Tokio, Actix, Axum                      |
+| [go-dev.jsonc](./templates/language/go-dev.jsonc)                 | Go development        | Gin, Echo, standard library             |
 
 #### 🔧 Workflow Templates
+
 Meta-agents optimized for specific development workflows.
 
-| Template | Description | Focus |
-|----------|-------------|-------|
-| [debugger.jsonc](./templates/workflow/debugger.jsonc) | Systematic debugging | Error analysis, root cause |
-| [refactor.jsonc](./templates/workflow/refactor.jsonc) | Code refactoring | Code quality, patterns |
-| [tdd.jsonc](./templates/workflow/tdd.jsonc) | Test-driven development | Testing, TDD |
+| Template                                              | Description             | Focus                      |
+| ----------------------------------------------------- | ----------------------- | -------------------------- |
+| [debugger.jsonc](./templates/workflow/debugger.jsonc) | Systematic debugging    | Error analysis, root cause |
+| [refactor.jsonc](./templates/workflow/refactor.jsonc) | Code refactoring        | Code quality, patterns     |
+| [tdd.jsonc](./templates/workflow/tdd.jsonc)           | Test-driven development | Testing, TDD               |
 
 #### 👥 Team Templates
+
 Meta-agents optimized for different team sizes and collaboration models.
 
-| Template | Description | Best For |
-|----------|-------------|----------|
-| [solo-dev.jsonc](./templates/team/solo-dev.jsonc) | Solo developer | Individual projects |
-| [small-team.jsonc](./templates/team/small-team.jsonc) | Small team | Startups |
-| [enterprise.jsonc](./templates/team/enterprise.jsonc) | Enterprise | Large organizations |
+| Template                                              | Description    | Best For            |
+| ----------------------------------------------------- | -------------- | ------------------- |
+| [solo-dev.jsonc](./templates/team/solo-dev.jsonc)     | Solo developer | Individual projects |
+| [small-team.jsonc](./templates/team/small-team.jsonc) | Small team     | Startups            |
+| [enterprise.jsonc](./templates/team/enterprise.jsonc) | Enterprise     | Large organizations |
 
 #### 🌐 Domain Templates
+
 Meta-agents for specific project architectures and domains.
 
-| Template | Description | Use Cases |
-|----------|-------------|-----------|
-| [monorepo.jsonc](./templates/domain/monorepo.jsonc) | Monorepo routing | Turborepo, Nx |
-| [cicd.jsonc](./templates/domain/cicd.jsonc) | CI/CD workflows | GitHub Actions, GitLab CI |
-| [api-first.jsonc](./templates/domain/api-first.jsonc) | API-first development | REST, GraphQL |
-| [data-analysis.jsonc](./templates/domain/data-analysis.jsonc) | Data analysis | Jupyter, Pandas, ML |
-| [documentation.jsonc](./templates/domain/documentation.jsonc) | Documentation | Docusaurus, MDX |
-| [security-audit.jsonc](./templates/domain/security-audit.jsonc) | Security review | OWASP, auth |
+| Template                                                        | Description           | Use Cases                 |
+| --------------------------------------------------------------- | --------------------- | ------------------------- |
+| [monorepo.jsonc](./templates/domain/monorepo.jsonc)             | Monorepo routing      | Turborepo, Nx             |
+| [cicd.jsonc](./templates/domain/cicd.jsonc)                     | CI/CD workflows       | GitHub Actions, GitLab CI |
+| [api-first.jsonc](./templates/domain/api-first.jsonc)           | API-first development | REST, GraphQL             |
+| [data-analysis.jsonc](./templates/domain/data-analysis.jsonc)   | Data analysis         | Jupyter, Pandas, ML       |
+| [documentation.jsonc](./templates/domain/documentation.jsonc)   | Documentation         | Docusaurus, MDX           |
+| [security-audit.jsonc](./templates/domain/security-audit.jsonc) | Security review       | OWASP, auth               |
 
 ### Quick Start
 
@@ -620,11 +676,11 @@ Combine templates from different categories for a comprehensive configuration:
 
   "meta_agents": {
     // Language template
-    "python": { /* from python-dev.jsonc */ },
+    "python": {/* from python-dev.jsonc */},
     // Workflow template
-    "debugger": { /* from debugger.jsonc */ },
+    "debugger": {/* from debugger.jsonc */},
     // Domain template
-    "monorepo": { /* from monorepo.jsonc */ }
+    "monorepo": {/* from monorepo.jsonc */}
   },
   "settings": {
     "max_delegation_depth": 3
@@ -643,19 +699,24 @@ After copying a template, customize it to fit your needs:
 
 ### Learn More
 
-- **[Templates Reference](./templates/README.md)** - Complete catalog and detailed documentation
-- **[Using Templates Tutorial](./docs/tutorials/06-using-templates.md)** - Step-by-step guide with examples
-- **[Contributing Templates](./templates/README.md#contributing-templates)** - Submit your own templates
+- **[Templates Reference](./templates/README.md)** - Complete catalog and
+  detailed documentation
+- **[Using Templates Tutorial](./docs/tutorials/06-using-templates.md)** -
+  Step-by-step guide with examples
+- **[Contributing Templates](./templates/README.md#contributing-templates)** -
+  Submit your own templates
 
 ---
 
 ## Routing Rules
 
-Routing rules determine which builtin agent handles a request. Rules are evaluated in order; the first match wins.
+Routing rules determine which builtin agent handles a request. Rules are
+evaluated in order; the first match wins.
 
 ### Matcher Types
 
 #### 1. Keyword Matcher
+
 Matches if prompt contains specified keywords (case-insensitive).
 
 ```jsonc
@@ -663,31 +724,34 @@ Matches if prompt contains specified keywords (case-insensitive).
   "matcher": {
     "type": "keyword",
     "keywords": ["docs", "documentation", "guide"],
-    "mode": "any"  // "any" = ≥1 keyword | "all" = all keywords required
+    "mode": "any" // "any" = ≥1 keyword | "all" = all keywords required
   },
   "target_agent": "librarian"
 }
 ```
 
 #### 2. Complexity Matcher
+
 Routes based on heuristic complexity scoring (line count + keyword density).
 
 ```jsonc
 {
   "matcher": {
     "type": "complexity",
-    "threshold": "high"  // "low" | "medium" | "high"
+    "threshold": "high" // "low" | "medium" | "high"
   },
   "target_agent": "oracle"
 }
 ```
 
 Scoring:
+
 - Base: `Math.ceil(lineCount / 10)` points
 - Keywords: +1 per technical keyword (architecture, performance, database, etc.)
 - Thresholds: low=2, medium=5, high=10
 
 #### 3. Regex Matcher
+
 Routes based on regex pattern matching.
 
 ```jsonc
@@ -695,13 +759,14 @@ Routes based on regex pattern matching.
   "matcher": {
     "type": "regex",
     "pattern": "^(design|ui|component|button)",
-    "flags": "i"  // Optional: regex flags (default: "i" for case-insensitive)
+    "flags": "i" // Optional: regex flags (default: "i" for case-insensitive)
   },
   "target_agent": "hephaestus"
 }
 ```
 
 #### 4. Project Context Matcher
+
 Routes based on project structure (files and dependencies).
 
 ```jsonc
@@ -709,13 +774,14 @@ Routes based on project structure (files and dependencies).
   "matcher": {
     "type": "project_context",
     "has_files": ["package.json", "src/"],
-    "has_deps": ["vitest", "jest"]  // Any one of these satisfies "has_deps"
+    "has_deps": ["vitest", "jest"] // Any one of these satisfies "has_deps"
   },
   "target_agent": "sisyphus"
 }
 ```
 
 #### 5. Always Matcher
+
 Catch-all fallback (matches everything).
 
 ```jsonc
@@ -849,31 +915,38 @@ Response
 ### Key Components
 
 #### 1. Config System (src/config/)
+
 - **schema.ts**: Zod v4 schema validation
 - **loader.ts**: Loads & merges olimpus.jsonc (project + user)
 - **translator.ts**: Extracts oh-my-opencode passthrough config
 
 #### 2. Routing Engine (src/agents/routing.ts)
+
 - Evaluates 5 matcher types against user prompt
 - Implements first-match-wins semantics
 - Returns resolved route or null
 
 #### 3. Meta-Agent System (src/agents/)
+
 - **meta-agent.ts**: Factory for generating AgentConfig from MetaAgentDef
 - **registry.ts**: Tracks meta-agent definitions, detects circular dependencies
-- **definitions/**: Built-in meta-agent implementations (atenea, hermes, hefesto)
+- **definitions/**: Built-in meta-agent implementations (atenea, hermes,
+  hefesto)
 
 #### 4. Plugin Wrapper (src/plugin/wrapper.ts)
+
 - Merges Olimpus PluginInterface with oh-my-opencode base interface
 - Chains config handlers and other hook types
 - Returns single merged PluginInterface to framework
 
 #### 5. Skill System (src/skills/)
+
 - Loads skill definitions from YAML frontmatter
 - Applies `olimpus:` namespace prefix
 - Merges with oh-my-opencode skills (no conflicts)
 
 #### 6. Entry Point (src/index.ts)
+
 - Orchestrates all 5 components
 - Implements error handling & defaults
 - Returns final PluginInterface for oh-my-opencode
@@ -1024,6 +1097,7 @@ Warning: No olimpus.jsonc found. Using defaults.
 ```
 
 **Solution**:
+
 - Create `olimpus.jsonc` in project root or `~/.config/opencode/`
 - Validate your configuration: `bun run olimpus validate olimpus.jsonc`
 - Check file syntax with `bun run typecheck`
@@ -1037,6 +1111,7 @@ Warning: Regex pattern may cause performance issues: Nested quantifiers can caus
 ```
 
 **Solution**:
+
 - Run `bun run olimpus validate olimpus.jsonc` to get detailed error messages
 - Fix circular dependencies by removing or re-routing delegation chains
 - Ensure all agent references are either builtin agents or defined meta-agents
@@ -1045,8 +1120,10 @@ Warning: Regex pattern may cause performance issues: Nested quantifiers can caus
 ### Routing Not Matching
 
 **Debug**:
+
 1. Check routing order (first match wins)
-2. Print routing context: `console.log({ prompt, projectDir, projectFiles, projectDeps })`
+2. Print routing context:
+   `console.log({ prompt, projectDir, projectFiles, projectDeps })`
 3. Verify matcher syntax matches examples
 
 ### Circular Delegation Detected
@@ -1056,6 +1133,7 @@ Error: Circular delegation detected: atenea → hermes → atenea
 ```
 
 **Solution**:
+
 - Review meta-agent definitions for cycles
 - Ensure `delegates_to` doesn't indirectly loop back
 - Increase `max_delegation_depth` if chain is deep but valid
@@ -1067,6 +1145,7 @@ Warning: Failed to load skill: docs/skills/custom.md - file not found
 ```
 
 **Solution**:
+
 - Check `skills` array paths are relative to project root
 - Verify `.md` files have YAML frontmatter:
   ```md
@@ -1164,6 +1243,7 @@ MIT © 2024 Olimpus Contributors
 
 ## See Also
 
-- [oh-my-opencode](https://github.com/opencode-ai/oh-my-opencode) - Base plugin framework
+- [oh-my-opencode](https://github.com/opencode-ai/oh-my-opencode) - Base plugin
+  framework
 - [example/olimpus.jsonc](./example/olimpus.jsonc) - Full configuration example
 - [src/config/schema.ts](./src/config/schema.ts) - Zod v4 config schema

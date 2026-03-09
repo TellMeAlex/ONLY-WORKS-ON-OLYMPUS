@@ -1,6 +1,6 @@
 {
   "name": "@TellMeAlex/only-works-on-olympus",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A meta-orchestrator for oh-my-opencode that routes requests to specialized agents using intelligent matching rules",
   "license": "SUL-1.0",
   "module": "dist-node/index.js",
@@ -53,10 +53,10 @@
     "build:web": "cd web && bun install && bunx vite build"
   },
   "dependencies": {
-    "oh-my-opencode": "^3.4.0",
     "@opencode-ai/plugin": "^1.1.19",
-    "zod": "^4.1.8",
-    "jsonc-parser": "^3.3.1"
+    "jsonc-parser": "^3.3.1",
+    "oh-my-opencode": "^3.11.2",
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
