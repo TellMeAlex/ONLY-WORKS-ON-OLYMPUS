@@ -9,8 +9,17 @@ import type {
   AlwaysMatcher,
 } from "../config/schema.js";
 import type { RoutingLogger, MatcherEvaluation } from "./logger.js";
-import { error, bold, dim } from "../utils/colors.js";
+import { deprecationWarn } from "../utils/deprecation.js";
 
+/**
+ * Context information for evaluating routing rules.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Provides the prompt and project context needed to evaluate matchers
+ * and determine which agent should handle a task.
+ */
 export interface RoutingContext {
   prompt: string;
   projectDir: string;
@@ -18,6 +27,15 @@ export interface RoutingContext {
   projectDeps?: string[];
 }
 
+/**
+ * A resolved routing result indicating which agent to use.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Contains information about the matched route including the target agent,
+ * which matcher triggered the match, and any configuration overrides.
+ */
 export interface ResolvedRoute {
   target_agent: string;
   matcher_type?: string;
@@ -30,14 +48,44 @@ export interface ResolvedRoute {
   };
 }
 
+/**
+ * Extended routing result with detailed evaluation information.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Returned when evaluation capture is enabled, providing both the matched route
+ * and the full list of matcher evaluations for debugging purposes.
+ */
 export interface RoutingResult {
   route: ResolvedRoute | null;
   evaluations: MatcherEvaluation[];
 }
 
 /**
- * Evaluates routing rules in order and returns the first matching route
- * Returns null if no rules match
+ * Evaluates routing rules in order and returns the first matching route.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Iterates through routing rules evaluating each matcher against the context.
+ * Returns the first matching route or null if no rules match. Supports
+ * optional evaluation capture for debugging when logger is in debug mode
+ * or captureEvaluations is true.
+ *
+ * @param rules - Array of routing rules to evaluate in order
+ * @param context - Routing context containing prompt and project information
+ * @param logger - Optional logger for recording routing decisions
+ * @param captureEvaluations - When true, return RoutingResult with all evaluations
+ * @returns First matching route, null if no match, or RoutingResult with evaluations
+ *
+ * @example
+ * ```ts
+ * const route = evaluateRoutingRules(rules, context, logger);
+ * if (route) {
+ *   console.log(`Routing to: ${route.target_agent}`);
+ * }
+ * ```
  */
 export function evaluateRoutingRules(
   rules: RoutingRule[],
@@ -152,13 +200,80 @@ function getMatchedContent(matcher: Matcher, context: RoutingContext): string {
 }
 
 /**
- * Evaluates a single matcher against the routing context
- * Dispatches to specific matcher evaluators based on matcher type
+ * Checks if a matcher type is deprecated and emits a deprecation warning.
+ *
+ * @since 0.4.0
+ * @internal
+ *
+ * This function checks the deprecated matcher registry and emits a warning
+ * if the matcher type has been marked as deprecated. Each deprecated matcher
+ * type will only emit a warning once per session.
+ *
+ * @param matcherType - The matcher type to check
+ * @see {@link https://github.com/anthropics/olimpus/blob/main/docs/STABILITY.md | STABILITY.md} for deprecation policy
+ */
+function checkDeprecatedMatcher(matcherType: string): void {
+  // Registry of deprecated matcher types.
+  // Add entries here when deprecating matcher types following STABILITY.md guidelines.
+  const deprecatedMatchers: Record<
+    string,
+    {
+      deprecatedSince: string;
+      removal: string;
+      replacement?: string;
+      docsUrl?: string;
+    }
+  > = {
+    // Example: "old_matcher_type": {
+    //   deprecatedSince: "0.4.0",
+    //   removal: "1.0.0",
+    //   replacement: "new_matcher_type",
+    //   docsUrl: "./docs/migration-v0.4.0.md"
+    // }
+  };
+
+  const deprecationInfo = deprecatedMatchers[matcherType];
+
+  if (deprecationInfo) {
+    deprecationWarn({
+      api: `Matcher type "${matcherType}"`,
+      version: deprecationInfo.deprecatedSince,
+      replacement: deprecationInfo.replacement,
+      removal: deprecationInfo.removal,
+      docsUrl: deprecationInfo.docsUrl,
+      message: `This matcher type is deprecated and will be removed in ${deprecationInfo.removal}. Please update your routing configuration.`,
+    });
+  }
+}
+
+/**
+ * Evaluates a single matcher against the routing context.
+ *
+ * @since 0.1.0
+ * @stable
+ *
+ * Dispatches to the appropriate matcher evaluator based on the matcher type.
+ * Each matcher type has its own evaluation logic for determining matches.
+ *
+ * @param matcher - The matcher to evaluate
+ * @param context - Routing context containing prompt and project information
+ * @returns true if the matcher matches the context, false otherwise
+ *
+ * @example
+ * ```ts
+ * const matched = evaluateMatcher(matcher, context);
+ * if (matched) {
+ *   // This rule should be applied
+ * }
+ * ```
  */
 export function evaluateMatcher(
   matcher: Matcher,
   context: RoutingContext
 ): boolean {
+  // Check if this matcher type is deprecated
+  checkDeprecatedMatcher(matcher.type);
+
   switch (matcher.type) {
     case "keyword":
       return evaluateKeywordMatcher(matcher, context);
@@ -247,9 +362,10 @@ function evaluateRegexMatcher(
   try {
     const regex = new RegExp(matcher.pattern, matcher.flags || "i");
     return regex.test(context.prompt);
-  } catch (err) {
+  } catch (error) {
     console.error(
-      `${bold("[Olimpus]")} ${error("Invalid regex pattern:")} ${dim(matcher.pattern)} - ${dim(err instanceof Error ? err.message : String(err))}`
+      `Invalid regex pattern: ${matcher.pattern}`,
+      error instanceof Error ? error.message : error
     );
     return false;
   }
