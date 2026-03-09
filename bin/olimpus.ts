@@ -14,13 +14,19 @@
  *   olimpus templates preview --help   Show help for templates preview command
  *   olimpus templates apply <name>    Apply a template to your config
  *   olimpus templates apply --help    Show help for templates apply command
+ *   olimpus worktrees clean           Remove stale .sisyphus worktrees safely
+ *   olimpus worktrees clean --help    Show help for worktrees clean command
  *   olimpus --help                    Show general help
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { execFileSync } from "node:child_process";
 import { parse } from "jsonc-parser";
-import { OlimpusConfigSchema, type OlimpusConfig } from "../src/config/schema.js";
+import {
+  OlimpusConfigSchema,
+  type OlimpusConfig,
+} from "../src/config/schema.js";
 import {
   validateOlimpusConfig,
   getValidationSummary,
@@ -34,8 +40,16 @@ import {
   type RoutingResult,
   type MatcherEvaluation,
 } from "../src/agents/routing.js";
-import { loadTemplates, type LoadTemplatesOptions } from "../src/templates/loader.js";
+import {
+  loadTemplates,
+  type LoadTemplatesOptions,
+} from "../src/templates/loader.js";
 import { type Template } from "../src/templates/types.js";
+import {
+  normalizeForCompare,
+  parseWorktreeListPorcelain,
+  stripHeadsPrefix,
+} from "../src/orchestration/worktree-cleanup.js";
 
 /**
  * Parsed command options
@@ -48,6 +62,7 @@ interface CommandOptions {
   verbose: boolean;
   dryRun?: boolean;
   expectAgent?: string;
+  force?: boolean;
 }
 
 /**
@@ -82,6 +97,9 @@ export function parseOptions(args: string[]): CommandOptions {
       i++;
     } else if (arg === "--dry-run") {
       options.dryRun = true;
+      i++;
+    } else if (arg === "--force") {
+      options.force = true;
       i++;
     } else if (arg === "--config") {
       i++;
@@ -124,6 +142,248 @@ export function parseOptions(args: string[]): CommandOptions {
   }
 
   return options;
+}
+
+function runGit(directory: string, args: string[]): string {
+  return execFileSync("git", args, {
+    cwd: directory,
+    encoding: "utf-8",
+    timeout: 20000,
+    stdio: ["pipe", "pipe", "pipe"],
+  }).trim();
+}
+
+function resolveDefaultBranch(repoRoot: string): string {
+  const candidates = ["master", "main"];
+  for (const candidate of candidates) {
+    try {
+      runGit(repoRoot, ["show-ref", "--verify", `refs/heads/${candidate}`]);
+      return candidate;
+    } catch {}
+  }
+
+  try {
+    const originHead = runGit(repoRoot, [
+      "symbolic-ref",
+      "refs/remotes/origin/HEAD",
+    ]);
+    const inferred = originHead.replace("refs/remotes/origin/", "").trim();
+    return inferred || "master";
+  } catch {
+    return "master";
+  }
+}
+
+async function worktreesCommand(args: string[]): Promise<number> {
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showWorktreesHelp();
+    return 0;
+  }
+
+  const subcommand = args[0];
+  const subcommandArgs = args.slice(1);
+
+  if (subcommand === "clean") {
+    return worktreesCleanCommand(subcommandArgs);
+  }
+
+  console.error(`\n❌ Unknown worktrees subcommand: ${subcommand}\n`);
+  console.log("Run 'olimpus worktrees --help' for available subcommands.\n");
+  return 1;
+}
+
+function worktreesCleanCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  if (options.help) {
+    showWorktreesCleanHelp();
+    return 0;
+  }
+
+  try {
+    const repoRoot = runGit(process.cwd(), ["rev-parse", "--show-toplevel"]);
+    const managedRoot = path.join(repoRoot, ".sisyphus", "worktrees");
+
+    const porcelain = runGit(repoRoot, ["worktree", "list", "--porcelain"]);
+    const allWorktrees = parseWorktreeListPorcelain(porcelain);
+
+    const managed = allWorktrees.filter((wt) =>
+      normalizeForCompare(wt.path).startsWith(normalizeForCompare(managedRoot)),
+    );
+
+    if (managed.length === 0) {
+      console.log("\n✅ No managed .sisyphus worktrees found.\n");
+      return 0;
+    }
+
+    let activeWorktreePath: string | undefined;
+    const boulderPath = path.join(repoRoot, ".sisyphus", "boulder.json");
+    if (fs.existsSync(boulderPath)) {
+      try {
+        const state = JSON.parse(fs.readFileSync(boulderPath, "utf-8")) as {
+          worktree_path?: string;
+        };
+        activeWorktreePath = state.worktree_path;
+      } catch {}
+    }
+
+    const defaultBranch = resolveDefaultBranch(repoRoot);
+    const mergedBranches = new Set(
+      runGit(repoRoot, [
+        "branch",
+        "--merged",
+        defaultBranch,
+        "--format=%(refname:short)",
+      ])
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
+    );
+
+    const removable: Array<{ path: string; branch: string }> = [];
+    const skipped: Array<{ path: string; reason: string }> = [];
+
+    for (const wt of managed) {
+      const normalizedPath = normalizeForCompare(wt.path);
+      const isActive =
+        !!activeWorktreePath &&
+        normalizeForCompare(activeWorktreePath) === normalizedPath;
+
+      if (isActive) {
+        skipped.push({
+          path: wt.path,
+          reason: "active in .sisyphus/boulder.json",
+        });
+        continue;
+      }
+
+      const branch = stripHeadsPrefix(wt.branch);
+      if (!branch) {
+        skipped.push({
+          path: wt.path,
+          reason: "detached HEAD or unknown branch",
+        });
+        continue;
+      }
+
+      const isMerged = mergedBranches.has(branch);
+      if (!isMerged) {
+        skipped.push({
+          path: wt.path,
+          reason: `branch '${branch}' is not merged into ${defaultBranch}`,
+        });
+        continue;
+      }
+
+      const dirty =
+        runGit(wt.path, ["status", "--porcelain"]).trim().length > 0;
+      if (dirty) {
+        skipped.push({ path: wt.path, reason: "contains uncommitted changes" });
+        continue;
+      }
+
+      removable.push({ path: wt.path, branch });
+    }
+
+    console.log(`\n🧹 Managed worktrees: ${managed.length}`);
+    console.log(`🗑️  Eligible for removal: ${removable.length}`);
+    console.log(`⏭️  Skipped: ${skipped.length}\n`);
+
+    if (options.verbose) {
+      if (removable.length > 0) {
+        console.log("Removable:");
+        for (const item of removable) {
+          console.log(`  - ${item.path} (${item.branch})`);
+        }
+        console.log();
+      }
+
+      if (skipped.length > 0) {
+        console.log("Skipped:");
+        for (const item of skipped) {
+          console.log(`  - ${item.path} (${item.reason})`);
+        }
+        console.log();
+      }
+    }
+
+    if (removable.length === 0) {
+      console.log("✅ Nothing to remove.\n");
+      return 0;
+    }
+
+    if (!options.force && !options.dryRun) {
+      console.log(
+        "ℹ️  Dry-run by default for safety. Re-run with --force to remove.\n",
+      );
+      return 0;
+    }
+
+    if (options.dryRun) {
+      console.log("🔎 Dry-run mode: no worktrees removed.\n");
+      return 0;
+    }
+
+    for (const item of removable) {
+      runGit(repoRoot, ["worktree", "remove", item.path]);
+    }
+
+    console.log(`✅ Removed ${removable.length} worktree(s).\n`);
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error("\n❌ Unexpected error\n");
+    }
+    return 1;
+  }
+}
+
+function showWorktreesHelp(): void {
+  console.log(`
+Usage: olimpus worktrees <subcommand> [options]
+
+Manage Olimpus-managed worktrees under .sisyphus/worktrees.
+
+Subcommands:
+  clean             Remove stale worktrees safely
+
+Options:
+  -h, --help        Show this help message
+
+Examples:
+  olimpus worktrees clean --dry-run
+  olimpus worktrees clean --force --verbose
+
+For more information on a specific subcommand, run:
+  olimpus worktrees <subcommand> --help
+`);
+}
+
+function showWorktreesCleanHelp(): void {
+  console.log(`
+Usage: olimpus worktrees clean [options]
+
+Cleanup stale worktrees created by Olimpus orchestration.
+
+A worktree is removable when all are true:
+  - It is under .sisyphus/worktrees/
+  - It is not the active worktree in .sisyphus/boulder.json
+  - Its branch is merged into the default branch (master/main)
+  - It has no uncommitted changes
+
+Options:
+  --dry-run         Show candidates without deleting
+  --force           Perform actual removal
+  -v, --verbose     Show detailed candidate/skip reasons
+  -h, --help        Show this help message
+
+Examples:
+  olimpus worktrees clean --dry-run
+  olimpus worktrees clean --force
+  olimpus worktrees clean --force --verbose
+`);
 }
 
 /**
@@ -280,7 +540,9 @@ async function validateCommand(args: string[]): Promise<number> {
     } else if (options.positional.length > 0) {
       filePath = options.positional[0];
     } else {
-      throw new Error("Configuration file path is required. Use --config <file> or provide as positional argument.");
+      throw new Error(
+        "Configuration file path is required. Use --config <file> or provide as positional argument.",
+      );
     }
 
     // Load configuration
@@ -375,7 +637,9 @@ async function testCommand(args: string[]): Promise<number> {
     } else if (options.positional.length > 0) {
       filePath = options.positional[0];
     } else {
-      throw new Error("Configuration file path is required. Use --config <file> or provide as positional argument.");
+      throw new Error(
+        "Configuration file path is required. Use --config <file> or provide as positional argument.",
+      );
     }
 
     // Load configuration
@@ -413,7 +677,9 @@ async function testCommand(args: string[]): Promise<number> {
           console.log(`   - ${dep}`);
         }
         if (projectDeps.length > 20) {
-          console.log(`   ... and ${projectDeps.length - 20} more dependencies`);
+          console.log(
+            `   ... and ${projectDeps.length - 20} more dependencies`,
+          );
         }
         console.log();
       }
@@ -423,12 +689,18 @@ async function testCommand(args: string[]): Promise<number> {
     let metaAgentId: string | undefined;
     if (options.metaAgent) {
       metaAgentId = options.metaAgent;
-    } else if (config.meta_agents && Object.keys(config.meta_agents).length === 1) {
+    } else if (
+      config.meta_agents &&
+      Object.keys(config.meta_agents).length === 1
+    ) {
       // Use the only meta-agent if there's exactly one
       metaAgentId = Object.keys(config.meta_agents)[0];
-    } else if (config.meta_agents && Object.keys(config.meta_agents).length > 0) {
+    } else if (
+      config.meta_agents &&
+      Object.keys(config.meta_agents).length > 0
+    ) {
       throw new Error(
-        "Multiple meta-agents found. Use --meta-agent <agent> to specify which one to test."
+        "Multiple meta-agents found. Use --meta-agent <agent> to specify which one to test.",
       );
     } else {
       throw new Error("No meta-agents found in configuration.");
@@ -448,7 +720,9 @@ async function testCommand(args: string[]): Promise<number> {
       const startIndex = options.config ? 0 : 1;
       testPrompt = options.positional.slice(startIndex).join(" ");
     } else {
-      throw new Error("Test prompt is required. Provide it as a positional argument after the config file.");
+      throw new Error(
+        "Test prompt is required. Provide it as a positional argument after the config file.",
+      );
     }
 
     if (options.verbose) {
@@ -472,19 +746,20 @@ async function testCommand(args: string[]): Promise<number> {
           metaAgent.routing_rules,
           routingContext,
           undefined,
-          true
+          true,
         ) as RoutingResult)
       : null;
 
     // Capture evaluations for verbose mode
-    const verboseResult = !options.dryRun && options.verbose
-      ? (evaluateRoutingRules(
-          metaAgent.routing_rules,
-          routingContext,
-          undefined,
-          true
-        ) as RoutingResult)
-      : null;
+    const verboseResult =
+      !options.dryRun && options.verbose
+        ? (evaluateRoutingRules(
+            metaAgent.routing_rules,
+            routingContext,
+            undefined,
+            true,
+          ) as RoutingResult)
+        : null;
 
     const result: ResolvedRoute | null = dryRunResult
       ? dryRunResult.route
@@ -499,27 +774,43 @@ async function testCommand(args: string[]): Promise<number> {
       for (const evaluation of dryRunResult.evaluations) {
         const resultPrefix = evaluation.matched ? "✅" : "❌";
         const resultText = evaluation.matched ? "Matched" : "Not matched";
-        console.log(`${resultPrefix} Evaluating matcher: ${evaluation.matcher_type}`);
+        console.log(
+          `${resultPrefix} Evaluating matcher: ${evaluation.matcher_type}`,
+        );
         console.log(`   Result: ${resultText}`);
 
         // Show matcher details
         switch (evaluation.matcher.type) {
           case "keyword":
-            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
+            console.log(
+              `   Keywords: ${evaluation.matcher.keywords.join(", ")}`,
+            );
             console.log(`   Mode: ${evaluation.matcher.mode}`);
             break;
           case "regex":
-            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
+            console.log(
+              `   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`,
+            );
             break;
           case "complexity":
             console.log(`   Threshold: ${evaluation.matcher.threshold}`);
             break;
           case "project_context":
-            if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
-              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
+            if (
+              evaluation.matcher.has_files &&
+              evaluation.matcher.has_files.length > 0
+            ) {
+              console.log(
+                `   Has files: ${evaluation.matcher.has_files.join(", ")}`,
+              );
             }
-            if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
-              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
+            if (
+              evaluation.matcher.has_deps &&
+              evaluation.matcher.has_deps.length > 0
+            ) {
+              console.log(
+                `   Has deps: ${evaluation.matcher.has_deps.join(", ")}`,
+              );
             }
             break;
           case "always":
@@ -528,16 +819,22 @@ async function testCommand(args: string[]): Promise<number> {
         }
 
         // Show target agent for each rule
-        const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
+        const rule = metaAgent.routing_rules.find(
+          (r) => r.matcher === evaluation.matcher,
+        );
         if (rule) {
           console.log(`   Target agent: ${rule.target_agent}`);
           if (rule.config_overrides) {
             const overrides: string[] = [];
-            if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
+            if (rule.config_overrides.model)
+              overrides.push(`model=${rule.config_overrides.model}`);
             if (rule.config_overrides.temperature !== undefined) {
-              overrides.push(`temperature=${rule.config_overrides.temperature}`);
+              overrides.push(
+                `temperature=${rule.config_overrides.temperature}`,
+              );
             }
-            if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
+            if (rule.config_overrides.variant)
+              overrides.push(`variant=${rule.config_overrides.variant}`);
             if (overrides.length > 0) {
               console.log(`   Overrides: ${overrides.join(", ")}`);
             }
@@ -550,8 +847,8 @@ async function testCommand(args: string[]): Promise<number> {
       // Show final result
       if (result) {
         console.log(`✅ Final match: ${result.target_agent}`);
-        console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
-        console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
+        console.log(`   Matcher type: ${result.matcher_type || "unknown"}`);
+        console.log(`   Matched content: ${result.matched_content || "N/A"}`);
         console.log();
 
         // Check if the matched agent matches the expected agent
@@ -592,21 +889,35 @@ async function testCommand(args: string[]): Promise<number> {
         // Show matcher details
         switch (evaluation.matcher.type) {
           case "keyword":
-            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
+            console.log(
+              `   Keywords: ${evaluation.matcher.keywords.join(", ")}`,
+            );
             console.log(`   Mode: ${evaluation.matcher.mode}`);
             break;
           case "regex":
-            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
+            console.log(
+              `   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`,
+            );
             break;
           case "complexity":
             console.log(`   Threshold: ${evaluation.matcher.threshold}`);
             break;
           case "project_context":
-            if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
-              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
+            if (
+              evaluation.matcher.has_files &&
+              evaluation.matcher.has_files.length > 0
+            ) {
+              console.log(
+                `   Has files: ${evaluation.matcher.has_files.join(", ")}`,
+              );
             }
-            if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
-              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
+            if (
+              evaluation.matcher.has_deps &&
+              evaluation.matcher.has_deps.length > 0
+            ) {
+              console.log(
+                `   Has deps: ${evaluation.matcher.has_deps.join(", ")}`,
+              );
             }
             break;
           case "always":
@@ -615,16 +926,22 @@ async function testCommand(args: string[]): Promise<number> {
         }
 
         // Show target agent for each rule
-        const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
+        const rule = metaAgent.routing_rules.find(
+          (r) => r.matcher === evaluation.matcher,
+        );
         if (rule) {
           console.log(`   Target agent: ${rule.target_agent}`);
           if (rule.config_overrides) {
             const overrides: string[] = [];
-            if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
+            if (rule.config_overrides.model)
+              overrides.push(`model=${rule.config_overrides.model}`);
             if (rule.config_overrides.temperature !== undefined) {
-              overrides.push(`temperature=${rule.config_overrides.temperature}`);
+              overrides.push(
+                `temperature=${rule.config_overrides.temperature}`,
+              );
             }
-            if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
+            if (rule.config_overrides.variant)
+              overrides.push(`variant=${rule.config_overrides.variant}`);
             if (overrides.length > 0) {
               console.log(`   Overrides: ${overrides.join(", ")}`);
             }
@@ -638,19 +955,26 @@ async function testCommand(args: string[]): Promise<number> {
     // Display normal results (non-dry-run)
     if (result) {
       console.log(`✅ Matched agent: ${result.target_agent}`);
-      console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
-      console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
+      console.log(`   Matcher type: ${result.matcher_type || "unknown"}`);
+      console.log(`   Matched content: ${result.matched_content || "N/A"}`);
 
       if (options.verbose) {
         console.log(`   Target agent: ${result.target_agent}`);
         if (result.config_overrides) {
           const overrides: string[] = [];
-          if (result.config_overrides.model) overrides.push(`model=${result.config_overrides.model}`);
+          if (result.config_overrides.model)
+            overrides.push(`model=${result.config_overrides.model}`);
           if (result.config_overrides.temperature !== undefined) {
-            overrides.push(`temperature=${result.config_overrides.temperature}`);
+            overrides.push(
+              `temperature=${result.config_overrides.temperature}`,
+            );
           }
-          if (result.config_overrides.variant) overrides.push(`variant=${result.config_overrides.variant}`);
-          if (result.config_overrides.prompt) overrides.push(`prompt=${result.config_overrides.prompt.slice(0, 50)}...`);
+          if (result.config_overrides.variant)
+            overrides.push(`variant=${result.config_overrides.variant}`);
+          if (result.config_overrides.prompt)
+            overrides.push(
+              `prompt=${result.config_overrides.prompt.slice(0, 50)}...`,
+            );
           if (overrides.length > 0) {
             console.log(`   Overrides: ${overrides.join(", ")}`);
           }
@@ -811,7 +1135,9 @@ function templatesListCommand(args: string[]): number {
             console.log(`    Tags: ${template.tags.join(", ")}`);
           }
           if (options.verbose && template.documentation) {
-            console.log(`    ${template.documentation.slice(0, 100)}${template.documentation.length > 100 ? "..." : ""}`);
+            console.log(
+              `    ${template.documentation.slice(0, 100)}${template.documentation.length > 100 ? "..." : ""}`,
+            );
           }
         }
         console.log();
@@ -948,17 +1274,29 @@ function templatesPreviewCommand(args: string[]): number {
       console.log(`\nMeta-Agent Configuration:`);
       console.log(`  Base Model: ${template.meta_agent.base_model}`);
 
-      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
-        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      if (
+        template.meta_agent.delegates_to &&
+        template.meta_agent.delegates_to.length > 0
+      ) {
+        console.log(
+          `  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`,
+        );
       }
 
-      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
-        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+      if (
+        template.meta_agent.routing_rules &&
+        template.meta_agent.routing_rules.length > 0
+      ) {
+        console.log(
+          `  Routing Rules: ${template.meta_agent.routing_rules.length}`,
+        );
       }
 
       if (template.meta_agent.prompt_template) {
         const preview = template.meta_agent.prompt_template.slice(0, 100);
-        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+        console.log(
+          `  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`,
+        );
       }
     }
 
@@ -1047,24 +1385,38 @@ function templatesApplyCommand(args: string[]): number {
       console.log(`Meta-Agent Configuration:\n`);
       console.log(`  Base Model: ${template.meta_agent.base_model}`);
 
-      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
-        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      if (
+        template.meta_agent.delegates_to &&
+        template.meta_agent.delegates_to.length > 0
+      ) {
+        console.log(
+          `  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`,
+        );
       }
 
-      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
-        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+      if (
+        template.meta_agent.routing_rules &&
+        template.meta_agent.routing_rules.length > 0
+      ) {
+        console.log(
+          `  Routing Rules: ${template.meta_agent.routing_rules.length}`,
+        );
         console.log();
         console.log(`  Summary of routing rules:`);
         for (let i = 0; i < template.meta_agent.routing_rules.length; i++) {
           const rule = template.meta_agent.routing_rules[i];
-          console.log(`    ${i + 1}. ${rule.matcher.type} → ${rule.target_agent}`);
+          console.log(
+            `    ${i + 1}. ${rule.matcher.type} → ${rule.target_agent}`,
+          );
         }
       }
 
       if (template.meta_agent.prompt_template) {
         const preview = template.meta_agent.prompt_template.slice(0, 100);
         console.log();
-        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+        console.log(
+          `  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`,
+        );
       }
 
       console.log();
@@ -1075,15 +1427,21 @@ function templatesApplyCommand(args: string[]): number {
       console.log(`To apply this template to your configuration:\n`);
       console.log(`  1. Create or open your olimpus.jsonc file`);
       console.log(`  2. Add the meta_agent configuration from this template`);
-      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log(
+        `  3. Customize routing rules, prompts, and agents as needed`,
+      );
       console.log();
     } else {
       console.log(`✅ Template ready to apply\n`);
       console.log(`To apply this template to your configuration:\n`);
       console.log(`  1. Create or open your olimpus.jsonc file`);
       console.log(`  2. Add the meta_agent configuration from this template`);
-      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
-      console.log(`  4. Run 'olimpus validate olimpus.jsonc' to verify your configuration`);
+      console.log(
+        `  3. Customize routing rules, prompts, and agents as needed`,
+      );
+      console.log(
+        `  4. Run 'olimpus validate olimpus.jsonc' to verify your configuration`,
+      );
       console.log();
     }
 
@@ -1153,6 +1511,7 @@ Commands:
   validate          Validate configuration file
   test              Test routing rules
   templates         Manage and explore meta-agent templates
+  worktrees         Manage Olimpus-managed git worktrees
 
 Options:
   -h, --help       Show this help message
@@ -1161,6 +1520,7 @@ Examples:
   olimpus validate olimpus.jsonc
   olimpus test olimpus.jsonc
   olimpus templates list
+  olimpus worktrees clean --dry-run
   olimpus validate --help
 
 For more information on a specific command, run:
@@ -1197,6 +1557,11 @@ async function main(): Promise<number> {
       name: "templates",
       description: "Manage and explore meta-agent templates",
       execute: templatesCommand,
+    },
+    worktrees: {
+      name: "worktrees",
+      description: "Manage Olimpus-managed git worktrees",
+      execute: worktreesCommand,
     },
   };
 

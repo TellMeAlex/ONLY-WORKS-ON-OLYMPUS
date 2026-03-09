@@ -388,6 +388,28 @@ Add the analytics configuration to your `olimpus.jsonc`:
 
 Olimpus provides CLI commands for managing analytics data:
 
+#### Cleanup Stale Worktrees
+
+Remove stale orchestration worktrees under `.sisyphus/worktrees` safely.
+
+```bash
+# Preview removable worktrees (safe default)
+bun run olimpus worktrees clean --dry-run
+
+# Remove eligible worktrees
+bun run olimpus worktrees clean --force
+
+# Show detailed skip reasons
+bun run olimpus worktrees clean --force --verbose
+```
+
+Removal criteria:
+
+- Worktree is under `.sisyphus/worktrees/`
+- Worktree is not active in `.sisyphus/boulder.json`
+- Worktree branch is already merged into the default branch (`master` or `main`)
+- Worktree has no uncommitted changes
+
 #### Show Analytics Dashboard
 
 Display analytics metrics and routing statistics:

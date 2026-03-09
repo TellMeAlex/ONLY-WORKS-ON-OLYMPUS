@@ -166,7 +166,9 @@ describe("runWizardNonInteractive", () => {
     // Assert
     expect(result?.answers.project_type).toBe("cli");
     // CLI project type doesn't enable background_parallelization by default
-    expect(result?.config.settings?.background_parallelization?.enabled).toBeUndefined();
+    expect(
+      result?.config.settings?.background_parallelization?.enabled,
+    ).toBeUndefined();
   });
 
   test("respects custom meta_agents answer", async () => {
@@ -200,7 +202,9 @@ describe("runWizardNonInteractive", () => {
     // Assert
     expect(result?.answers.primary_model).toBe("gpt-5.2");
     expect(result?.answers.research_model).toBe("claude-haiku-4-5");
-    expect(result?.config.providers?.priority_chain).toContain("openai/gpt-5.2");
+    expect(result?.config.providers?.priority_chain).toContain(
+      "openai/gpt-5.2",
+    );
     expect(result?.config.providers?.research_providers).toContain(
       "anthropic/claude-haiku-4-5",
     );
@@ -220,7 +224,9 @@ describe("runWizardNonInteractive", () => {
     expect(result?.config.settings?.ultrawork_enabled).toBe(true);
     expect(result?.config.settings?.todo_continuation).toBe(true);
     // adaptive_model_selection is enabled by default in project template
-    expect(result?.config.settings?.adaptive_model_selection?.enabled).toBe(true);
+    expect(result?.config.settings?.adaptive_model_selection?.enabled).toBe(
+      true,
+    );
   });
 
   test("respects custom skills_path answer", async () => {
@@ -282,7 +288,9 @@ describe("runWizardNonInteractive", () => {
 
     // Assert: should throw error
     expect(error).not.toBeNull();
-    expect((error as Error).message).toContain("HOME environment variable not set");
+    expect((error as Error).message).toContain(
+      "HOME environment variable not set",
+    );
   });
 
   test("handles permission errors gracefully", async () => {
@@ -376,8 +384,12 @@ describe("runWizardNonInteractive", () => {
     expect(config.settings?.adaptive_model_selection?.enabled).toBe(true);
 
     // Verify adaptive model selection has models configured
-    expect(config.settings?.adaptive_model_selection?.strategy_model).toBeDefined();
-    expect(config.settings?.adaptive_model_selection?.research_model).toBeDefined();
+    expect(
+      config.settings?.adaptive_model_selection?.strategy_model,
+    ).toBeDefined();
+    expect(
+      config.settings?.adaptive_model_selection?.research_model,
+    ).toBeDefined();
   });
 
   test("web project type has expected defaults", async () => {
@@ -446,7 +458,9 @@ describe("runWizardNonInteractive", () => {
     expect(config.categories?.documentation).toBeDefined();
 
     // Assert: background_parallelization is not enabled for CLI (template default)
-    expect(config.settings?.background_parallelization?.enabled).toBeUndefined();
+    expect(
+      config.settings?.background_parallelization?.enabled,
+    ).toBeUndefined();
   });
 
   test("fullstack project type has both frontend and backend categories", async () => {
@@ -508,12 +522,45 @@ describe("runWizardNonInteractive", () => {
     expect(config.providers?.priority_chain).toContain(
       "anthropic/claude-sonnet-4-20250217",
     );
-    expect(config.providers?.priority_chain).toContain("anthropic/claude-haiku-4-5");
+    expect(config.providers?.priority_chain).toContain(
+      "anthropic/claude-haiku-4-5",
+    );
 
     // Research providers should include research model
     expect(config.providers?.research_providers).toContain(
       "anthropic/claude-haiku-4-5",
     );
+  });
+
+  test("category-first strategy does not hardcode provider or model overrides", async () => {
+    const answers: Partial<WizardAnswers> = {
+      model_strategy: "category_first",
+      project_type: "web",
+    };
+
+    const result = await runWizardNonInteractive(answers);
+    expect(result).not.toBeNull();
+
+    const config = result!.config;
+    expect(config.providers).toBeUndefined();
+
+    if (config.meta_agents) {
+      for (const def of Object.values(config.meta_agents)) {
+        expect(def.base_model).toBe("");
+      }
+    }
+
+    if (config.agents) {
+      for (const def of Object.values(config.agents)) {
+        expect(def?.model).toBeUndefined();
+      }
+    }
+
+    if (config.categories) {
+      for (const def of Object.values(config.categories)) {
+        expect(def?.model).toBeUndefined();
+      }
+    }
   });
 
   test("returns correct answers in result", async () => {

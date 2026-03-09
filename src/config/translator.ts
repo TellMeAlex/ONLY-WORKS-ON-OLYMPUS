@@ -5,6 +5,47 @@ import type {
   CategoryConfig,
 } from "./schema";
 
+const BUILTIN_ALIAS_TO_CANONICAL: Record<string, string> = {
+  atenea: "atenea",
+  ateneo: "atenea",
+  hermes: "hermes",
+  hades: "hades",
+  hefesto: "hades",
+};
+
+function canonicalizeMetaAgentName(name: string, namespace: string): string {
+  if (name.startsWith(`${namespace}:`)) {
+    return name;
+  }
+
+  const normalized = BUILTIN_ALIAS_TO_CANONICAL[name];
+  if (normalized) {
+    return `${namespace}:${normalized}`;
+  }
+
+  return name;
+}
+
+function normalizeMetaAgentDef(
+  def: MetaAgentDef,
+  namespace: string,
+): MetaAgentDef {
+  const delegates = def.delegates_to.map((target) =>
+    canonicalizeMetaAgentName(target, namespace),
+  );
+
+  const rules = def.routing_rules.map((rule) => ({
+    ...rule,
+    target_agent: canonicalizeMetaAgentName(rule.target_agent, namespace),
+  }));
+
+  return {
+    ...def,
+    delegates_to: delegates,
+    routing_rules: rules,
+  };
+}
+
 /**
  * Translate OlimpusConfig to oh-my-opencode compatible config format.
  * Extracts only oh-my-opencode passthrough fields (agents, categories, disabled_hooks).
@@ -24,9 +65,18 @@ export function translateToOMOConfig(config: OlimpusConfig): OMOPluginConfig {
  * Returns only the meta_agents section (olimpus-specific extension).
  */
 export function extractMetaAgentDefs(
-  config: OlimpusConfig
+  config: OlimpusConfig,
+  namespace: string = config.settings?.namespace_prefix ?? "olimpus",
 ): Record<string, MetaAgentDef> {
-  return config.meta_agents ?? {};
+  const metaAgents = config.meta_agents ?? {};
+  const normalized: Record<string, MetaAgentDef> = {};
+
+  for (const [name, def] of Object.entries(metaAgents)) {
+    const canonicalName = canonicalizeMetaAgentName(name, namespace);
+    normalized[canonicalName] = normalizeMetaAgentDef(def, namespace);
+  }
+
+  return normalized;
 }
 
 /**

@@ -62,17 +62,22 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
     });
   }
 
-  const registry = new MetaAgentRegistry(maxDepth, loggerConfig, analyticsStorage);
+  const registry = new MetaAgentRegistry(
+    maxDepth,
+    loggerConfig,
+    analyticsStorage,
+  );
 
-  const configMetaAgents = extractMetaAgentDefs(config);
+  const namespace = config.settings?.namespace_prefix ?? "olimpus";
+  const configMetaAgents = extractMetaAgentDefs(config, namespace);
   for (const [name, def] of Object.entries(configMetaAgents)) {
     registry.register(name, def);
   }
 
   const builtInMetaAgents = [
-    { name: "olimpus:atenea", def: ateneo },
-    { name: "olimpus:hermes", def: hermes },
-    { name: "olimpus:hades", def: hades },
+    { name: `${namespace}:atenea`, def: ateneo },
+    { name: `${namespace}:hermes`, def: hermes },
+    { name: `${namespace}:hades`, def: hades },
   ];
 
   for (const { name, def } of builtInMetaAgents) {
@@ -93,8 +98,6 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   }
 
   const baseConfigHandler = pluginInterface.config;
-  const namespace = config.settings?.namespace_prefix ?? "olimpus";
-
   pluginInterface.config = async (configInput: Config) => {
     if (baseConfigHandler) {
       await baseConfigHandler(configInput);

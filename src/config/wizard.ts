@@ -42,12 +42,17 @@ interface ProjectConfigTemplate {
   /**
    * Default agent configurations for this project type
    */
-  defaultAgents?: Partial<Record<string, { model: string; temperature: number; description: string }>>;
+  defaultAgents?: Partial<
+    Record<string, { model: string; temperature: number; description: string }>
+  >;
 
   /**
    * Default categories for this project type
    */
-  defaultCategories?: Record<string, { description: string; model?: string; temperature?: number }>;
+  defaultCategories?: Record<
+    string,
+    { description: string; model?: string; temperature?: number }
+  >;
 
   /**
    * Default settings overrides for this project type
@@ -345,7 +350,10 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
  * Get config template for a project type
  */
 function getProjectTemplate(projectType: string): ProjectConfigTemplate {
-  return PROJECT_CONFIG_TEMPLATES[projectType as ProjectTypeId] || PROJECT_CONFIG_TEMPLATES.other;
+  return (
+    PROJECT_CONFIG_TEMPLATES[projectType as ProjectTypeId] ||
+    PROJECT_CONFIG_TEMPLATES.other
+  );
 }
 
 /**
@@ -452,7 +460,9 @@ function displayOptions(options: PromptOption[], selectedIndex?: number): void {
   options.forEach((opt, index) => {
     const isSelected = index === selectedIndex;
     const prefix = isSelected ? bold("> ") : "  ";
-    const label = isSelected ? bold(`${index + 1}. ${opt.label}`) : `${index + 1}. ${opt.label}`;
+    const label = isSelected
+      ? bold(`${index + 1}. ${opt.label}`)
+      : `${index + 1}. ${opt.label}`;
     const description = opt.description ? dim(` - ${opt.description}`) : "";
     console.log(`${prefix}${label}${description}`);
   });
@@ -483,8 +493,9 @@ async function selectOption(
   help?: string,
 ): Promise<PromptOption> {
   // Get options from the prompt
-  const optionsPrompt: OptionsPrompt =
-    WIZARD_PROMPTS[prompt as keyof typeof WIZARD_PROMPTS] as OptionsPrompt;
+  const optionsPrompt: OptionsPrompt = WIZARD_PROMPTS[
+    prompt as keyof typeof WIZARD_PROMPTS
+  ] as OptionsPrompt;
   if (!isOptionsPrompt(optionsPrompt)) {
     throw new Error(`Prompt "${prompt}" is not an options prompt`);
   }
@@ -501,11 +512,17 @@ async function selectOption(
   console.log("");
 
   while (true) {
-    const answer = await rli.question("Select option (1-" + options.length + "): ");
+    const answer = await rli.question(
+      "Select option (1-" + options.length + "): ",
+    );
     const num = parseInt(answer, 10);
 
     if (isNaN(num) || num < 1 || num > options.length) {
-      console.log(error(`Invalid selection. Please enter a number between 1 and ${options.length}.`));
+      console.log(
+        error(
+          `Invalid selection. Please enter a number between 1 and ${options.length}.`,
+        ),
+      );
       continue;
     }
 
@@ -522,8 +539,9 @@ async function selectMultipleOptions(
   help?: string,
   defaults?: boolean[],
 ): Promise<PromptOption[]> {
-  const optionsPrompt: OptionsPrompt =
-    WIZARD_PROMPTS[prompt as keyof typeof WIZARD_PROMPTS] as OptionsPrompt;
+  const optionsPrompt: OptionsPrompt = WIZARD_PROMPTS[
+    prompt as keyof typeof WIZARD_PROMPTS
+  ] as OptionsPrompt;
   if (!isOptionsPrompt(optionsPrompt)) {
     throw new Error(`Prompt "${prompt}" is not an options prompt`);
   }
@@ -587,8 +605,9 @@ async function askText(
   promptId: string,
   defaultValue?: string,
 ): Promise<string> {
-  const promptObj: WizardPrompt =
-    WIZARD_PROMPTS[promptId as keyof typeof WIZARD_PROMPTS] as WizardPrompt;
+  const promptObj: WizardPrompt = WIZARD_PROMPTS[
+    promptId as keyof typeof WIZARD_PROMPTS
+  ] as WizardPrompt;
   if (!isSimplePrompt(promptObj) || typeof promptObj.message === "function") {
     throw new Error(`Prompt "${promptId}" is not a simple text prompt`);
   }
@@ -609,8 +628,9 @@ async function showMessage(
   promptId: string,
   ...args: unknown[]
 ): Promise<void> {
-  const promptObj: WizardPrompt =
-    WIZARD_PROMPTS[promptId as keyof typeof WIZARD_PROMPTS] as WizardPrompt;
+  const promptObj: WizardPrompt = WIZARD_PROMPTS[
+    promptId as keyof typeof WIZARD_PROMPTS
+  ] as WizardPrompt;
   if (!isSimplePrompt(promptObj)) {
     throw new Error(`Prompt "${promptId}" is not a simple prompt`);
   }
@@ -666,7 +686,8 @@ function createMetaAgents(
           },
           target_agent: "librarian",
           config_overrides: {
-            prompt: "You are a research specialist. Search comprehensively for documentation and guides.",
+            prompt:
+              "You are a research specialist. Search comprehensively for documentation and guides.",
           },
         },
         {
@@ -688,7 +709,8 @@ function createMetaAgents(
           },
           target_agent: "sisyphus",
           config_overrides: {
-            prompt: "You are a TDD expert. Write tests first, then implementation.",
+            prompt:
+              "You are a TDD expert. Write tests first, then implementation.",
             variant: "tdd",
           },
         },
@@ -714,7 +736,8 @@ function createMetaAgents(
           },
           target_agent: "hephaestus",
           config_overrides: {
-            prompt: "You are a frontend specialist. Build responsive, accessible UI components.",
+            prompt:
+              "You are a frontend specialist. Build responsive, accessible UI components.",
           },
         },
         {
@@ -741,7 +764,11 @@ function createMetaAgents(
 function createProviderConfig(
   primaryModel: string,
   researchModel: string,
-): ProviderConfig {
+): ProviderConfig | undefined {
+  if (!primaryModel || !researchModel) {
+    return undefined;
+  }
+
   const primaryModelData = getProviderModel(primaryModel);
   const researchModelData = getProviderModel(researchModel);
 
@@ -784,11 +811,15 @@ function createSettings(
     projectDefaults?.adaptive_model_selection === true;
   const ultraworkEnabled = selectedKeys.includes("ultrawork_enabled");
   const todoContinuation = selectedKeys.includes("todo_continuation");
-  const verifyBeforeCompletion = selectedKeys.includes("verify_before_completion");
+  const verifyBeforeCompletion = selectedKeys.includes(
+    "verify_before_completion",
+  );
   const lspRefactoringPreferred =
     selectedKeys.includes("lsp_refactoring_preferred") ||
     projectDefaults?.lsp_refactoring_preferred === true;
-  const aggressiveCommentPruning = selectedKeys.includes("aggressive_comment_pruning");
+  const aggressiveCommentPruning = selectedKeys.includes(
+    "aggressive_comment_pruning",
+  );
 
   return {
     namespace_prefix: "olimpus",
@@ -800,14 +831,15 @@ function createSettings(
           timeout_ms: 30000,
         }
       : undefined,
-    adaptive_model_selection: adaptiveModelSelection
-      ? {
-          enabled: true,
-          research_model: researchModel,
-          strategy_model: primaryModel,
-          default_model: "claude-sonnet-4-20250217",
-        }
-      : undefined,
+    adaptive_model_selection:
+      adaptiveModelSelection && primaryModel && researchModel
+        ? {
+            enabled: true,
+            research_model: researchModel,
+            strategy_model: primaryModel,
+            default_model: "claude-sonnet-4-20250217",
+          }
+        : undefined,
     ultrawork_enabled: ultraworkEnabled,
     todo_continuation: todoContinuation,
     verify_before_completion: verifyBeforeCompletion,
@@ -826,8 +858,10 @@ const SCHEMA_URL =
  * Build Olimpus configuration from wizard answers
  */
 function buildConfig(answers: WizardAnswers): OlimpusConfig {
-  const primaryModel = answers.primary_model;
-  const researchModel = answers.research_model;
+  const categoryFirst =
+    (answers.model_strategy ?? "category_first") === "category_first";
+  const primaryModel = categoryFirst ? "" : answers.primary_model;
+  const researchModel = categoryFirst ? "" : answers.research_model;
   const projectTemplate = getProjectTemplate(answers.project_type);
 
   // Determine meta-agents to use: user selection or project template defaults
@@ -846,9 +880,20 @@ function buildConfig(answers: WizardAnswers): OlimpusConfig {
 
   // Update all agents to use the selected primary model
   for (const agentId in agents) {
-    if (agents[agentId]) {
-      agents[agentId]!.model = primaryModel;
+    const existingAgent = agents[agentId];
+    if (!existingAgent) {
+      continue;
     }
+
+    agents[agentId] = categoryFirst
+      ? {
+          ...existingAgent,
+          model: undefined,
+        }
+      : {
+          ...existingAgent,
+          model: primaryModel,
+        };
   }
 
   // Build categories: apply primary model if not specified in template
@@ -859,16 +904,24 @@ function buildConfig(answers: WizardAnswers): OlimpusConfig {
     )) {
       categories[categoryId] = {
         description: categoryDef.description,
-        model: categoryDef.model ?? primaryModel,
+        model: categoryFirst ? undefined : (categoryDef.model ?? primaryModel),
         temperature: categoryDef.temperature ?? 0.3,
       };
     }
   }
 
   return {
-    meta_agents: metaAgentIds.length > 0 ? createMetaAgents(metaAgentIds, primaryModel) : undefined,
+    meta_agents:
+      metaAgentIds.length > 0
+        ? createMetaAgents(metaAgentIds, primaryModel)
+        : undefined,
     providers: createProviderConfig(primaryModel, researchModel),
-    settings: createSettings(settings, primaryModel, researchModel, projectTemplate.defaultSettings),
+    settings: createSettings(
+      settings,
+      primaryModel,
+      researchModel,
+      projectTemplate.defaultSettings,
+    ),
     skills: answers.skills_path ? [answers.skills_path] : undefined,
     agents,
     categories,
@@ -882,8 +935,10 @@ function buildConfig(answers: WizardAnswers): OlimpusConfig {
 function formatConfigAsJsonc(config: OlimpusConfig): string {
   const jsonString = JSON.stringify(config, null, 2);
   // Prepend schema URL
-  return `{
-  "$schema": "${SCHEMA_URL}",\n` + jsonString.slice(1);
+  return (
+    `{
+  "$schema": "${SCHEMA_URL}",\n` + jsonString.slice(1)
+  );
 }
 
 /**
@@ -905,16 +960,25 @@ export async function runWizard(
     const answers: WizardAnswers = {
       project_type: "",
       language: "",
+      model_strategy: "category_first",
       primary_model: "",
       research_model: "",
     };
 
     // Project type
-    const projectType = await selectOption(rli, "project_type", WIZARD_PROMPTS.project_type.help);
+    const projectType = await selectOption(
+      rli,
+      "project_type",
+      WIZARD_PROMPTS.project_type.help,
+    );
     answers.project_type = projectType.value;
 
     // Language
-    const language = await selectOption(rli, "language", WIZARD_PROMPTS.language.help);
+    const language = await selectOption(
+      rli,
+      "language",
+      WIZARD_PROMPTS.language.help,
+    );
     answers.language = language.value;
 
     // Meta-agents
@@ -926,21 +990,31 @@ export async function runWizard(
     );
     answers.meta_agents = metaAgents.map((a) => a.value);
 
-    // Primary model
-    const primaryModel = await selectOption(
+    const modelStrategy = await selectOption(
       rli,
-      "primary_model",
-      WIZARD_PROMPTS.primary_model.help,
+      "model_strategy",
+      WIZARD_PROMPTS.model_strategy.help,
     );
-    answers.primary_model = primaryModel.value;
+    answers.model_strategy =
+      modelStrategy.value === "explicit_models"
+        ? "explicit_models"
+        : "category_first";
 
-    // Research model
-    const researchModel = await selectOption(
-      rli,
-      "research_model",
-      WIZARD_PROMPTS.research_model.help,
-    );
-    answers.research_model = researchModel.value;
+    if (answers.model_strategy === "explicit_models") {
+      const primaryModel = await selectOption(
+        rli,
+        "primary_model",
+        WIZARD_PROMPTS.primary_model.help,
+      );
+      answers.primary_model = primaryModel.value;
+
+      const researchModel = await selectOption(
+        rli,
+        "research_model",
+        WIZARD_PROMPTS.research_model.help,
+      );
+      answers.research_model = researchModel.value;
+    }
 
     // Settings
     const settings = await selectMultipleOptions(
@@ -1014,6 +1088,7 @@ export async function runWizardNonInteractive(
   const config = buildConfig({
     project_type: presetAnswers.project_type ?? "web",
     language: presetAnswers.language ?? "typescript",
+    model_strategy: presetAnswers.model_strategy ?? "explicit_models",
     meta_agents: presetAnswers.meta_agents ?? ["atenea", "hermes", "hefesto"],
     primary_model: presetAnswers.primary_model ?? "claude-sonnet-4-20250217",
     research_model: presetAnswers.research_model ?? "claude-haiku-4-5",
