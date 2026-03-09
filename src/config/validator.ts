@@ -26,6 +26,13 @@ export const SchemaValidationErrorSchema = z.object({
   zodIssue: z.any().optional(),
 });
 
+export const InvalidRegexFlagsErrorSchema = z.object({
+  type: z.literal("invalid_regex_flags"),
+  message: z.string(),
+  path: z.array(z.string()),
+  flags: z.string(),
+});
+
 export const RegexPerformanceWarningSchema = z.object({
   type: z.literal("regex_performance"),
   message: z.string(),
@@ -42,6 +49,7 @@ export const ValidationErrorSchema = z.discriminatedUnion("type", [
   CircularDependencyErrorSchema,
   InvalidAgentReferenceErrorSchema,
   SchemaValidationErrorSchema,
+  InvalidRegexFlagsErrorSchema,
 ]);
 
 /**
@@ -78,6 +86,7 @@ export const CheckTypeSchema = z.enum([
   "schema",
   "circular_dependency",
   "agent_reference",
+  "regex_flags",
   "regex_performance",
 ]);
 
@@ -101,6 +110,7 @@ export const ValidationContextSchema = z.object({
   configName: z.string().optional(),
   checkCircularDependencies: z.boolean().default(true),
   checkAgentReferences: z.boolean().default(true),
+  checkRegexFlags: z.boolean().default(true),
   checkRegexPerformance: z.boolean().default(true),
 });
 
@@ -115,6 +125,9 @@ export type InvalidAgentReferenceError = z.infer<
   typeof InvalidAgentReferenceErrorSchema
 >;
 export type SchemaValidationError = z.infer<typeof SchemaValidationErrorSchema>;
+export type InvalidRegexFlagsError = z.infer<
+  typeof InvalidRegexFlagsErrorSchema
+>;
 
 export type ValidationError = z.infer<typeof ValidationErrorSchema>;
 
@@ -185,6 +198,19 @@ export function createSchemaValidationError(
   };
 }
 
+export function createInvalidRegexFlagsError(
+  message: string,
+  path: string[],
+  flags: string,
+): InvalidRegexFlagsError {
+  return {
+    type: "invalid_regex_flags",
+    message,
+    path,
+    flags,
+  };
+}
+
 /**
  * Create a regex performance warning
  */
@@ -225,7 +251,7 @@ export function createValidationResult(
 
 export function createCheckResult(
   checkType: CheckType,
-  passed: boolean = false,
+  passed = false,
 ): CheckResult {
   return {
     checkType,
@@ -320,6 +346,7 @@ export function validateOlimpusConfig(
   const ctx: ValidationContext = {
     checkCircularDependencies: true,
     checkAgentReferences: true,
+    checkRegexFlags: true,
     checkRegexPerformance: true,
     ...context,
   };
@@ -336,6 +363,11 @@ export function validateOlimpusConfig(
   if (ctx.checkAgentReferences) {
     const agentRefCheck = checkAgentReferencesInConfig(config, ctx);
     result.errors.push(...agentRefCheck.errors);
+  }
+
+  if (ctx.checkRegexFlags) {
+    const regexFlagsCheck = checkRegexFlagsInConfig(config, ctx);
+    result.errors.push(...regexFlagsCheck.errors);
   }
 
   // Run regex performance check (generates warnings, not errors)
@@ -383,7 +415,7 @@ class DelegationGraph {
   private delegations: DelegationTracker = {};
   private maxDepth: number;
 
-  constructor(maxDepth: number = 3) {
+  constructor(maxDepth = 3) {
     this.maxDepth = maxDepth;
   }
 
@@ -403,7 +435,7 @@ class DelegationGraph {
   checkCircular(
     from: string,
     to: string,
-    maxDepth: number = this.maxDepth
+    maxDepth: number = this.maxDepth,
   ): boolean {
     return this.hasCircle(from, to, maxDepth, new Set());
   }
@@ -420,7 +452,7 @@ class DelegationGraph {
     current: string,
     target: string,
     depth: number,
-    visited: Set<string>
+    visited: Set<string>,
   ): boolean {
     if (depth <= 0) {
       return false;
@@ -460,7 +492,7 @@ class DelegationGraph {
  */
 export function checkCircularDependencies(
   metaAgents: Record<string, MetaAgentDef>,
-  maxDepth: number = 3
+  maxDepth = 3,
 ): CircularDependencyError[] {
   const errors: CircularDependencyError[] = [];
 
@@ -496,8 +528,8 @@ export function checkCircularDependencies(
           createCircularDependencyError(
             `Circular dependency detected: "${name}" delegates to "${delegate}" which can route back to "${name}"`,
             path,
-            [name, delegate]
-          )
+            [name, delegate],
+          ),
         );
       }
     }
@@ -511,8 +543,8 @@ export function checkCircularDependencies(
           createCircularDependencyError(
             `Circular dependency detected: "${name}" can route to "${rule.target_agent}" which can route back to "${name}"`,
             path,
-            [name, rule.target_agent]
-          )
+            [name, rule.target_agent],
+          ),
         );
       }
     }
@@ -529,8 +561,8 @@ export function checkCircularDependencies(
             createCircularDependencyError(
               `Circular dependency detected between meta-agents: "${name}" -> "${delegate}"`,
               path,
-              [name, delegate]
-            )
+              [name, delegate],
+            ),
           );
         }
       }
@@ -548,7 +580,7 @@ export function checkCircularDependencies(
  */
 export function checkCircularDependenciesInConfig(
   config: OlimpusConfig,
-  context?: Partial<ValidationContext>
+  context?: Partial<ValidationContext>,
 ): CheckResult {
   const result = createCheckResult("circular_dependency");
 
@@ -577,7 +609,7 @@ export function checkCircularDependenciesInConfig(
  * @returns Array of InvalidAgentReferenceError for each invalid reference found
  */
 export function checkAgentReferences(
-  metaAgents: Record<string, MetaAgentDef>
+  metaAgents: Record<string, MetaAgentDef>,
 ): InvalidAgentReferenceError[] {
   const errors: InvalidAgentReferenceError[] = [];
 
@@ -587,7 +619,10 @@ export function checkAgentReferences(
 
   // Build set of all valid agent references
   // Valid references: builtin agents OR other meta-agents defined in the config
-  const validAgents = new Set<string>([...BUILTIN_AGENT_NAMES, ...Object.keys(metaAgents)]);
+  const validAgents = new Set<string>([
+    ...BUILTIN_AGENT_NAMES,
+    ...Object.keys(metaAgents),
+  ]);
 
   // Check each meta-agent for invalid agent references
   for (const [agentName, def] of Object.entries(metaAgents)) {
@@ -598,8 +633,8 @@ export function checkAgentReferences(
           createInvalidAgentReferenceError(
             `Invalid agent reference: "${delegate}" is not a recognized agent. Valid agents are: ${[...BUILTIN_AGENT_NAMES].join(", ")}`,
             ["meta_agents", agentName, "delegates_to"],
-            delegate
-          )
+            delegate,
+          ),
         );
       }
     }
@@ -610,9 +645,15 @@ export function checkAgentReferences(
         errors.push(
           createInvalidAgentReferenceError(
             `Invalid agent reference: "${rule.target_agent}" is not a recognized agent. Valid agents are: ${[...BUILTIN_AGENT_NAMES].join(", ")}`,
-            ["meta_agents", agentName, "routing_rules", String(ruleIndex), "target_agent"],
-            rule.target_agent
-          )
+            [
+              "meta_agents",
+              agentName,
+              "routing_rules",
+              String(ruleIndex),
+              "target_agent",
+            ],
+            rule.target_agent,
+          ),
         );
       }
     }
@@ -629,7 +670,7 @@ export function checkAgentReferences(
  */
 export function checkAgentReferencesInConfig(
   config: OlimpusConfig,
-  context?: Partial<ValidationContext>
+  context?: Partial<ValidationContext>,
 ): CheckResult {
   const result = createCheckResult("agent_reference");
 
@@ -639,6 +680,84 @@ export function checkAgentReferencesInConfig(
   }
 
   const errors = checkAgentReferences(config.meta_agents);
+
+  if (errors.length > 0) {
+    result.passed = false;
+    result.errors.push(...errors);
+  } else {
+    result.passed = true;
+  }
+
+  return result;
+}
+
+export function checkRegexFlags(
+  metaAgents: Record<string, MetaAgentDef>,
+): InvalidRegexFlagsError[] {
+  const errors: InvalidRegexFlagsError[] = [];
+  const validFlags = new Set(["g", "i", "m", "s", "u", "y", "d"]);
+
+  if (Object.keys(metaAgents).length === 0) {
+    return errors;
+  }
+
+  for (const [agentName, def] of Object.entries(metaAgents)) {
+    for (const [ruleIndex, rule] of def.routing_rules.entries()) {
+      if (rule.matcher.type !== "regex") {
+        continue;
+      }
+
+      const { flags } = rule.matcher;
+      if (!flags) {
+        continue;
+      }
+
+      const invalidFlags = Array.from(flags).filter(
+        (flag) => !validFlags.has(flag),
+      );
+      const hasDuplicates = new Set(flags).size !== flags.length;
+
+      if (invalidFlags.length === 0 && !hasDuplicates) {
+        continue;
+      }
+
+      const message =
+        invalidFlags.length > 0
+          ? `Invalid regex flags: "${invalidFlags.join("")}" is not a valid regex flag. Valid flags are: ${Array.from(validFlags).join(", ")}`
+          : `Regex flags must be unique (received: "${flags}")`;
+
+      errors.push(
+        createInvalidRegexFlagsError(
+          message,
+          [
+            "meta_agents",
+            agentName,
+            "routing_rules",
+            String(ruleIndex),
+            "matcher",
+            "flags",
+          ],
+          flags,
+        ),
+      );
+    }
+  }
+
+  return errors;
+}
+
+export function checkRegexFlagsInConfig(
+  config: OlimpusConfig,
+  context?: Partial<ValidationContext>,
+): CheckResult {
+  const result = createCheckResult("regex_flags");
+
+  if (!config.meta_agents || Object.keys(config.meta_agents).length === 0) {
+    result.passed = true;
+    return result;
+  }
+
+  const errors = checkRegexFlags(config.meta_agents);
 
   if (errors.length > 0) {
     result.passed = false;
@@ -664,7 +783,9 @@ interface RegexAnalysisResult {
  * @returns RegexAnalysisResult indicating if there are performance issues
  */
 function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
-  const complexLookaround = /\(\?[=!][^)]*[+*?]\)|\(\?<[=!][^)]*[+*?]\)/.test(pattern);
+  const complexLookaround = /\(\?[=!][^)]*[+*?]\)|\(\?<[=!][^)]*[+*?]\)/.test(
+    pattern,
+  );
   if (complexLookaround) {
     return {
       hasIssue: true,
@@ -672,7 +793,9 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
     };
   }
 
-  const nestedQuantifiers = /(\([^)]*[+*?][^)]*\)[+*?]|([+*?][+*?]))/.test(pattern);
+  const nestedQuantifiers = /(\([^)]*[+*?][^)]*\)[+*?]|([+*?][+*?]))/.test(
+    pattern,
+  );
   if (nestedQuantifiers) {
     return {
       hasIssue: true,
@@ -692,7 +815,8 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
   if (unboundedDot) {
     return {
       hasIssue: true,
-      reason: "Unbounded .* patterns can match excessively and cause performance issues",
+      reason:
+        "Unbounded .* patterns can match excessively and cause performance issues",
     };
   }
 
@@ -708,7 +832,8 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
   if (backreferences) {
     return {
       hasIssue: true,
-      reason: "Backreferences prevent efficient regex compilation and can be slow",
+      reason:
+        "Backreferences prevent efficient regex compilation and can be slow",
     };
   }
 
@@ -733,7 +858,7 @@ function analyzeRegexPattern(pattern: string): RegexAnalysisResult {
  * @returns Array of RegexPerformanceWarning for each performance issue found
  */
 export function checkRegexPerformance(
-  metaAgents: Record<string, MetaAgentDef>
+  metaAgents: Record<string, MetaAgentDef>,
 ): RegexPerformanceWarning[] {
   const warnings: RegexPerformanceWarning[] = [];
 
@@ -753,10 +878,17 @@ export function checkRegexPerformance(
           warnings.push(
             createRegexPerformanceWarning(
               `Regex pattern may cause performance issues: ${analysis.reason}`,
-              ["meta_agents", agentName, "routing_rules", String(ruleIndex), "matcher", "pattern"],
+              [
+                "meta_agents",
+                agentName,
+                "routing_rules",
+                String(ruleIndex),
+                "matcher",
+                "pattern",
+              ],
               pattern,
-              analysis.reason
-            )
+              analysis.reason,
+            ),
           );
         }
       }
@@ -774,7 +906,7 @@ export function checkRegexPerformance(
  */
 export function checkRegexPerformanceInConfig(
   config: OlimpusConfig,
-  context?: Partial<ValidationContext>
+  context?: Partial<ValidationContext>,
 ): CheckResult {
   const result = createCheckResult("regex_performance");
 
