@@ -1,0 +1,174 @@
+{
+  // ============================================================================
+  // Python Development Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for Python development tasks.
+  // It intelligently routes requests based on Python-specific patterns and project
+  // context, ensuring appropriate tool selection and guidance.
+
+  "name": "python-dev",
+  "description": "Specialized meta-agent for Python development including Django, FastAPI, Flask, data science, and machine learning workflows",
+  "category": "language",
+  "tags": ["python", "django", "fastapi", "flask", "data-science", "ml", "pandas", "numpy"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "librarian", "explore", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Python Web Framework Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["django", "model", "view", "template", "migrate", "admin"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Django expert. Follow Django best practices including proper model design, URL routing, template structure, and migrations. Use Django ORM patterns and conventions."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["fastapi", "pydantic", "endpoint", "api router", "dependency"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a FastAPI expert. Follow async/await patterns, use Pydantic models for validation, implement proper error handling, and document endpoints with OpenAPI specs."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["flask", "blueprint", "jinja", "wsgi"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Flask expert. Follow Flask conventions, use blueprints for organization, implement proper context handling, and use Jinja2 templates effectively."
+        }
+      },
+
+      // ========================================================================
+      // Data Science and ML Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pandas", "dataframe", "numpy", "matplotlib", "seaborn", "plot"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a data science expert. Use pandas best practices for data manipulation, vectorized operations with numpy, and create informative visualizations. Consider performance and memory efficiency."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["tensorflow", "pytorch", "keras", "scikit-learn", "sklearn", "model training", "neural", "deep learning"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a machine learning expert. Follow ML best practices including proper train/val/test splits, feature engineering, model evaluation metrics, and reproducible training pipelines."
+        }
+      },
+
+      // ========================================================================
+      // Python Project Context Detection
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "setup.py"],
+          "has_deps": ["pytest", "unittest", "nose"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TDD-focused Python developer. Write comprehensive pytest tests first, then implement. Use fixtures, parametrize tests, and follow PEP 8 style conventions.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Python Task Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["async", "await", "asyncio", "concurrent", "coroutine"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are an async/await Python expert. Focus on proper async patterns, event loop management, avoiding blocking calls, and handling cancellation and timeouts correctly."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["decorator", "context manager", "descriptor", "metaclass", "magic method"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a Python advanced patterns expert. Provide guidance on using decorators, context managers, descriptors, metaclasses, and dunder methods appropriately and idiomatically."
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance", "optimization", "profiling", "memory", "cython"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a Python performance expert. Focus on profiling techniques, memory optimization, efficient data structures, and when to consider compiled extensions or async patterns."
+        }
+      },
+
+      // ========================================================================
+      // Documentation and Research
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["sphinx", "docstring", "type hint", "mypy", "stub"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are a Python documentation expert. Follow PEP 257 for docstrings, use type hints extensively, and generate comprehensive Sphinx documentation with proper markup."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Python Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are a Python developer. Follow PEP 8 style guidelines, write clean and maintainable code, use virtual environments properly, and follow Python idioms and best practices."
+        }
+      }
+    ],
+
+    "prompt_template": "Python Development Task: {input}\n\nConsider:\n- PEP 8 style conventions\n- Python idioms and best practices\n- Proper package structure\n- Type hints where appropriate\n- Testing with pytest"
+  },
+
+  "documentation": "This meta-agent template is designed for Python development workflows. It automatically detects common Python frameworks (Django, FastAPI, Flask) and data science libraries, routing to appropriate specialized agents. For ML/data science tasks, it provides expert guidance on proper practices and patterns.",
+  "examples": [
+    "Create a Django model for user profiles with proper relationships",
+    "Build a FastAPI endpoint with Pydantic validation",
+    "Optimize this pandas operation for performance",
+    "Set up a pytest suite for my Flask app"
+  ]
+}

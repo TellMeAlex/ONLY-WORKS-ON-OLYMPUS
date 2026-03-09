@@ -101,6 +101,16 @@ export const MetaAgentSchema = z.object({
   temperature: z.number().optional(),
 });
 
+export const TemplateSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  category: z.enum(["language", "workflow", "team", "domain"]),
+  tags: z.array(z.string()).optional(),
+  meta_agent: MetaAgentSchema,
+  documentation: z.string().optional(),
+  examples: z.array(z.string()).optional(),
+});
+
 /**
  * Agent Overrides Schema (passthrough for oh-my-opencode compatibility)
  * Simplified version supporting core fields only
@@ -262,6 +272,7 @@ export const SettingsSchema = z.object({
 export const OlimpusConfigSchema = z.object({
   // Olimpus-specific sections
   meta_agents: z.record(z.string(), MetaAgentSchema).optional(),
+  templates: z.array(TemplateSchema).optional(),
   providers: ProviderConfigSchema.optional(),
   settings: SettingsSchema.optional(),
   skills: z.array(z.string()).optional(),
@@ -374,6 +385,7 @@ export type Matcher = z.infer<typeof MatcherSchema>;
 
 export type RoutingRule = z.infer<typeof RoutingRuleSchema>;
 export type MetaAgentDef = z.infer<typeof MetaAgentSchema>;
+export type Template = z.infer<typeof TemplateSchema>;
 export type AgentOverride = z.infer<typeof AgentOverrideSchema>;
 export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
