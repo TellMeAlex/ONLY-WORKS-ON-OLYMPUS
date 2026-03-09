@@ -1,0 +1,195 @@
+{
+  // ============================================================================
+  // Solo Developer Meta-Agent Template
+  // ============================================================================
+  // This template is optimized for individual developers working alone or on
+  // personal projects. It emphasizes autonomy, rapid development, and
+  // all-in-one capability. The configuration is streamlined for quick
+  // setup without complex team coordination requirements.
+
+  "name": "solo-dev",
+  "description": "Optimized meta-agent template for solo developers and individual contributors, emphasizing rapid development, autonomy, and all-in-one capability",
+  "category": "team",
+  "tags": ["solo", "individual", "personal", "freelance", "indie", "autonomy"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "hephaestus", "oracle", "metis", "explore", "librarian"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Rapid Development Tasks
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["build", "create", "implement", "add", "write"],
+          "mode": "any"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are a solo developer building a feature quickly. Focus on getting functionality working first, then refine for quality. Prioritize productivity while maintaining clean, maintainable code. Be pragmatic about trade-offs."
+        }
+      },
+
+      // ========================================================================
+      // Planning and Architecture (Critical for Solo Devs)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["plan", "design", "architecture", "roadmap", "strategy"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer plan their project. Provide practical, implementable advice. Consider the constraints of working alone - time management, prioritization, and what's realistically achievable. Break down large projects into manageable pieces."
+        }
+      },
+
+      // ========================================================================
+      // Debugging and Troubleshooting
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["debug", "fix", "error", "bug", "issue", "broken", "not working"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer debug an issue. Provide clear, step-by-step debugging guidance. Since they don't have teammates to ask, be thorough in your explanations. Suggest multiple potential causes and how to test each one."
+        }
+      },
+
+      // ========================================================================
+      // Code Search and Understanding
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["find", "search", "where", "locate", "understand", "explain"],
+          "mode": "any"
+        },
+        "target_agent": "explore",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer navigate their codebase. Provide comprehensive context about code you find. Explain how code works, why it was written that way, and how it connects to other parts of the system."
+        }
+      },
+
+      // ========================================================================
+      // Documentation and Learning
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["docs", "documentation", "learn", "tutorial", "guide", "how to"],
+          "mode": "any"
+        },
+        "target_agent": "librarian",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer learn and document. Find relevant documentation and guides. Explain concepts clearly, assuming they're a competent developer but may not be familiar with this specific technology."
+        }
+      },
+
+      // ========================================================================
+      // Testing (Pragmatic Approach)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["test", "spec", "testing"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer add tests. Be pragmatic about testing effort - suggest what level of testing is appropriate for the task. Focus on tests that provide real value: preventing regressions and catching bugs early.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Project Context: Full-Stack Solo Projects
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"]
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are helping a solo full-stack developer. You need to handle frontend, backend, database, and infrastructure. Provide comprehensive solutions that cover all layers. Consider deployment and hosting implications."
+        }
+      },
+
+      // ========================================================================
+      // Refactoring and Code Quality
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["refactor", "cleanup", "optimize", "improve", "simplify"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer refactor code. Suggest improvements that maintain the existing behavior while improving readability, maintainability, and performance. Consider the trade-off between refactoring time and benefits."
+        }
+      },
+
+      // ========================================================================
+      // Deployment and DevOps (Simplified for Solo)
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["deploy", "deploying", "host", "hosting", "production", "ci", "cd"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer deploy their project. Recommend simple, cost-effective deployment solutions suitable for individual projects. Avoid overly complex enterprise solutions. Focus on Vercel, Netlify, Render, or similar solo-friendly platforms."
+        }
+      },
+
+      // ========================================================================
+      // Feature Requests and Ideas
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["idea", "feature", "add feature", "new feature", "what if"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer evaluate a feature idea. Provide honest feedback about complexity vs. value. Suggest alternatives or simplifications. Help them prioritize based on their limited time and resources."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General Solo Development
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "hephaestus",
+        "config_overrides": {
+          "prompt": "You are helping a solo developer. Be direct and efficient. Prioritize getting things done. Provide clear, actionable guidance. Consider the constraints of working alone - time, resources, and the need to be self-sufficient."
+        }
+      }
+    ],
+
+    "prompt_template": "Solo Development Task: {input}\n\nApproach:\n- Be pragmatic and practical\n- Prioritize getting things done\n- Provide clear, self-contained solutions\n- Consider time constraints of solo work\n- Avoid unnecessary complexity\n- Explain thoroughly (no teammates to ask)"
+  },
+
+  "documentation": "This meta-agent template is optimized for solo developers and individual contributors. It emphasizes rapid development, autonomy, and practical solutions. The configuration is streamlined without complex team coordination, focusing on getting features built and deployed efficiently by a single person.",
+  "examples": [
+    "Build a simple REST API for a todo app",
+    "Debug why my authentication isn't working",
+    "Plan the architecture for a SaaS MVP",
+    "Add testing to this existing codebase",
+    "Deploy this Next.js app to production"
+  ]
+}
