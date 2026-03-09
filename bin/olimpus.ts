@@ -8,6 +8,12 @@
  *   olimpus validate --help           Show help for validate command
  *   olimpus test <config-file>        Test routing rules
  *   olimpus test --help               Show help for test command
+ *   olimpus templates list             List available templates
+ *   olimpus templates list --help      Show help for templates list command
+ *   olimpus templates preview <name>   Preview a template
+ *   olimpus templates preview --help   Show help for templates preview command
+ *   olimpus templates apply <name>    Apply a template to your config
+ *   olimpus templates apply --help    Show help for templates apply command
  *   olimpus --help                    Show general help
  */
 
@@ -28,7 +34,8 @@ import {
   type RoutingResult,
   type MatcherEvaluation,
 } from "../src/agents/routing.js";
-import { success, warning, error as errorColor, info, bold, dim } from "../src/utils/colors.js";
+import { loadTemplates, type LoadTemplatesOptions } from "../src/templates/loader.js";
+import { type Template } from "../src/templates/types.js";
 
 /**
  * Parsed command options
@@ -287,24 +294,24 @@ async function validateCommand(args: string[]): Promise<number> {
     });
 
     // Print results
-    console.log(`\n${bold("📋 Validating:")} ${filePath}\n`);
+    console.log(`\n📋 Validating: ${filePath}\n`);
 
     if (result.valid) {
-      console.log(success("✅ " + getValidationSummary(result)));
+      console.log("✅ " + getValidationSummary(result));
     } else {
-      console.log(errorColor("❌ " + getValidationSummary(result)));
+      console.log("❌ " + getValidationSummary(result));
     }
 
     // Print errors if any
     if (result.errors.length > 0) {
-      console.log(`\n${errorColor(bold("Errors:"))}`);
-      formatErrors(result).forEach((errorMsg) => console.log(`  ${errorColor(errorMsg)}`));
+      console.log("\nErrors:");
+      formatErrors(result).forEach((error) => console.log(`  ${error}`));
     }
 
     // Print warnings if any
     if (result.warnings.length > 0) {
-      console.log(`\n${warning(bold("Warnings:"))}`);
-      formatWarnings(result).forEach((warningMsg) => console.log(`  ${warning(warningMsg)}`));
+      console.log("\nWarnings:");
+      formatWarnings(result).forEach((warning) => console.log(`  ${warning}`));
     }
 
     console.log();
@@ -312,9 +319,9 @@ async function validateCommand(args: string[]): Promise<number> {
     return result.valid ? 0 : 1;
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`\n${errorColor("❌ Error:")} ${dim(error.message)}\n`);
+      console.error(`\n❌ Error: ${error.message}\n`);
     } else {
-      console.error(`\n${errorColor("❌ Unexpected error")}\n`);
+      console.error(`\n❌ Unexpected error\n`);
     }
     return 1;
   }
@@ -324,28 +331,28 @@ async function validateCommand(args: string[]): Promise<number> {
  * Show validate command help
  */
 function showValidateHelp(): void {
-  console.log(``);
-  console.log(`${bold("Usage:")}`);
-  console.log(`  olimpus validate [options] [<config-file>]\n`);
-  console.log(`${bold("Description:")}`);
-  console.log(`  Validate a configuration file for errors, circular dependencies,`);
-  console.log(`  invalid agent references, and other common issues.\n`);
-  console.log(`${bold("Arguments:")}`);
-  console.log(`  ${dim("<config-file>")}${dim("    ".repeat(14))} Path to the configuration file to validate`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} (e.g., olimpus.jsonc)`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} If --config is provided, this argument is ignored.\n`);
-  console.log(`${bold("Options:")}`);
-  console.log(`  ${dim("--config <file>")}${dim("  ".repeat(10))} Path to the configuration file`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} (alternative to positional argument)`);
-  console.log(`  ${dim("-h, --help")}${dim("       ".repeat(10))} Show this help message\n`);
-  console.log(`${bold("Examples:")}`);
-  console.log(`  ${dim("olimpus validate olimpus.jsonc")}`);
-  console.log(`  ${dim("olimpus validate --config ./example/olimpus.jsonc")}`);
-  console.log(`  ${dim("olimpus validate --config=/path/to/config.jsonc")}\n`);
-  console.log(`${bold("Exit codes:")}`);
-  console.log(`  ${dim("0")} ${dim(" ".repeat(15))} Configuration is valid`);
-  console.log(`  ${dim("1")} ${dim(" ".repeat(15))} Configuration has errors or validation failed\n`);
-  console.log(`${dim("─".repeat(56))}\n`);
+  console.log(`
+Usage: olimpus validate [options] [<config-file>]
+
+Validate a configuration file for errors, circular dependencies, invalid agent references, and other common issues.
+
+Arguments:
+  <config-file>    Path to the configuration file to validate (e.g., olimpus.jsonc)
+                  If --config is provided, this argument is ignored.
+
+Options:
+  --config <file>  Path to the configuration file (alternative to positional argument)
+  -h, --help       Show this help message
+
+Examples:
+  olimpus validate olimpus.jsonc
+  olimpus validate --config ./example/olimpus.jsonc
+  olimpus validate --config=/path/to/config.jsonc
+
+Exit codes:
+  0                Configuration is valid
+  1                Configuration has errors or validation failed
+`);
 }
 
 /**
@@ -375,7 +382,7 @@ async function testCommand(args: string[]): Promise<number> {
     const config = loadConfig(filePath);
     const absolutePath = path.resolve(filePath);
 
-    console.log(`\n${bold(info("🧪 Testing routing rules:"))} ${dim(filePath)}\n`);
+    console.log(`\n🧪 Testing routing rules: ${filePath}\n`);
 
     // Get project directory from config file location
     const projectDir = path.dirname(absolutePath);
@@ -384,29 +391,29 @@ async function testCommand(args: string[]): Promise<number> {
     const { projectFiles, projectDeps } = scanProjectContext(projectDir);
 
     if (options.verbose) {
-      console.log(`${info("📁 Project directory:")} ${dim(projectDir)}`);
-      console.log(`${info("📄 Found")} ${bold(String(projectFiles.length))} ${info("files")}`);
-      console.log(`${info("📦 Found")} ${bold(String(projectDeps.length))} ${info("dependencies")}`);
+      console.log(`📁 Project directory: ${projectDir}`);
+      console.log(`📄 Found ${projectFiles.length} files`);
+      console.log(`📦 Found ${projectDeps.length} dependencies`);
       console.log();
 
       if (projectFiles.length > 0) {
-        console.log(`${info("📄 projectFiles:")}`);
+        console.log(`📄 projectFiles:`);
         for (const file of projectFiles.slice(0, 20)) {
-          console.log(`   ${dim("-")} ${dim(file)}`);
+          console.log(`   - ${file}`);
         }
         if (projectFiles.length > 20) {
-          console.log(`   ${dim(`... and ${projectFiles.length - 20} more files`)}`);
+          console.log(`   ... and ${projectFiles.length - 20} more files`);
         }
         console.log();
       }
 
       if (projectDeps.length > 0) {
-        console.log(`${info("📦 projectDeps:")}`);
+        console.log(`📦 projectDeps:`);
         for (const dep of projectDeps.slice(0, 20)) {
-          console.log(`   ${dim("-")} ${dim(dep)}`);
+          console.log(`   - ${dep}`);
         }
         if (projectDeps.length > 20) {
-          console.log(`   ${dim(`... and ${projectDeps.length - 20} more dependencies`)}`);
+          console.log(`   ... and ${projectDeps.length - 20} more dependencies`);
         }
         console.log();
       }
@@ -445,9 +452,9 @@ async function testCommand(args: string[]): Promise<number> {
     }
 
     if (options.verbose) {
-      console.log(`${info("🤖 Meta-agent:")} ${bold(metaAgentId)}`);
-      console.log(`${info("📝 Test prompt:")} ${dim(testPrompt)}`);
-      console.log(`${info("📋 Routing rules:")} ${bold(String(metaAgent.routing_rules.length))}`);
+      console.log(`🤖 Meta-agent: ${metaAgentId}`);
+      console.log(`📝 Test prompt: ${testPrompt}`);
+      console.log(`📋 Routing rules: ${metaAgent.routing_rules.length}`);
       console.log();
     }
 
@@ -487,32 +494,32 @@ async function testCommand(args: string[]): Promise<number> {
 
     // Display dry-run results (all evaluated matchers)
     if (options.dryRun && dryRunResult) {
-      console.log(`${info("🔍 Dry-run mode - showing all evaluated matchers:")}\n`);
+      console.log(`🔍 Dry-run mode - showing all evaluated matchers:\n`);
 
       for (const evaluation of dryRunResult.evaluations) {
-        const resultPrefix = evaluation.matched ? success("✅") : errorColor("❌");
-        const resultText = evaluation.matched ? success("Matched") : errorColor("Not matched");
-        console.log(`${resultPrefix} ${info("Evaluating matcher:")} ${bold(evaluation.matcher_type)}`);
-        console.log(`   ${dim("Result:")} ${resultText}`);
+        const resultPrefix = evaluation.matched ? "✅" : "❌";
+        const resultText = evaluation.matched ? "Matched" : "Not matched";
+        console.log(`${resultPrefix} Evaluating matcher: ${evaluation.matcher_type}`);
+        console.log(`   Result: ${resultText}`);
 
         // Show matcher details
         switch (evaluation.matcher.type) {
           case "keyword":
-            console.log(`   ${dim("Keywords:")} ${dim(evaluation.matcher.keywords.join(", "))}`);
-            console.log(`   ${dim("Mode:")} ${dim(evaluation.matcher.mode)}`);
+            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
+            console.log(`   Mode: ${evaluation.matcher.mode}`);
             break;
           case "regex":
-            console.log(`   ${dim("Pattern:")} ${dim(`/${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`)}`);
+            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
             break;
           case "complexity":
-            console.log(`   ${dim("Threshold:")} ${dim(String(evaluation.matcher.threshold))}`);
+            console.log(`   Threshold: ${evaluation.matcher.threshold}`);
             break;
           case "project_context":
             if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
-              console.log(`   ${dim("Has files:")} ${dim(evaluation.matcher.has_files.join(", "))}`);
+              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
             }
             if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
-              console.log(`   ${dim("Has deps:")} ${dim(evaluation.matcher.has_deps.join(", "))}`);
+              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
             }
             break;
           case "always":
@@ -523,7 +530,7 @@ async function testCommand(args: string[]): Promise<number> {
         // Show target agent for each rule
         const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
         if (rule) {
-          console.log(`   ${dim("Target agent:")} ${success(rule.target_agent)}`);
+          console.log(`   Target agent: ${rule.target_agent}`);
           if (rule.config_overrides) {
             const overrides: string[] = [];
             if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
@@ -532,7 +539,7 @@ async function testCommand(args: string[]): Promise<number> {
             }
             if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
             if (overrides.length > 0) {
-              console.log(`   ${dim("Overrides:")} ${dim(overrides.join(", "))}`);
+              console.log(`   Overrides: ${overrides.join(", ")}`);
             }
           }
         }
@@ -542,26 +549,26 @@ async function testCommand(args: string[]): Promise<number> {
 
       // Show final result
       if (result) {
-        console.log(`${success("✅ Final match:")} ${success(result.target_agent)}`);
-        console.log(`   ${dim("Matcher type:")} ${info(result.matcher_type || 'unknown')}`);
-        console.log(`   ${dim("Matched content:")} ${dim(result.matched_content || 'N/A')}`);
+        console.log(`✅ Final match: ${result.target_agent}`);
+        console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
+        console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
         console.log();
 
         // Check if the matched agent matches the expected agent
         if (options.expectAgent) {
           if (result.target_agent === options.expectAgent) {
-            console.log(`${success("✅ Expected agent matched:")} ${success(options.expectAgent)}`);
+            console.log(`✅ Expected agent matched: ${options.expectAgent}`);
             return 0;
           } else {
-            console.log(`${errorColor("❌ Expected agent:")} ${errorColor(options.expectAgent)}`);
-            console.log(`   ${dim("Actual matched agent:")} ${result.target_agent}`);
+            console.log(`❌ Expected agent: ${options.expectAgent}`);
+            console.log(`   Actual matched agent: ${result.target_agent}`);
             return 2;
           }
         }
 
         return 0;
       } else {
-        console.log(`${errorColor("❌ No matching agent found for the given prompt.")}`);
+        console.log(`❌ No matching agent found for the given prompt.`);
         console.log();
 
         if (options.expectAgent) {
@@ -574,32 +581,32 @@ async function testCommand(args: string[]): Promise<number> {
 
     // Display step-by-step evaluation for verbose mode (non-dry-run)
     if (!options.dryRun && options.verbose && verboseResult) {
-      console.log(`${info("🔍 Step-by-step evaluation:")}\n`);
+      console.log(`🔍 Step-by-step evaluation:\n`);
 
       for (const evaluation of verboseResult.evaluations) {
-        const resultPrefix = evaluation.matched ? success("✅") : errorColor("❌");
-        const resultText = evaluation.matched ? success("Matched") : errorColor("Not matched");
-        console.log(`${resultPrefix} ${info(evaluation.matcher_type)} matcher`);
-        console.log(`   ${dim("Result:")} ${resultText}`);
+        const resultPrefix = evaluation.matched ? "✅" : "❌";
+        const resultText = evaluation.matched ? "Matched" : "Not matched";
+        console.log(`${resultPrefix} ${evaluation.matcher_type} matcher`);
+        console.log(`   Result: ${resultText}`);
 
         // Show matcher details
         switch (evaluation.matcher.type) {
           case "keyword":
-            console.log(`   ${dim("Keywords:")} ${dim(evaluation.matcher.keywords.join(", "))}`);
-            console.log(`   ${dim("Mode:")} ${dim(evaluation.matcher.mode)}`);
+            console.log(`   Keywords: ${evaluation.matcher.keywords.join(", ")}`);
+            console.log(`   Mode: ${evaluation.matcher.mode}`);
             break;
           case "regex":
-            console.log(`   ${dim("Pattern:")} ${dim(`/${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`)}`);
+            console.log(`   Pattern: /${evaluation.matcher.pattern}/${evaluation.matcher.flags || ""}`);
             break;
           case "complexity":
-            console.log(`   ${dim("Threshold:")} ${dim(String(evaluation.matcher.threshold))}`);
+            console.log(`   Threshold: ${evaluation.matcher.threshold}`);
             break;
           case "project_context":
             if (evaluation.matcher.has_files && evaluation.matcher.has_files.length > 0) {
-              console.log(`   ${dim("Has files:")} ${dim(evaluation.matcher.has_files.join(", "))}`);
+              console.log(`   Has files: ${evaluation.matcher.has_files.join(", ")}`);
             }
             if (evaluation.matcher.has_deps && evaluation.matcher.has_deps.length > 0) {
-              console.log(`   ${dim("Has deps:")} ${dim(evaluation.matcher.has_deps.join(", "))}`);
+              console.log(`   Has deps: ${evaluation.matcher.has_deps.join(", ")}`);
             }
             break;
           case "always":
@@ -610,7 +617,7 @@ async function testCommand(args: string[]): Promise<number> {
         // Show target agent for each rule
         const rule = metaAgent.routing_rules.find((r) => r.matcher === evaluation.matcher);
         if (rule) {
-          console.log(`   ${dim("Target agent:")} ${success(rule.target_agent)}`);
+          console.log(`   Target agent: ${rule.target_agent}`);
           if (rule.config_overrides) {
             const overrides: string[] = [];
             if (rule.config_overrides.model) overrides.push(`model=${rule.config_overrides.model}`);
@@ -619,7 +626,7 @@ async function testCommand(args: string[]): Promise<number> {
             }
             if (rule.config_overrides.variant) overrides.push(`variant=${rule.config_overrides.variant}`);
             if (overrides.length > 0) {
-              console.log(`   ${dim("Overrides:")} ${dim(overrides.join(", "))}`);
+              console.log(`   Overrides: ${overrides.join(", ")}`);
             }
           }
         }
@@ -630,12 +637,12 @@ async function testCommand(args: string[]): Promise<number> {
 
     // Display normal results (non-dry-run)
     if (result) {
-      console.log(`${success("✅ Matched agent:")} ${success(result.target_agent)}`);
-      console.log(`   ${dim("Matcher type:")} ${info(result.matcher_type || 'unknown')}`);
-      console.log(`   ${dim("Matched content:")} ${dim(result.matched_content || 'N/A')}`);
+      console.log(`✅ Matched agent: ${result.target_agent}`);
+      console.log(`   Matcher type: ${result.matcher_type || 'unknown'}`);
+      console.log(`   Matched content: ${result.matched_content || 'N/A'}`);
 
       if (options.verbose) {
-        console.log(`   ${dim("Target agent:")} ${success(result.target_agent)}`);
+        console.log(`   Target agent: ${result.target_agent}`);
         if (result.config_overrides) {
           const overrides: string[] = [];
           if (result.config_overrides.model) overrides.push(`model=${result.config_overrides.model}`);
@@ -645,7 +652,7 @@ async function testCommand(args: string[]): Promise<number> {
           if (result.config_overrides.variant) overrides.push(`variant=${result.config_overrides.variant}`);
           if (result.config_overrides.prompt) overrides.push(`prompt=${result.config_overrides.prompt.slice(0, 50)}...`);
           if (overrides.length > 0) {
-            console.log(`   ${dim("Overrides:")} ${dim(overrides.join(", "))}`);
+            console.log(`   Overrides: ${overrides.join(", ")}`);
           }
         }
       }
@@ -654,12 +661,12 @@ async function testCommand(args: string[]): Promise<number> {
       if (options.expectAgent) {
         if (result.target_agent === options.expectAgent) {
           console.log();
-          console.log(`${success("✅ Expected agent matched:")} ${success(options.expectAgent)}`);
+          console.log(`✅ Expected agent matched: ${options.expectAgent}`);
           return 0;
         } else {
           console.log();
-          console.log(`${errorColor("❌ Expected agent:")} ${errorColor(options.expectAgent)}`);
-          console.log(`   ${dim("Actual matched agent:")} ${result.target_agent}`);
+          console.log(`❌ Expected agent: ${options.expectAgent}`);
+          console.log(`   Actual matched agent: ${result.target_agent}`);
           return 2;
         }
       }
@@ -667,7 +674,7 @@ async function testCommand(args: string[]): Promise<number> {
       console.log();
       return 0;
     } else {
-      console.log(`${errorColor("❌ No matching agent found for the given prompt.")}`);
+      console.log(`❌ No matching agent found for the given prompt.`);
       console.log();
 
       if (options.expectAgent) {
@@ -678,9 +685,9 @@ async function testCommand(args: string[]): Promise<number> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`\n${errorColor("❌ Error:")} ${dim(error.message)}\n`);
+      console.error(`\n❌ Error: ${error.message}\n`);
     } else {
-      console.error(`\n${errorColor("❌ Unexpected error")}\n`);
+      console.error(`\n❌ Unexpected error\n`);
     }
     return 1;
   }
@@ -690,66 +697,475 @@ async function testCommand(args: string[]): Promise<number> {
  * Show test command help
  */
 function showTestHelp(): void {
-  console.log(``);
-  console.log(`${bold("Usage:")}`);
-  console.log(`  olimpus test [options] [<config-file>]\n`);
-  console.log(`${bold("Description:")}`);
-  console.log(`  Test routing rules to verify they match the expected behavior`);
-  console.log(`  for various user queries.\n`);
-  console.log(`${bold("Arguments:")}`);
-  console.log(`  ${dim("<config-file>")}${dim("    ".repeat(14))} Path to the configuration file to test`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} (e.g., olimpus.jsonc)`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} If --config is provided, this argument is`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} treated as the test query.\n`);
-  console.log(`${bold("Options:")}`);
-  console.log(`  ${dim("--config <file>")}${dim("  ".repeat(10))} Path to the configuration file`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} (alternative to positional argument)`);
-  console.log(`  ${dim("--meta-agent <agent>")}`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} Meta-agent ID to test against`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} (default: the meta-agent specified in config)`);
-  console.log(`  ${dim("--verbose, -v")}${dim("    ".repeat(10))} Show detailed output including`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} project context`);
-  console.log(`  ${dim("--dry-run")}${dim("        ".repeat(10))} Show all evaluated matchers without`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} selecting one`);
-  console.log(`  ${dim("--expect-agent <agent>")}`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} Expected agent ID to match`);
-  console.log(`  ${dim("")}${dim(" ".repeat(15))} (exit 2 if not matched, for CI)`);
-  console.log(`  ${dim("-h, --help")}${dim("       ".repeat(10))} Show this help message\n`);
-  console.log(`${bold("Examples:")}`);
-  console.log(`  ${dim("olimpus test olimpus.jsonc")}`);
-  console.log(`  ${dim("olimpus test --config ./example/olimpus.jsonc")}`);
-  console.log(`  ${dim("olimpus test --config=/path/to/config.jsonc --meta-agent=my-agent")}`);
-  console.log(`  ${dim("olimpus test olimpus.jsonc --verbose")}`);
-  console.log(`  ${dim("olimpus test olimpus.jsonc --dry-run")}`);
-  console.log(`  ${dim("olimpus test olimpus.jsonc --expect-agent librarian")}\n`);
-  console.log(`${bold("Exit codes:")}`);
-  console.log(`  ${dim("0")} ${dim(" ".repeat(15))} Matched expected agent or all tests passed`);
-  console.log(`  ${dim("1")} ${dim(" ".repeat(15))} Error occurred`);
-  console.log(`  ${dim("2")} ${dim(" ".repeat(15))} No match or expected agent not matched\n`);
-  console.log(`${dim("─".repeat(56))}\n`);
+  console.log(`
+Usage: olimpus test [options] [<config-file>]
+
+Test routing rules to verify they match the expected behavior for various user queries.
+
+Arguments:
+  <config-file>    Path to the configuration file to test (e.g., olimpus.jsonc)
+                  If --config is provided, this argument is treated as the test query.
+
+Options:
+  --config <file>  Path to the configuration file (alternative to positional argument)
+  --meta-agent <agent>
+                  Meta-agent ID to test against (default: the meta-agent specified in config)
+  --verbose, -v    Show detailed output including project context
+  --dry-run        Show all evaluated matchers without selecting one
+  --expect-agent <agent>
+                  Expected agent ID to match (exit 2 if not matched, for CI)
+  -h, --help       Show this help message
+
+Examples:
+  olimpus test olimpus.jsonc
+  olimpus test --config ./example/olimpus.jsonc
+  olimpus test --config=/path/to/config.jsonc --meta-agent=my-agent
+  olimpus test olimpus.jsonc --verbose
+  olimpus test olimpus.jsonc --dry-run
+  olimpus test olimpus.jsonc --expect-agent librarian
+
+Exit codes:
+  0                Matched expected agent or all tests passed
+  1                Error occurred
+  2                No match or expected agent not matched
+`);
+}
+
+/**
+ * Templates command handler
+ */
+async function templatesCommand(args: string[]): Promise<number> {
+  // Check for subcommand
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+    showTemplatesHelp();
+    return 0;
+  }
+
+  const subcommand = args[0];
+  const subcommandArgs = args.slice(1);
+
+  if (subcommand === "list") {
+    return templatesListCommand(subcommandArgs);
+  } else if (subcommand === "preview") {
+    return templatesPreviewCommand(subcommandArgs);
+  } else if (subcommand === "apply") {
+    return templatesApplyCommand(subcommandArgs);
+  } else {
+    console.error(`\n❌ Unknown templates subcommand: ${subcommand}\n`);
+    console.log("Run 'olimpus templates --help' for available subcommands.\n");
+    return 1;
+  }
+}
+
+/**
+ * Templates list subcommand handler
+ */
+function templatesListCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesListHelp();
+    return 0;
+  }
+
+  try {
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+    const templateNames = Object.keys(templates).sort();
+
+    if (templateNames.length === 0) {
+      console.log(`\n📋 No templates found in: ${templatesDir}\n`);
+      return 0;
+    }
+
+    console.log(`\n📋 Templates (${templateNames.length} found):\n`);
+
+    // Group templates by category
+    const templatesByCategory: Record<string, Template[]> = {};
+
+    for (const name of templateNames) {
+      const template = templates[name];
+      if (!templatesByCategory[template.category]) {
+        templatesByCategory[template.category] = [];
+      }
+      templatesByCategory[template.category].push(template);
+    }
+
+    // Display templates grouped by category
+    const categoryOrder = ["language", "workflow", "team", "domain"];
+
+    for (const category of categoryOrder) {
+      if (templatesByCategory[category]) {
+        console.log(`${category.toUpperCase()}`);
+        for (const template of templatesByCategory[category]) {
+          console.log(`  ${template.name}`);
+          console.log(`    ${template.description}`);
+          if (template.tags && template.tags.length > 0) {
+            console.log(`    Tags: ${template.tags.join(", ")}`);
+          }
+          if (options.verbose && template.documentation) {
+            console.log(`    ${template.documentation.slice(0, 100)}${template.documentation.length > 100 ? "..." : ""}`);
+          }
+        }
+        console.log();
+      }
+    }
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates command help
+ */
+function showTemplatesHelp(): void {
+  console.log(`
+Usage: olimpus templates <subcommand> [options]
+
+Manage and explore meta-agent templates.
+
+Subcommands:
+  list              List all available templates
+  preview           Preview a specific template
+  apply             Apply a template to your configuration
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus templates list
+  olimpus templates preview python-dev
+  olimpus templates apply python-dev --dry-run
+  olimpus templates list --config ./custom/templates
+
+For more information on a specific subcommand, run:
+  olimpus templates <subcommand> --help
+`);
+}
+
+/**
+ * Show templates list help
+ */
+function showTemplatesListHelp(): void {
+  console.log(`
+Usage: olimpus templates list [options]
+
+List all available meta-agent templates, grouped by category.
+
+Templates are organized into categories:
+  language          Language-specific routing patterns
+  workflow          Team workflows and processes
+  team              Team size and structure
+  domain            Domain-specific use cases
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  -v, --verbose     Show additional template details
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates list
+  olimpus templates list --verbose
+  olimpus templates list --config ./my-templates
+`);
+}
+
+/**
+ * Templates preview subcommand handler
+ */
+function templatesPreviewCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesPreviewHelp();
+    return 0;
+  }
+
+  try {
+    // Get template name from positional arguments
+    let templateName: string | undefined;
+    if (options.positional.length > 0) {
+      templateName = options.positional[0];
+    } else {
+      console.error(`\n❌ Template name is required\n`);
+      showTemplatesPreviewHelp();
+      return 1;
+    }
+
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+
+    if (!templates[templateName]) {
+      console.error(`\n❌ Template not found: ${templateName}\n`);
+      console.log("Run 'olimpus templates list' to see available templates.\n");
+      return 1;
+    }
+
+    const template = templates[templateName];
+
+    console.log(`\n📋 Template: ${template.name}\n`);
+    console.log(`Category: ${template.category}`);
+    console.log(`Description: ${template.description}`);
+
+    if (template.tags && template.tags.length > 0) {
+      console.log(`Tags: ${template.tags.join(", ")}`);
+    }
+
+    if (template.documentation) {
+      console.log(`\nDocumentation:`);
+      console.log(`  ${template.documentation}`);
+    }
+
+    if (template.examples && template.examples.length > 0) {
+      console.log(`\nExamples:`);
+      for (const example of template.examples) {
+        console.log(`  • ${example}`);
+      }
+    }
+
+    if (options.verbose && template.meta_agent) {
+      console.log(`\nMeta-Agent Configuration:`);
+      console.log(`  Base Model: ${template.meta_agent.base_model}`);
+
+      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
+        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      }
+
+      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
+        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+      }
+
+      if (template.meta_agent.prompt_template) {
+        const preview = template.meta_agent.prompt_template.slice(0, 100);
+        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+      }
+    }
+
+    console.log();
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates preview help
+ */
+function showTemplatesPreviewHelp(): void {
+  console.log(`
+Usage: olimpus templates preview <template-name> [options]
+
+Display detailed information about a specific meta-agent template.
+
+Arguments:
+  <template-name>  Name of the template to preview
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  -v, --verbose     Show additional template details including meta-agent configuration
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates preview python-dev
+  olimpus templates preview solo-developer --verbose
+  olimpus templates preview data-pipeline --config ./my-templates
+`);
+}
+
+/**
+ * Templates apply subcommand handler
+ */
+function templatesApplyCommand(args: string[]): number {
+  const options = parseOptions(args);
+
+  // Show help if requested
+  if (options.help) {
+    showTemplatesApplyHelp();
+    return 0;
+  }
+
+  try {
+    // Get template name from positional arguments
+    let templateName: string | undefined;
+    if (options.positional.length > 0) {
+      templateName = options.positional[0];
+    } else {
+      console.error(`\n❌ Template name is required\n`);
+      showTemplatesApplyHelp();
+      return 1;
+    }
+
+    const templatesDir = options.config ?? "./templates";
+    const loadOptions: LoadTemplatesOptions = {
+      templatesDir,
+      validate: true,
+      skipInvalid: false,
+    };
+
+    const templates = loadTemplates(loadOptions);
+
+    if (!templates[templateName]) {
+      console.error(`\n❌ Template not found: ${templateName}\n`);
+      console.log("Run 'olimpus templates list' to see available templates.\n");
+      return 1;
+    }
+
+    const template = templates[templateName];
+
+    console.log(`\n📋 Applying template: ${template.name}\n`);
+    console.log(`Category: ${template.category}`);
+    console.log(`Description: ${template.description}`);
+    console.log();
+
+    if (template.meta_agent) {
+      console.log(`Meta-Agent Configuration:\n`);
+      console.log(`  Base Model: ${template.meta_agent.base_model}`);
+
+      if (template.meta_agent.delegates_to && template.meta_agent.delegates_to.length > 0) {
+        console.log(`  Delegates to: ${template.meta_agent.delegates_to.join(", ")}`);
+      }
+
+      if (template.meta_agent.routing_rules && template.meta_agent.routing_rules.length > 0) {
+        console.log(`  Routing Rules: ${template.meta_agent.routing_rules.length}`);
+        console.log();
+        console.log(`  Summary of routing rules:`);
+        for (let i = 0; i < template.meta_agent.routing_rules.length; i++) {
+          const rule = template.meta_agent.routing_rules[i];
+          console.log(`    ${i + 1}. ${rule.matcher.type} → ${rule.target_agent}`);
+        }
+      }
+
+      if (template.meta_agent.prompt_template) {
+        const preview = template.meta_agent.prompt_template.slice(0, 100);
+        console.log();
+        console.log(`  Prompt Template: ${preview}${template.meta_agent.prompt_template.length > 100 ? "..." : ""}`);
+      }
+
+      console.log();
+    }
+
+    if (options.dryRun) {
+      console.log(`🔍 Dry-run mode - no changes made\n`);
+      console.log(`To apply this template to your configuration:\n`);
+      console.log(`  1. Create or open your olimpus.jsonc file`);
+      console.log(`  2. Add the meta_agent configuration from this template`);
+      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log();
+    } else {
+      console.log(`✅ Template ready to apply\n`);
+      console.log(`To apply this template to your configuration:\n`);
+      console.log(`  1. Create or open your olimpus.jsonc file`);
+      console.log(`  2. Add the meta_agent configuration from this template`);
+      console.log(`  3. Customize routing rules, prompts, and agents as needed`);
+      console.log(`  4. Run 'olimpus validate olimpus.jsonc' to verify your configuration`);
+      console.log();
+    }
+
+    if (template.documentation) {
+      console.log(`Documentation:\n  ${template.documentation}\n`);
+    }
+
+    if (template.examples && template.examples.length > 0) {
+      console.log(`Examples:`);
+      for (const example of template.examples) {
+        console.log(`  • ${example}`);
+      }
+      console.log();
+    }
+
+    return 0;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`\n❌ Error: ${error.message}\n`);
+    } else {
+      console.error(`\n❌ Unexpected error\n`);
+    }
+    return 1;
+  }
+}
+
+/**
+ * Show templates apply help
+ */
+function showTemplatesApplyHelp(): void {
+  console.log(`
+Usage: olimpus templates apply <template-name> [options]
+
+Apply a meta-agent template to your configuration. Shows what configuration
+would be added without making any changes to your files.
+
+Arguments:
+  <template-name>  Name of the template to apply
+
+Options:
+  --config <dir>    Path to templates directory (default: ./templates)
+  --dry-run         Show what would be applied without making changes
+  -h, --help        Show this help message
+
+Examples:
+  olimpus templates apply python-dev
+  olimpus templates apply python-dev --dry-run
+  olimpus templates apply small-team --config ./my-templates
+
+Note:
+  This command only shows what would be applied. You must manually add the
+  configuration to your olimpus.jsonc file. See the preview output for the
+  exact meta_agent configuration to add.
+`);
 }
 
 /**
  * Show general help
  */
 function showHelp(): void {
-  console.log(``);
-  console.log(`${bold("Olimpus CLI")}`);
-  console.log(`${dim("Configuration management tool for Olimpus meta-agent orchestrator")}\n`);
-  console.log(`${bold("Usage:")}`);
-  console.log(`  olimpus <command> [options]\n`);
-  console.log(`${bold("Commands:")}`);
-  console.log(`  ${success("validate")}          ${dim("Validate configuration file")}`);
-  console.log(`  ${info("test")}              ${dim("Test routing rules")}\n`);
-  console.log(`${bold("Options:")}`);
-  console.log(`  ${dim("-h, --help")}       ${dim("Show this help message")}\n`);
-  console.log(`${bold("Examples:")}`);
-  console.log(`  ${dim("olimpus validate olimpus.jsonc")}`);
-  console.log(`  ${dim("olimpus test olimpus.jsonc")}`);
-  console.log(`  ${dim("olimpus validate --help")}\n`);
-  console.log(`${bold("For more information on a specific command, run:")}`);
-  console.log(`  ${dim("olimpus <command> --help")}\n`);
-  console.log(`${dim("─".repeat(56))}\n`);
+  console.log(`
+Olimpus CLI - Configuration management tool for Olimpus meta-agent orchestrator
+
+Usage: olimpus <command> [options]
+
+Commands:
+  validate          Validate configuration file
+  test              Test routing rules
+  templates         Manage and explore meta-agent templates
+
+Options:
+  -h, --help       Show this help message
+
+Examples:
+  olimpus validate olimpus.jsonc
+  olimpus test olimpus.jsonc
+  olimpus templates list
+  olimpus validate --help
+
+For more information on a specific command, run:
+  olimpus <command> --help
+`);
 }
 
 /**
@@ -777,22 +1193,18 @@ async function main(): Promise<number> {
       description: "Test routing rules",
       execute: testCommand,
     },
+    templates: {
+      name: "templates",
+      description: "Manage and explore meta-agent templates",
+      execute: templatesCommand,
+    },
   };
 
   const command = commands[commandName];
 
   if (!command) {
-    console.error(``);
-    console.error(`${errorColor("❌ Error:")} ${errorColor(`Unknown command '${commandName}'`)}`);
-    console.error(``);
-    console.log(`${dim("─".repeat(56))}`);
-    console.log(`${bold("Available commands:")}`);
-    console.log(`  ${success("validate")}          ${dim("Validate configuration file")}`);
-    console.log(`  ${info("test")}              ${dim("Test routing rules")}`);
-    console.log(`${dim("─".repeat(56))}`);
-    console.log(``);
-    console.log(`${info("Run 'olimpus --help' for more information.")}`);
-    console.log(``);
+    console.error(`\n❌ Unknown command: ${commandName}\n`);
+    console.log("Run 'olimpus --help' for available commands.\n");
     return 1;
   }
 
