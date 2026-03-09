@@ -5,15 +5,19 @@ import {
   checkCircularDependenciesInConfig,
   checkAgentReferences,
   checkAgentReferencesInConfig,
+  checkRegexFlags,
+  checkRegexFlagsInConfig,
   checkRegexPerformance,
   checkRegexPerformanceInConfig,
   validateOlimpusConfig,
   createCircularDependencyError,
   createInvalidAgentReferenceError,
+  createInvalidRegexFlagsError,
   createRegexPerformanceWarning,
   createCheckResult,
   type CircularDependencyError,
   type InvalidAgentReferenceError,
+  type InvalidRegexFlagsError,
   type RegexPerformanceWarning,
   type CheckResult,
 } from "./validator.js";
@@ -83,7 +87,9 @@ describe("circular dependency", () => {
 
       // Assert
       expect(errors.length).toBeGreaterThan(0);
-      const circularError = errors.find((e) => e.type === "circular_dependency");
+      const circularError = errors.find(
+        (e) => e.type === "circular_dependency",
+      );
       expect(circularError).toBeDefined();
       expect(circularError?.meta_agents).toContain("meta_a");
       expect(circularError?.meta_agents).toContain("meta_b");
@@ -119,7 +125,9 @@ describe("circular dependency", () => {
 
       // Assert
       expect(errors.length).toBeGreaterThan(0);
-      const circularError = errors.find((e) => e.type === "circular_dependency");
+      const circularError = errors.find(
+        (e) => e.type === "circular_dependency",
+      );
       expect(circularError).toBeDefined();
     });
 
@@ -186,7 +194,9 @@ describe("circular dependency", () => {
 
       // Assert
       expect(errors.length).toBeGreaterThan(0);
-      const circularError = errors.find((e) => e.type === "circular_dependency");
+      const circularError = errors.find(
+        (e) => e.type === "circular_dependency",
+      );
       expect(circularError).toBeDefined();
       expect(circularError?.meta_agents).toContain("self_ref");
     });
@@ -222,7 +232,9 @@ describe("circular dependency", () => {
 
       // Assert
       expect(errors.length).toBeGreaterThan(0);
-      const circularErrors = errors.filter((e) => e.type === "circular_dependency");
+      const circularErrors = errors.filter(
+        (e) => e.type === "circular_dependency",
+      );
       expect(circularErrors.length).toBeGreaterThan(0);
     });
   });
@@ -500,7 +512,13 @@ describe("circular dependency", () => {
         const error = errors.find((e) => e.type === "invalid_agent_reference");
         expect(error).toBeDefined();
         expect(error?.reference).toBe("invalid_target");
-        expect(error?.path).toEqual(["meta_agents", "router", "routing_rules", "0", "target_agent"]);
+        expect(error?.path).toEqual([
+          "meta_agents",
+          "router",
+          "routing_rules",
+          "0",
+          "target_agent",
+        ]);
       });
 
       test("detects multiple invalid agent references", () => {
@@ -679,13 +697,134 @@ describe("circular dependency", () => {
         const reference = "invalid_agent";
 
         // Act
-        const error = createInvalidAgentReferenceError(message, path, reference);
+        const error = createInvalidAgentReferenceError(
+          message,
+          path,
+          reference,
+        );
 
         // Assert
         expect(error.type).toBe("invalid_agent_reference");
         expect(error.message).toBe(message);
         expect(error.path).toEqual(path);
         expect(error.reference).toBe(reference);
+      });
+    });
+  });
+
+  describe("regex flags", () => {
+    describe("checkRegexFlags", () => {
+      test("returns empty array when regex flags are valid", () => {
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "test", flags: "gi" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        const errors = checkRegexFlags(metaAgents);
+
+        expect(errors).toEqual([]);
+      });
+
+      test("detects invalid regex flags", () => {
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "test", flags: "gix" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        const errors = checkRegexFlags(metaAgents);
+
+        expect(errors.length).toBe(1);
+        expect(errors[0]?.type).toBe("invalid_regex_flags");
+        expect(errors[0]?.flags).toBe("gix");
+      });
+
+      test("detects duplicate regex flags", () => {
+        const metaAgents: Record<string, MetaAgentDef> = {
+          router: {
+            base_model: "claude-3-5-sonnet",
+            delegates_to: ["sisyphus"],
+            routing_rules: [
+              {
+                matcher: { type: "regex", pattern: "test", flags: "ggi" },
+                target_agent: "sisyphus",
+              },
+            ],
+          },
+        };
+
+        const errors = checkRegexFlags(metaAgents);
+
+        expect(errors.length).toBe(1);
+        expect(errors[0]?.message).toContain("unique");
+      });
+    });
+
+    describe("checkRegexFlagsInConfig", () => {
+      test("fails config when invalid regex flags are present", () => {
+        const config: OlimpusConfig = {
+          meta_agents: {
+            router: {
+              base_model: "claude-3-5-sonnet",
+              delegates_to: ["sisyphus"],
+              routing_rules: [
+                {
+                  matcher: { type: "regex", pattern: "test", flags: "zz" },
+                  target_agent: "sisyphus",
+                },
+              ],
+            },
+          },
+          agents: {},
+          categories: undefined,
+        };
+
+        const result = checkRegexFlagsInConfig(config);
+
+        expect(result.passed).toBe(false);
+        expect(result.checkType).toBe("regex_flags");
+        expect(result.errors.length).toBe(1);
+      });
+    });
+
+    describe("createInvalidRegexFlagsError", () => {
+      test("creates invalid regex flags error", () => {
+        const message = "Invalid flags";
+        const path = [
+          "meta_agents",
+          "router",
+          "routing_rules",
+          "0",
+          "matcher",
+          "flags",
+        ];
+        const flags = "xx";
+
+        const error: InvalidRegexFlagsError = createInvalidRegexFlagsError(
+          message,
+          path,
+          flags,
+        );
+
+        expect(error.type).toBe("invalid_regex_flags");
+        expect(error.message).toBe(message);
+        expect(error.path).toEqual(path);
+        expect(error.flags).toBe(flags);
       });
     });
   });
@@ -748,7 +887,9 @@ describe("circular dependency", () => {
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
         expect(warning?.pattern).toBe("(a+)+");
-        expect(warning?.reason).toBe("Nested quantifiers can cause catastrophic backtracking");
+        expect(warning?.reason).toBe(
+          "Nested quantifiers can cause catastrophic backtracking",
+        );
       });
 
       test("detects nested quantifiers - (.*)*", () => {
@@ -822,7 +963,9 @@ describe("circular dependency", () => {
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
-        expect(warning?.reason).toBe("Overlapping alternation can cause inefficient backtracking");
+        expect(warning?.reason).toBe(
+          "Overlapping alternation can cause inefficient backtracking",
+        );
       });
 
       test("detects unbounded dot - ^.* at start", () => {
@@ -847,7 +990,9 @@ describe("circular dependency", () => {
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
-        expect(warning?.reason).toBe("Unbounded .* patterns can match excessively and cause performance issues");
+        expect(warning?.reason).toBe(
+          "Unbounded .* patterns can match excessively and cause performance issues",
+        );
       });
 
       test("detects unbounded dot - .*$ at end", () => {
@@ -922,7 +1067,9 @@ describe("circular dependency", () => {
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
-        expect(warning?.reason).toBe("Large repetition quantifiers can cause excessive backtracking");
+        expect(warning?.reason).toBe(
+          "Large repetition quantifiers can cause excessive backtracking",
+        );
       });
 
       test("detects complex lookahead with quantifier - (?=.*)*", () => {
@@ -947,7 +1094,9 @@ describe("circular dependency", () => {
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
-        expect(warning?.reason).toBe("Complex lookaheads/lookbehinds with quantifiers can be slow");
+        expect(warning?.reason).toBe(
+          "Complex lookaheads/lookbehinds with quantifiers can be slow",
+        );
       });
 
       test("detects complex lookbehind with quantifier - (?<=a+)b", () => {
@@ -997,7 +1146,9 @@ describe("circular dependency", () => {
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
-        expect(warning?.reason).toBe("Backreferences prevent efficient regex compilation and can be slow");
+        expect(warning?.reason).toBe(
+          "Backreferences prevent efficient regex compilation and can be slow",
+        );
       });
 
       test("detects excessive alternations - more than 8 pipe operators", () => {
@@ -1022,7 +1173,9 @@ describe("circular dependency", () => {
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
         expect(warning).toBeDefined();
-        expect(warning?.reason).toBe("Many alternations can cause the regex engine to try many paths");
+        expect(warning?.reason).toBe(
+          "Many alternations can cause the regex engine to try many paths",
+        );
       });
 
       test("does not warn for 8 or fewer alternations", () => {
@@ -1071,7 +1224,9 @@ describe("circular dependency", () => {
 
         // Assert
         expect(warnings.length).toBe(2);
-        expect(warnings.every((w) => w.type === "regex_performance")).toBe(true);
+        expect(warnings.every((w) => w.type === "regex_performance")).toBe(
+          true,
+        );
       });
 
       test("detects regex performance issues across multiple meta-agents", () => {
@@ -1104,7 +1259,9 @@ describe("circular dependency", () => {
 
         // Assert
         expect(warnings.length).toBe(2);
-        expect(warnings.every((w) => w.type === "regex_performance")).toBe(true);
+        expect(warnings.every((w) => w.type === "regex_performance")).toBe(
+          true,
+        );
       });
 
       test("sets correct path for regex performance warnings", () => {
@@ -1128,7 +1285,14 @@ describe("circular dependency", () => {
         // Assert
         expect(warnings.length).toBe(1);
         const warning = warnings.find((w) => w.type === "regex_performance");
-        expect(warning?.path).toEqual(["meta_agents", "router", "routing_rules", "0", "matcher", "pattern"]);
+        expect(warning?.path).toEqual([
+          "meta_agents",
+          "router",
+          "routing_rules",
+          "0",
+          "matcher",
+          "pattern",
+        ]);
       });
 
       test("does not check non-regex matchers", () => {
@@ -1185,7 +1349,7 @@ describe("circular dependency", () => {
 
         // Assert
         expect(warnings.length).toBe(1);
-        expect(warnings[0]!.pattern).toBe("(a+)+");
+        expect(warnings[0]?.pattern).toBe("(a+)+");
       });
     });
 
@@ -1309,7 +1473,7 @@ describe("circular dependency", () => {
         // Assert
         expect(result.passed).toBe(true);
         expect(result.warnings.length).toBe(1);
-        expect(result.warnings[0]!.pattern).toBe("(a+)+");
+        expect(result.warnings[0]?.pattern).toBe("(a+)+");
       });
     });
 
@@ -1317,12 +1481,24 @@ describe("circular dependency", () => {
       test("creates valid regex performance warning", () => {
         // Arrange
         const message = "Regex pattern may cause performance issues";
-        const path = ["meta_agents", "router", "routing_rules", "0", "matcher", "pattern"];
+        const path = [
+          "meta_agents",
+          "router",
+          "routing_rules",
+          "0",
+          "matcher",
+          "pattern",
+        ];
         const pattern = "(a+)+";
         const reason = "Nested quantifiers can cause catastrophic backtracking";
 
         // Act
-        const warning = createRegexPerformanceWarning(message, path, pattern, reason);
+        const warning = createRegexPerformanceWarning(
+          message,
+          path,
+          pattern,
+          reason,
+        );
 
         // Assert
         expect(warning.type).toBe("regex_performance");

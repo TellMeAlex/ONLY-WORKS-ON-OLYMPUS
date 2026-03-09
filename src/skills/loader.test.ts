@@ -27,7 +27,7 @@ description: A test skill
 model: claude-3-sonnet
 subtask: true
 ---
-This is the skill template content.`
+This is the skill template content.`,
   );
 
   const skills = loadOlimpusSkills([join(TEST_DIR, "test-skill.md")], ".");
@@ -37,7 +37,7 @@ This is the skill template content.`
   expect(skills[0]?.definition.model).toBe("claude-3-sonnet");
   expect(skills[0]?.definition.subtask).toBe(true);
   expect(skills[0]?.definition.template).toContain(
-    "This is the skill template"
+    "This is the skill template",
   );
   cleanup();
 });
@@ -49,7 +49,7 @@ test("loadOlimpusSkills: parse metadata with arrays", () => {
 name: array-test
 allowed-tools: ["tool1", "tool2", "tool3"]
 ---
-Template here.`
+Template here.`,
   );
 
   const skills = loadOlimpusSkills([join(TEST_DIR, "array-skill.md")], ".");
@@ -165,4 +165,25 @@ test("mergeSkills: preserve order", () => {
     "olimpus:new1",
     "olimpus:new2",
   ]);
+});
+
+test("loadOlimpusSkills: reject absolute paths", () => {
+  const absolutePath = "/etc/passwd.md";
+  const skills = loadOlimpusSkills([absolutePath], ".");
+  expect(skills).toHaveLength(0);
+});
+
+test("loadOlimpusSkills: reject relative paths with ../", () => {
+  const relativePath = "../../secrets.md";
+  const skills = loadOlimpusSkills([relativePath], ".");
+  expect(skills).toHaveLength(0);
+});
+
+test("loadOlimpusSkills: accept valid relative paths", () => {
+  createTestSkill("valid-skill.md", "---\n---\nContent");
+
+  const skills = loadOlimpusSkills([join(TEST_DIR, "valid-skill.md")], ".");
+  expect(skills).toHaveLength(1);
+  expect(skills[0]?.name).toBe("olimpus:valid-skill");
+  cleanup();
 });

@@ -34,7 +34,24 @@ export const ComplexityMatcherSchema = z.object({
 export const RegexMatcherSchema = z.object({
   type: z.literal("regex"),
   pattern: z.string().min(1),
-  flags: z.string().optional(),
+  flags: z
+    .string()
+    .optional()
+    .refine((flags) => {
+      if (!flags) {
+        return true;
+      }
+
+      const validFlags = new Set(["g", "i", "m", "s", "u", "y", "d"]);
+      return Array.from(flags).every((flag) => validFlags.has(flag));
+    }, "Invalid regex flags. Only valid RegExp flags are allowed: g, i, m, s, u, y, d")
+    .refine((flags) => {
+      if (!flags) {
+        return true;
+      }
+
+      return new Set(flags).size === flags.length;
+    }, "Regex flags must be unique (no duplicate flags allowed)"),
 });
 
 export const ProjectContextMatcherSchema = z.object({
@@ -84,6 +101,16 @@ export const MetaAgentSchema = z.object({
   temperature: z.number().optional(),
 });
 
+export const TemplateSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  category: z.enum(["language", "workflow", "team", "domain"]),
+  tags: z.array(z.string()).optional(),
+  meta_agent: MetaAgentSchema,
+  documentation: z.string().optional(),
+  examples: z.array(z.string()).optional(),
+});
+
 /**
  * Agent Overrides Schema (passthrough for oh-my-opencode compatibility)
  * Simplified version supporting core fields only
@@ -131,7 +158,9 @@ export const ProviderConfigSchema = z.object({
   config: z
     .record(
       z.string(),
-      z.record(z.string(), z.string().or(z.boolean()).or(z.number())).optional()
+      z
+        .record(z.string(), z.string().or(z.boolean()).or(z.number()))
+        .optional(),
     )
     .optional(),
 });
@@ -193,8 +222,6 @@ export const AnalyticsConfigSchema = z.object({
     .optional(),
 });
 
-
-
 /**
  * Olimpus Settings Schema (Extended with oh-my-opencode integration)
  */
@@ -245,6 +272,7 @@ export const SettingsSchema = z.object({
 export const OlimpusConfigSchema = z.object({
   // Olimpus-specific sections
   meta_agents: z.record(z.string(), MetaAgentSchema).optional(),
+  templates: z.array(TemplateSchema).optional(),
   providers: ProviderConfigSchema.optional(),
   settings: SettingsSchema.optional(),
   skills: z.array(z.string()).optional(),
@@ -357,10 +385,13 @@ export type Matcher = z.infer<typeof MatcherSchema>;
 
 export type RoutingRule = z.infer<typeof RoutingRuleSchema>;
 export type MetaAgentDef = z.infer<typeof MetaAgentSchema>;
+export type Template = z.infer<typeof TemplateSchema>;
 export type AgentOverride = z.infer<typeof AgentOverrideSchema>;
 export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
-export type RoutingAnalyticsConfig = z.infer<typeof RoutingAnalyticsConfigSchema>;
+export type RoutingAnalyticsConfig = z.infer<
+  typeof RoutingAnalyticsConfigSchema
+>;
 export type RoutingLoggerConfig = z.infer<typeof RoutingLoggerConfigSchema>;
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;

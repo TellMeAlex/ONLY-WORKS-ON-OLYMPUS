@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "fs";
-import { resolve, extname } from "path";
+import { resolve, extname, normalize, relative, isAbsolute } from "path";
 import type {
   SkillDefinition,
   SkillMetadata,
@@ -109,6 +109,32 @@ function extractSkillName(filePath: string): string {
   return fileName.replace(/\.[^.]+$/, "");
 }
 
+function validateSkillPath(skillPath: string, baseDir: string): boolean {
+  const normalizedPath = normalize(skillPath);
+
+  if (
+    isAbsolute(skillPath) ||
+    skillPath.startsWith("\\") ||
+    /^[A-Za-z]:[\\/]/.test(skillPath)
+  ) {
+    return false;
+  }
+
+  if (normalizedPath.includes("..")) {
+    return false;
+  }
+
+  const resolvedPath = resolve(baseDir, skillPath);
+  const basePath = resolve(baseDir);
+  const pathFromBase = relative(basePath, resolvedPath);
+
+  if (pathFromBase.startsWith("..") || isAbsolute(pathFromBase)) {
+    return false;
+  }
+
+  return true;
+}
+
 /**
  * Load Olimpus skills from specified paths
  * Reads markdown files and parses frontmatter + template
@@ -116,14 +142,19 @@ function extractSkillName(filePath: string): string {
  */
 export function loadOlimpusSkills(
   skillPaths: string[],
-  projectDir: string
+  projectDir: string,
 ): SkillDefinition[] {
   const skills: SkillDefinition[] = [];
 
   for (const skillPath of skillPaths) {
-    const resolvedPath = skillPath.startsWith("/")
-      ? skillPath
-      : resolve(projectDir, skillPath);
+    if (!validateSkillPath(skillPath, projectDir)) {
+      console.warn(
+        `${bold("[Olimpus]")} ${warning("Invalid skill path (must be relative to project directory):")} ${dim(skillPath)}`,
+      );
+      continue;
+    }
+
+    const resolvedPath = resolve(projectDir, skillPath);
 
     if (!existsSync(resolvedPath)) {
       console.warn(
@@ -201,12 +232,12 @@ export function loadOlimpusSkills(
  */
 export function mergeSkills(
   baseSkills: SkillDefinition[],
-  olimpusSkills: SkillDefinition[]
+  olimpusSkills: SkillDefinition[],
 ): SkillDefinition[] {
   const baseNames = new Set(baseSkills.map((s) => s.name));
 
   const uniqueOlimpusSkills = olimpusSkills.filter(
-    (skill) => !baseNames.has(skill.name)
+    (skill) => !baseNames.has(skill.name),
   );
 
   return [...baseSkills, ...uniqueOlimpusSkills];

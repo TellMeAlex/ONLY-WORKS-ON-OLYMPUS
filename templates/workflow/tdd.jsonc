@@ -1,0 +1,322 @@
+{
+  // ============================================================================
+  // TDD (Test-Driven Development) Workflow Meta-Agent Template
+  // ============================================================================
+  // This template provides a specialized meta-agent for TDD workflows.
+  // It emphasizes writing tests first, then implementing code to make those
+  // tests pass. It covers unit testing, integration testing, test coverage,
+  and various testing frameworks and strategies.
+
+  "name": "tdd",
+  "description": "Specialized meta-agent for TDD workflows including test-first development, unit testing, integration testing, mocking, and comprehensive test coverage",
+  "category": "workflow",
+  "tags": ["tdd", "test", "testing", "test-driven", "unit test", "integration test", "mock", "stub", "coverage", "spec"],
+
+  "meta_agent": {
+    "base_model": "claude-3-5-sonnet-20241022",
+    "delegates_to": ["sisyphus", "oracle", "atlas", "metis"],
+
+    "routing_rules": [
+      // ========================================================================
+      // Test-Driven Development (TDD) Core Pattern
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["tdd", "test first", "test-driven", "write test first", "red green refactor"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TDD expert. Follow strict Test-Driven Development:\n1. Write a failing test first (RED)\n2. Write minimal code to pass (GREEN)\n3. Refactor for quality (REFACTOR)\n\nRepeat in small cycles. Each test should focus on one behavior. Use descriptive test names. Keep tests independent.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Unit Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["unit test", "unit testing", "test function", "test class", "test method"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a unit testing expert. Write focused unit tests that test individual functions or classes in isolation. Use AAA pattern (Arrange-Act-Assert). Test edge cases, error conditions, and typical usage. Keep tests fast and deterministic.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Integration Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["integration test", "integration testing", "api test", "end to end", "e2e", "system test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are an integration testing expert. Write integration tests that verify components work together correctly. Test API endpoints, database interactions, and external service integrations. Use test fixtures and ensure tests are idempotent. Set up and tear down test environments properly.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Mocking and Stubbing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["mock", "stub", "spy", "fake", "double", "isolation", "mock external"],
+          "mode": "any"
+        },
+        "target_agent": "atlas",
+        "config_overrides": {
+          "prompt": "You are a testing isolation expert. Use mocks, stubs, and spies to isolate code under test. Mock external dependencies (APIs, databases, file system). Ensure mocks have realistic behavior. Verify interactions with mocks when necessary. Use dependency injection to enable effective mocking."
+        }
+      },
+
+      // ========================================================================
+      // Test Coverage
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["coverage", "test coverage", "uncovered", "missing tests", "coverage report"],
+          "mode": "any"
+        },
+        "target_agent": "metis",
+        "config_overrides": {
+          "prompt": "You are a test coverage specialist. Analyze test coverage reports to identify untested code paths. Write tests for uncovered branches, lines, and functions. Aim for meaningful coverage, not just high percentages. Test error paths and edge cases, not just happy paths."
+        }
+      },
+
+      // ========================================================================
+      // Testing Framework Specific Patterns
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["jest", "vitest", "describe", "it", "test", "expect", "beforeeach", "aftereach"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Jest/Vitest testing expert. Write tests using Jest/Vitest conventions. Use describe/it/test blocks for organization. Use beforeEach/afterEach for setup/teardown. Leverage matchers appropriately. Use mocking utilities (jest.mock, vi.mock). Run tests in watch mode during development.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["mocha", "chai", "bdd", "should", "expect"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Mocha/Chai testing expert. Write tests using Mocha and Chai conventions. Use describe/it blocks for BDD-style organization. Use Chai's expect/should assertions. Use hooks (before, after, beforeEach, afterEach) for setup/teardown. Configure test runner appropriately.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["pytest", "unittest", "assert", "fixture", "parametrize"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Python testing expert (pytest/unittest). Write tests using pytest or unittest. Use pytest fixtures for test setup/teardown. Use parametrize for data-driven tests. Follow PEP 8 naming (test_*.py). Use assertions clearly. Set up pytest configuration properly.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["go test", "table driven test", "testify", "testing package"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Go testing expert. Write tests using the testing package. Use table-driven tests for multiple test cases. Follow Go conventions (test_*.go files, TestXxx functions). Use testify for assertions and suites when helpful. Parallelize tests safely with t.Parallel().",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Test Quality and Best Practices
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["flaky", "flaky test", "intermittent", "deterministic", "test quality"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a test quality specialist. Identify and fix flaky tests. Ensure tests are deterministic (same inputs always produce same outputs). Remove external dependencies or mock them. Fix timing issues. Ensure proper isolation between tests. Fix race conditions in parallel test execution."
+        }
+      },
+
+      // ========================================================================
+      // Property-Based Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["property based", "quickcheck", "fast-check", "hypothesis", "property", "fuzz"],
+          "mode": "any"
+        },
+        "target_agent": "prometheus",
+        "config_overrides": {
+          "prompt": "You are a property-based testing expert. Write property-based tests that verify invariants across many generated inputs. Define properties that should always hold true. Use property-based testing frameworks (fast-check, Hypothesis, QuickCheck). Complement example-based tests with property-based tests."
+        }
+      },
+
+      // ========================================================================
+      // Visual/UI Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["visual test", "screenshot", "snapshot", "playwright", "cypress", "selenium", "puppeteer"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a visual/UI testing expert. Write UI tests using Playwright, Cypress, or Selenium. Test user flows and interactions. Use snapshot testing for component output. Ensure tests are reliable and not brittle. Handle dynamic content properly. Test accessibility.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Performance Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["performance test", "benchmark", "load test", "stress test", "profiling"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a performance testing expert. Write performance tests and benchmarks. Measure execution time, memory usage, and resource consumption. Identify bottlenecks. Use profiling tools. Establish performance baselines and set thresholds for regression detection."
+        }
+      },
+
+      // ========================================================================
+      // Project Context-Based Testing Strategy
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["package.json"],
+          "has_deps": ["vitest", "jest", "bun:test", "mocha"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a TDD specialist. Follow test-driven development using the project's testing framework (Vitest, Jest, or Mocha). Write tests first, ensure they fail, implement the feature, and verify tests pass. Maintain high test coverage and ensure tests are fast, reliable, and maintainable.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["go.mod", "go.sum"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Go TDD specialist. Follow test-driven development using Go's testing package. Write tests first in _test.go files, ensure they fail, implement the feature, and verify tests pass. Use table-driven tests, subtests, and testify assertions when appropriate.",
+          "variant": "tdd"
+        }
+      },
+      {
+        "matcher": {
+          "type": "project_context",
+          "has_files": ["requirements.txt", "pyproject.toml", "setup.py"]
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a Python TDD specialist. Follow test-driven development using pytest or unittest. Write tests first, ensure they fail, implement the feature, and verify tests pass. Use fixtures, parametrize tests, and follow PEP 8 conventions.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Test Documentation and Examples
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["documentation test", "doctest", "example", "test as documentation", "readme example"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a documentation testing expert. Use tests as documentation. Write clear, descriptive test names that explain behavior. Use doctests or docstring examples where appropriate. Ensure examples in READMEs are tested. Make tests serve both as verification and as usage examples.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Regression Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["regression", "regression test", "prevent breakage", "bug fix test"],
+          "mode": "any"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a regression testing specialist. Write tests that prevent bugs from returning. When fixing a bug, first write a failing test that reproduces the bug, then fix it. Label regression tests clearly. Ensure bug fixes always have corresponding tests.",
+          "variant": "tdd"
+        }
+      },
+
+      // ========================================================================
+      // Contract Testing
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "keyword",
+          "keywords": ["contract test", "api contract", "pact", "consumer driven", "provider"],
+          "mode": "any"
+        },
+        "target_agent": "oracle",
+        "config_overrides": {
+          "prompt": "You are a contract testing expert. Write contract tests that verify API agreements between services. Use consumer-driven contract testing with Pact or similar tools. Define and verify API contracts. Ensure backward compatibility in API changes."
+        }
+      },
+
+      // ========================================================================
+      // Fallback to General TDD
+      // ========================================================================
+      {
+        "matcher": {
+          "type": "always"
+        },
+        "target_agent": "sisyphus",
+        "config_overrides": {
+          "prompt": "You are a test-driven development specialist. Follow TDD principles:\n1. Write a failing test first\n2. Implement minimal code to make it pass\n3. Refactor for quality\n\nRepeat in small increments. Write descriptive tests, maintain good coverage, and ensure tests are fast, reliable, and maintainable.",
+          "variant": "tdd"
+        }
+      }
+    ],
+
+    "prompt_template": "TDD Task: {input}\n\nFollow Test-Driven Development:\n1. Write a failing test first (RED)\n2. Write minimal code to pass (GREEN)\n3. Refactor for quality (REFACTOR)\n\nTest Quality:\n- Descriptive test names\n- AAA pattern (Arrange-Act-Assert)\n- Test edge cases\n- Keep tests independent\n- Mock external dependencies"
+  },
+
+  "documentation": "This meta-agent template is designed for Test-Driven Development workflows. It follows the Red-Green-Refactor cycle strictly, emphasizing test-first development. It covers unit testing, integration testing, mocking, test coverage, and various testing frameworks. It ensures tests are fast, reliable, and serve as both verification and documentation.",
+  "examples": [
+    "Write tests first for a user authentication service",
+    "Add unit tests for the payment processing module",
+    "Create integration tests for the REST API endpoints",
+    "Improve test coverage for the utility functions",
+    "Write a regression test for this bug fix"
+  ]
+}
