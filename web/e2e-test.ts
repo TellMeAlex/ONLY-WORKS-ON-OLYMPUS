@@ -131,7 +131,7 @@ describe("End-to-End Workflow Verification", () => {
       const metaAgentNames = Object.keys(testConfig.meta_agents);
       expect(metaAgentNames).toContain("atenea");
       expect(metaAgentNames).toContain("hermes");
-      expect(metaAgentNames).toContain("hefesto");
+      expect(metaAgentNames).toContain("hades");
       expect(metaAgentNames).toContain("frontend_specialist");
     });
 
@@ -254,7 +254,9 @@ describe("End-to-End Workflow Verification", () => {
     test("complexity matcher has valid threshold", () => {
       const complexityRule = testMetaAgent.routing_rules[1];
       expect(complexityRule.matcher.type).toBe("complexity");
-      expect((complexityRule.matcher as ComplexityMatcher).threshold).toBe("high");
+      expect((complexityRule.matcher as ComplexityMatcher).threshold).toBe(
+        "high",
+      );
     });
 
     test("regex matcher has valid pattern and flags", () => {
@@ -317,7 +319,9 @@ describe("End-to-End Workflow Verification", () => {
 
       expect(result).toBeDefined();
       expect(result?.target_agent).toBe("sisyphus");
-      expect(result?.config_overrides?.prompt).toBe("Fix the bug with TDD approach.");
+      expect(result?.config_overrides?.prompt).toBe(
+        "Fix the bug with TDD approach.",
+      );
     });
 
     test("keyword matcher matches with 'all' mode", () => {
@@ -491,7 +495,11 @@ describe("End-to-End Workflow Verification", () => {
     test("routing rules are evaluated in order", () => {
       const orderedRules = [
         {
-          matcher: { type: "keyword", keywords: ["test"], mode: "any" as const },
+          matcher: {
+            type: "keyword",
+            keywords: ["test"],
+            mode: "any" as const,
+          },
           target_agent: "first_agent",
         },
         {
@@ -525,7 +533,11 @@ describe("End-to-End Workflow Verification", () => {
       const result = evaluateRoutingRules(
         [
           {
-            matcher: { type: "keyword", keywords: ["never"], mode: "any" as const },
+            matcher: {
+              type: "keyword",
+              keywords: ["never"],
+              mode: "any" as const,
+            },
             target_agent: "sisyphus",
           },
         ],
@@ -538,13 +550,14 @@ describe("End-to-End Workflow Verification", () => {
 
   describe("Step 5: Export configuration as JSONC", () => {
     test("export config as valid JSONC", () => {
-      testConfig.meta_agents["test_export"] = createTestMetaAgent("test_export");
+      testConfig.meta_agents["test_export"] =
+        createTestMetaAgent("test_export");
 
       const exported = exportJsonc(testConfig, true);
 
       expect(exported).toBeString();
-      expect(exported).toContain('{');
-      expect(exported).toContain('}');
+      expect(exported).toContain("{");
+      expect(exported).toContain("}");
       expect(exported).toContain("$schema");
       expect(exported).toContain("meta_agents");
       expect(exported).toContain("test_export");
@@ -560,7 +573,8 @@ describe("End-to-End Workflow Verification", () => {
     });
 
     test("export preserves all configuration sections", () => {
-      testConfig.meta_agents["test_sections"] = createTestMetaAgent("test_sections");
+      testConfig.meta_agents["test_sections"] =
+        createTestMetaAgent("test_sections");
       const exported = exportJsonc(testConfig, true);
 
       const parsed = JSON.parse(exported) as OlimpusConfig;
@@ -600,7 +614,8 @@ describe("End-to-End Workflow Verification", () => {
     });
 
     test("export formatting uses 2-space indentation", () => {
-      testConfig.meta_agents["format_test"] = createTestMetaAgent("format_test");
+      testConfig.meta_agents["format_test"] =
+        createTestMetaAgent("format_test");
       const exported = exportJsonc(testConfig, true);
 
       // Check for consistent indentation
@@ -615,7 +630,8 @@ describe("End-to-End Workflow Verification", () => {
 
     beforeEach(() => {
       // Add a test meta-agent with routing rules
-      testConfig.meta_agents["import_test"] = createTestMetaAgent("import_test");
+      testConfig.meta_agents["import_test"] =
+        createTestMetaAgent("import_test");
 
       // Export the config
       exportedConfig = exportJsonc(testConfig, true);
@@ -679,7 +695,9 @@ describe("End-to-End Workflow Verification", () => {
       expect(importedAgent.routing_rules[0].matcher.type).toBe("keyword");
       expect(importedAgent.routing_rules[1].matcher.type).toBe("complexity");
       expect(importedAgent.routing_rules[2].matcher.type).toBe("regex");
-      expect(importedAgent.routing_rules[3].matcher.type).toBe("project_context");
+      expect(importedAgent.routing_rules[3].matcher.type).toBe(
+        "project_context",
+      );
       expect(importedAgent.routing_rules[4].matcher.type).toBe("always");
     });
 
@@ -736,9 +754,8 @@ describe("End-to-End Workflow Verification", () => {
 
     beforeEach(() => {
       // Create a comprehensive test config
-      testConfig.meta_agents["verification_test"] = createTestMetaAgent(
-        "verification_test",
-      );
+      testConfig.meta_agents["verification_test"] =
+        createTestMetaAgent("verification_test");
       testConfig.meta_agents["verification_test_two"] = createTestMetaAgent(
         "verification_test_two",
       );
@@ -799,7 +816,8 @@ describe("End-to-End Workflow Verification", () => {
       const importedAgent = importedConfig.meta_agents["verification_test"];
 
       for (let i = 0; i < importedAgent.routing_rules.length; i++) {
-        const originalRule = testConfig.meta_agents["verification_test"].routing_rules[i];
+        const originalRule =
+          testConfig.meta_agents["verification_test"].routing_rules[i];
         const importedRule = importedAgent.routing_rules[i];
 
         if (originalRule.config_overrides) {
@@ -853,9 +871,8 @@ describe("End-to-End Workflow Verification", () => {
 
     test("config can be decoded from URL", () => {
       const originalConfig = deepClone(testConfig);
-      originalConfig.meta_agents["url_decode_test"] = createTestMetaAgent(
-        "url_decode_test",
-      );
+      originalConfig.meta_agents["url_decode_test"] =
+        createTestMetaAgent("url_decode_test");
 
       const encoded = encodeConfigForUrl(originalConfig);
       const decoded = decodeConfigFromUrl(encoded);
@@ -869,9 +886,8 @@ describe("End-to-End Workflow Verification", () => {
 
     test("URL encoding/decoding preserves config structure", () => {
       const originalConfig = deepClone(testConfig);
-      originalConfig.meta_agents["preserve_test"] = createTestMetaAgent(
-        "preserve_test",
-      );
+      originalConfig.meta_agents["preserve_test"] =
+        createTestMetaAgent("preserve_test");
 
       const encoded = encodeConfigForUrl(originalConfig);
       const decoded = decodeConfigFromUrl(encoded);
@@ -890,7 +906,9 @@ describe("End-to-End Workflow Verification", () => {
       const decodedAgent = decoded?.meta_agents["routing_rules_test"];
 
       expect(decodedAgent).toBeDefined();
-      expect(decodedAgent?.routing_rules.length).toBe(testAgent.routing_rules.length);
+      expect(decodedAgent?.routing_rules.length).toBe(
+        testAgent.routing_rules.length,
+      );
       expect(decodedAgent?.routing_rules[0].matcher.type).toBe("keyword");
       expect(decodedAgent?.routing_rules[1].matcher.type).toBe("complexity");
     });

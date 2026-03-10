@@ -11,7 +11,7 @@
  * • Relentless execution: Tasks don't end halfway (todo_continuation=true)
  * • Specialized workers: sisyphus, oracle, librarian, explore, metis, momus, atlas, prometheus
  *
- * META-AGENTS defined here (atenea, hermes, hefesto, frontend_specialist) are routers
+ * META-AGENTS defined here (atenea, hermes, hades, frontend_specialist) are routers
  * that intelligently delegate to the builtin oh-my-opencode agents above.
  *
  * QUICK START: Include "ulw" or "ultrawork" in your prompt to activate
@@ -22,9 +22,14 @@
 // Type Definitions
 // ============================================================================
 
-export type MatcherType = 'always' | 'complexity' | 'keyword' | 'regex' | 'project_context';
-export type ComplexityThreshold = 'low' | 'medium' | 'high';
-export type KeywordMode = 'any' | 'all';
+export type MatcherType =
+  | "always"
+  | "complexity"
+  | "keyword"
+  | "regex"
+  | "project_context";
+export type ComplexityThreshold = "low" | "medium" | "high";
+export type KeywordMode = "any" | "all";
 
 export interface Matcher {
   type: MatcherType;
@@ -127,40 +132,43 @@ const metaAgents: Record<string, MetaAgent> = {
   // Atenea - Strategic Planning & Architecture Analysis
   // ==========================================================================
   atenea: {
-    base_model: 'claude-3-5-sonnet-20241022',
-    delegates_to: ['oracle', 'prometheus', 'atlas', 'metis'],
+    base_model: "claude-3-5-sonnet-20241022",
+    delegates_to: ["oracle", "prometheus", "atlas", "metis"],
     routing_rules: [
       {
         // ===== MATCHER 1: COMPLEXITY MATCHER =====
         // Routes based on prompt complexity heuristic (line count + keywords)
         matcher: {
-          type: 'complexity',
-          threshold: 'high',
+          type: "complexity",
+          threshold: "high",
         },
-        target_agent: 'oracle',
+        target_agent: "oracle",
         config_overrides: {
-          prompt: 'You are a strategic architecture advisor. Analyze this complex problem from first principles, considering system design patterns, scalability, maintainability, and long-term implications.',
+          prompt:
+            "You are a strategic architecture advisor. Analyze this complex problem from first principles, considering system design patterns, scalability, maintainability, and long-term implications.",
         },
       },
       {
         matcher: {
-          type: 'complexity',
-          threshold: 'medium',
+          type: "complexity",
+          threshold: "medium",
         },
-        target_agent: 'prometheus',
+        target_agent: "prometheus",
         config_overrides: {
-          prompt: 'You are a technical strategist. Analyze this problem considering trade-offs, patterns, and best practices.',
+          prompt:
+            "You are a technical strategist. Analyze this problem considering trade-offs, patterns, and best practices.",
         },
       },
       {
         // ===== MATCHER 2: ALWAYS MATCHER =====
         // Catch-all fallback (no conditions)
         matcher: {
-          type: 'always',
+          type: "always",
         },
-        target_agent: 'metis',
+        target_agent: "metis",
         config_overrides: {
-          prompt: 'You are a general technical analyst. Synthesize information and provide comprehensive analysis.',
+          prompt:
+            "You are a general technical analyst. Synthesize information and provide comprehensive analysis.",
         },
       },
     ],
@@ -170,40 +178,42 @@ const metaAgents: Record<string, MetaAgent> = {
   // Hermes - Communication & Research
   // ==========================================================================
   hermes: {
-    base_model: 'claude-3-5-sonnet-20241022',
-    delegates_to: ['librarian', 'explore', 'oracle'],
+    base_model: "claude-3-5-sonnet-20241022",
+    delegates_to: ["librarian", "explore", "oracle"],
     routing_rules: [
       {
         // ===== MATCHER 3: KEYWORD MATCHER (ANY MODE) =====
         // Routes if ANY of the keywords appears in the prompt (case-insensitive)
         matcher: {
-          type: 'keyword',
-          keywords: ['docs', 'documentation', 'guide', 'search', 'lookup'],
-          mode: 'any',
+          type: "keyword",
+          keywords: ["docs", "documentation", "guide", "search", "lookup"],
+          mode: "any",
         },
-        target_agent: 'librarian',
+        target_agent: "librarian",
         config_overrides: {
-          prompt: 'You are a research specialist. Search comprehensively for documentation and guides.',
+          prompt:
+            "You are a research specialist. Search comprehensively for documentation and guides.",
         },
       },
       {
         // ===== MATCHER 3b: KEYWORD MATCHER (ALL MODE) =====
         // Routes if ALL keywords appear in the prompt
         matcher: {
-          type: 'keyword',
-          keywords: ['code', 'find'],
-          mode: 'all',
+          type: "keyword",
+          keywords: ["code", "find"],
+          mode: "all",
         },
-        target_agent: 'explore',
+        target_agent: "explore",
         config_overrides: {
-          prompt: 'You are a code explorer. Find and analyze relevant code patterns.',
+          prompt:
+            "You are a code explorer. Find and analyze relevant code patterns.",
         },
       },
       {
         matcher: {
-          type: 'always',
+          type: "always",
         },
-        target_agent: 'librarian',
+        target_agent: "librarian",
       },
     ],
   },
@@ -211,42 +221,45 @@ const metaAgents: Record<string, MetaAgent> = {
   // ==========================================================================
   // Hefesto - Implementation & Building
   // ==========================================================================
-  hefesto: {
-    base_model: 'claude-3-5-sonnet-20241022',
-    delegates_to: ['sisyphus', 'hephaestus'],
+  hades: {
+    base_model: "claude-3-5-sonnet-20241022",
+    delegates_to: ["sisyphus", "hephaestus"],
     temperature: 0.3,
     routing_rules: [
       {
         // ===== MATCHER 4: PROJECT_CONTEXT MATCHER =====
         // Routes based on project structure (files and dependencies present)
         matcher: {
-          type: 'project_context',
-          has_files: ['package.json'],
-          has_deps: ['vitest', 'jest', 'bun:test'],
+          type: "project_context",
+          has_files: ["package.json"],
+          has_deps: ["vitest", "jest", "bun:test"],
         },
-        target_agent: 'sisyphus',
+        target_agent: "sisyphus",
         config_overrides: {
-          prompt: 'You are a TDD expert. Write tests first, then implementation.',
-          variant: 'tdd',
+          prompt:
+            "You are a TDD expert. Write tests first, then implementation.",
+          variant: "tdd",
         },
       },
       {
         matcher: {
-          type: 'project_context',
-          has_files: ['package.json'],
+          type: "project_context",
+          has_files: ["package.json"],
         },
-        target_agent: 'sisyphus',
+        target_agent: "sisyphus",
         config_overrides: {
-          prompt: 'You are a quality-focused builder. Ensure comprehensive testing.',
+          prompt:
+            "You are a quality-focused builder. Ensure comprehensive testing.",
         },
       },
       {
         matcher: {
-          type: 'always',
+          type: "always",
         },
-        target_agent: 'hephaestus',
+        target_agent: "hephaestus",
         config_overrides: {
-          prompt: 'You are a builder. Implement with attention to quality and best practices.',
+          prompt:
+            "You are a builder. Implement with attention to quality and best practices.",
         },
       },
     ],
@@ -256,38 +269,40 @@ const metaAgents: Record<string, MetaAgent> = {
   // Custom Meta-Agent Example: Frontend Specialist
   // ==========================================================================
   frontend_specialist: {
-    base_model: 'claude-3-5-sonnet-20241022',
-    delegates_to: ['hephaestus', 'oracle'],
+    base_model: "claude-3-5-sonnet-20241022",
+    delegates_to: ["hephaestus", "oracle"],
     routing_rules: [
       {
         // ===== MATCHER 5: REGEX MATCHER =====
         // Routes based on regex pattern matching against the prompt
         matcher: {
-          type: 'regex',
-          pattern: '^(design|ui|component|button|form|style)',
-          flags: 'i',
+          type: "regex",
+          pattern: "^(design|ui|component|button|form|style)",
+          flags: "i",
         },
-        target_agent: 'hephaestus',
+        target_agent: "hephaestus",
         config_overrides: {
-          prompt: 'You are a frontend specialist. Build responsive, accessible UI components.',
+          prompt:
+            "You are a frontend specialist. Build responsive, accessible UI components.",
         },
       },
       {
         matcher: {
-          type: 'regex',
-          pattern: '(performance|optimization|rendering|bundle)',
-          flags: 'i',
+          type: "regex",
+          pattern: "(performance|optimization|rendering|bundle)",
+          flags: "i",
         },
-        target_agent: 'oracle',
+        target_agent: "oracle",
         config_overrides: {
-          prompt: 'You are a performance expert. Analyze and optimize frontend performance.',
+          prompt:
+            "You are a performance expert. Analyze and optimize frontend performance.",
         },
       },
       {
         matcher: {
-          type: 'always',
+          type: "always",
         },
-        target_agent: 'hephaestus',
+        target_agent: "hephaestus",
       },
     ],
   },
@@ -301,14 +316,14 @@ const metaAgents: Record<string, MetaAgent> = {
 
 const agents: Record<string, Agent> = {
   sisyphus: {
-    model: 'claude-3-5-sonnet-20241022',
+    model: "claude-3-5-sonnet-20241022",
     temperature: 0.3,
-    description: 'TDD-focused implementation agent',
+    description: "TDD-focused implementation agent",
   },
   oracle: {
-    model: 'claude-3-5-sonnet-20241022',
+    model: "claude-3-5-sonnet-20241022",
     temperature: 0.5,
-    description: 'Strategic analysis and architecture advisor',
+    description: "Strategic analysis and architecture advisor",
   },
 };
 
@@ -320,18 +335,18 @@ const agents: Record<string, Agent> = {
 
 const categories: Record<string, Category> = {
   frontend: {
-    description: 'Frontend development tasks',
-    model: 'claude-3-5-sonnet-20241022',
+    description: "Frontend development tasks",
+    model: "claude-3-5-sonnet-20241022",
     temperature: 0.3,
   },
   backend: {
-    description: 'Backend development and API tasks',
-    model: 'claude-3-5-sonnet-20241022',
+    description: "Backend development and API tasks",
+    model: "claude-3-5-sonnet-20241022",
     temperature: 0.4,
   },
   documentation: {
-    description: 'Technical writing and documentation',
-    model: 'claude-3-5-sonnet-20241022',
+    description: "Technical writing and documentation",
+    model: "claude-3-5-sonnet-20241022",
     temperature: 0.2,
   },
 };
@@ -347,23 +362,23 @@ const providers: Providers = {
   // Global provider priority chain (fallback strategy)
   // System tries providers in order until one is available
   priority_chain: [
-    'anthropic/claude-opus-4-6',
-    'openai/gpt-5.2',
-    'google/gemini-3-pro',
+    "anthropic/claude-opus-4-6",
+    "openai/gpt-5.2",
+    "google/gemini-3-pro",
   ],
 
   // Research/background tasks: Use cheap models for cost efficiency
   research_providers: [
-    'anthropic/claude-haiku-4-5',
-    'openai/gpt-4-turbo',
-    'google/gemini-1.5-flash',
+    "anthropic/claude-haiku-4-5",
+    "openai/gpt-4-turbo",
+    "google/gemini-1.5-flash",
   ],
 
   // Strategy/decisions: Use expensive models for quality
   strategy_providers: [
-    'anthropic/claude-opus-4-6',
-    'openai/gpt-5.2',
-    'google/gemini-3-pro',
+    "anthropic/claude-opus-4-6",
+    "openai/gpt-5.2",
+    "google/gemini-3-pro",
   ],
 
   // Optional: Per-provider configuration
@@ -382,7 +397,7 @@ const providers: Providers = {
 const settings: Settings = {
   // Namespace prefix for bundled skills (default: "olimpus")
   // Skills loaded via loadOlimpusSkills() are prefixed with this name
-  namespace_prefix: 'olimpus',
+  namespace_prefix: "olimpus",
 
   // Maximum delegation depth to prevent infinite chains
   // If A → B → C → A, and depth=3, the cycle is detected
@@ -406,9 +421,9 @@ const settings: Settings = {
   // Routes cheaper models (Haiku) to research/search, expensive (Opus) to decisions
   adaptive_model_selection: {
     enabled: true,
-    research_model: 'claude-haiku-4-5',
-    strategy_model: 'claude-opus-4-6',
-    default_model: 'claude-3-5-sonnet-20241022',
+    research_model: "claude-haiku-4-5",
+    strategy_model: "claude-opus-4-6",
+    default_model: "claude-3-5-sonnet-20241022",
   },
 
   // Enable relentless execution mode
@@ -431,9 +446,9 @@ const settings: Settings = {
 
 const skills: string[] = [
   // Example 1: Load from project docs
-  'docs/skills/custom-skill.md',
+  "docs/skills/custom-skill.md",
   // Example 2: Absolute path
-  '/Users/yourname/shared-skills/advanced-refactoring.md',
+  "/Users/yourname/shared-skills/advanced-refactoring.md",
   // Skills will be prefixed with "olimpus:" (e.g., "olimpus:custom-skill")
   // This prevents naming conflicts with oh-my-opencode builtin skills
 ];
@@ -452,7 +467,7 @@ const disabledHooks: string[] = [];
 
 const defaultConfig: OlimpusConfig = {
   $schema:
-    'https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json',
+    "https://raw.githubusercontent.com/TellMeAlex/ONLY-WORKS-ON-OLYMPUS/refs/heads/master/assets/olimpus.schema.json",
   meta_agents: metaAgents,
   agents,
   categories,

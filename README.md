@@ -897,7 +897,7 @@ src/
 │   └── definitions/
 │       ├── atenea.ts      # Strategic planning meta-agent
 │       ├── hermes.ts      # Communication meta-agent
-│       └── hefesto.ts     # Implementation meta-agent
+│       └── hades.ts       # Implementation meta-agent
 ├── plugin/
 │   ├── wrapper.ts         # Plugin interface merging
 │   └── wrapper.test.ts    # Merge tests
@@ -955,8 +955,7 @@ Response
 
 - **meta-agent.ts**: Factory for generating AgentConfig from MetaAgentDef
 - **registry.ts**: Tracks meta-agent definitions, detects circular dependencies
-- **definitions/**: Built-in meta-agent implementations (atenea, hermes,
-  hefesto)
+- **definitions/**: Built-in meta-agent implementations (atenea, hermes, hades)
 
 #### 4. Plugin Wrapper (src/plugin/wrapper.ts)
 

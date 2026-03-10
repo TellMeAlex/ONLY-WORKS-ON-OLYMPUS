@@ -8,7 +8,7 @@ import {
   type PluginInterface,
 } from "./plugin/wrapper.js";
 import { MetaAgentRegistry } from "./agents/registry.js";
-import { ateneo, hermes, hades } from "./agents/definitions/index.js";
+import { atenea, hermes, hades } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
 import { AnalyticsStorage } from "./analytics/storage.js";
 import { success, warning, bold } from "./utils/colors.js";
@@ -76,7 +76,7 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   }
 
   const builtInMetaAgents = [
-    { name: `${namespace}:atenea`, def: ateneo },
+    { name: `${namespace}:atenea`, def: atenea },
     { name: `${namespace}:hermes`, def: hermes },
     { name: `${namespace}:hades`, def: hades },
   ];

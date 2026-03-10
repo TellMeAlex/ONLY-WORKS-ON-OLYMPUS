@@ -61,7 +61,7 @@ describe("extractMetaAgentDefs", () => {
             { matcher: { type: "always" }, target_agent: "oracle" },
           ],
         },
-        hefesto: {
+        hades: {
           base_model: "",
           delegates_to: ["sisyphus"],
           routing_rules: [
@@ -81,7 +81,7 @@ describe("extractMetaAgentDefs", () => {
     const defs = extractMetaAgentDefs(config);
 
     expect(defs.atenea).toBeUndefined();
-    expect(defs.hefesto).toBeUndefined();
+    expect(defs.hades).toBeUndefined();
     expect(defs["olimpus:hades"]).toBeDefined();
   });
 });

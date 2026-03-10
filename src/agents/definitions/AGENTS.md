@@ -1,13 +1,16 @@
 # src/agents/definitions - BUILT-IN META-AGENTS
 
-**Score**: 12 (distinct domain)  
+**Score**: 12 (distinct domain)\
 **Purpose**: 3 opinionated meta-agents for common routing scenarios
 
 ---
 
 ## OVERVIEW
 
-Built-in meta-agent library: **Atenea** (strategic planning via complexity), **Hermes** (communication/research via keywords), **Hefesto** (implementation via project context). Each defines routing rules + delegation targets. Exported via `index.ts` re-export hub. Users can override/extend in olimpus.jsonc.
+Built-in meta-agent library: **Atenea** (strategic planning via complexity),
+**Hermes** (communication/research via keywords), **Hefesto** (implementation
+via project context). Each defines routing rules + delegation targets. Exported
+via `index.ts` re-export hub. Users can override/extend in olimpus.jsonc.
 
 ---
 
@@ -17,8 +20,8 @@ Built-in meta-agent library: **Atenea** (strategic planning via complexity), **H
 src/agents/definitions/
 ├── atenea.ts           # Strategic planning meta-agent (complexity-based)
 ├── hermes.ts           # Communication/research meta-agent (keyword-based)
-├── hefesto.ts          # Implementation meta-agent (project-context-based)
-└── index.ts            # Re-export all 3: ateneo, hermes, hefesto
+├── hades.ts            # Implementation meta-agent (project-context-based)
+└── index.ts            # Re-export all 3: atenea, hermes, hades
 ```
 
 ---
@@ -26,6 +29,7 @@ src/agents/definitions/
 ## THE 3 META-AGENTS
 
 ### 1. **Atenea** (Strategic Planning)
+
 **Routing logic**: Complexity threshold
 
 ```typescript
@@ -39,6 +43,7 @@ src/agents/definitions/
 **Delegation targets**: `oracle`, `prometheus`, `atlas`
 
 ### 2. **Hermes** (Communication & Research)
+
 **Routing logic**: Keywords
 
 ```typescript
@@ -53,6 +58,7 @@ src/agents/definitions/
 **Delegation targets**: `librarian`, `explore`, `oracle`
 
 ### 3. **Hefesto** (Implementation)
+
 **Routing logic**: Project context (has_files, has_deps)
 
 ```typescript
@@ -69,28 +75,29 @@ src/agents/definitions/
 
 ## WHERE TO LOOK
 
-| Task | File | Notes |
-|------|------|-------|
-| Modify Atenea routing | `atenea.ts` | Change complexity thresholds or target agents |
-| Add keywords to Hermes | `hermes.ts:20` routing_rules | Add new keyword matcher rule |
-| Override meta-agent | `olimpus.jsonc` | Define `meta_agents.atenea` to override built-in |
-| Create new meta-agent | Not here | Use `olimpus.jsonc` config or extend via plugin |
+| Task                   | File                         | Notes                                            |
+| ---------------------- | ---------------------------- | ------------------------------------------------ |
+| Modify Atenea routing  | `atenea.ts`                  | Change complexity thresholds or target agents    |
+| Add keywords to Hermes | `hermes.ts:20` routing_rules | Add new keyword matcher rule                     |
+| Override meta-agent    | `olimpus.jsonc`              | Define `meta_agents.atenea` to override built-in |
+| Create new meta-agent  | Not here                     | Use `olimpus.jsonc` config or extend via plugin  |
 
 ---
 
 ## KEY SYMBOLS
 
-| Symbol | Type | File | Role |
-|--------|------|------|------|
-| `ateneo` | Const | atenea.ts | MetaAgentDef for strategic planning |
-| `hermes` | Const | hermes.ts | MetaAgentDef for communication |
-| `hefesto` | Const | hefesto.ts | MetaAgentDef for implementation |
+| Symbol   | Type  | File      | Role                                |
+| -------- | ----- | --------- | ----------------------------------- |
+| `atenea` | Const | atenea.ts | MetaAgentDef for strategic planning |
+| `hermes` | Const | hermes.ts | MetaAgentDef for communication      |
+| `hades`  | Const | hades.ts  | MetaAgentDef for implementation     |
 
 ---
 
 ## CONVENTIONS
 
 ### Meta-Agent Definition Structure
+
 ```typescript
 const metaAgent: MetaAgentDef = {
   name: "atenea",
@@ -99,14 +106,15 @@ const metaAgent: MetaAgentDef = {
     {
       matcher: { type: "complexity", threshold: "high" },
       target_agent: "oracle",
-      config_overrides: { /* optional */ }
+      config_overrides: {/* optional */},
     },
-    { matcher: { type: "always" }, target_agent: "atlas" }  // fallback
-  ]
+    { matcher: { type: "always" }, target_agent: "atlas" }, // fallback
+  ],
 };
 ```
 
 ### Naming Convention
+
 - **Built-in agents named after Greek goddesses/gods**
 - Atenea = wisdom/strategy
 - Hermes = communication/travel
@@ -125,12 +133,15 @@ const metaAgent: MetaAgentDef = {
 ## UNIQUE STYLES
 
 ### Matcher Priority
+
 Each meta-agent uses matchers in order:
+
 1. Specific matchers first (keyword, complexity, regex)
 2. Project context matcher
 3. Always matcher (fallback catch-all)
 
 ### Config Overrides per Route
+
 ```typescript
 {
   matcher: { type: "complexity", threshold: "high" },

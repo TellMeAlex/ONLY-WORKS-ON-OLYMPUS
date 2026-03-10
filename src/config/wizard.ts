@@ -36,6 +36,13 @@ function withNamespace(namespace: string, id: string): string {
   return `${namespace}:${id}`;
 }
 
+function toTemplateId(selectedId: string): string {
+  const parts = selectedId.split(":");
+  return parts.length > 1
+    ? (parts[parts.length - 1] ?? selectedId)
+    : selectedId;
+}
+
 /**
  * Config template for a specific project type
  */
@@ -756,7 +763,8 @@ function createMetaAgents(
   };
 
   const result: Record<string, MetaAgentDef> = {};
-  for (const id of selectedIds) {
+  for (const selectedId of selectedIds) {
+    const id = toTemplateId(selectedId);
     if (templates[id]) {
       result[withNamespace(namespace, id)] = templates[id];
     }

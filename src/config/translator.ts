@@ -5,13 +5,7 @@ import type {
   CategoryConfig,
 } from "./schema";
 
-const LEGACY_OLIMPUS_AGENT_IDS = new Set([
-  "atenea",
-  "ateneo",
-  "hermes",
-  "hades",
-  "hefesto",
-]);
+const LEGACY_OLIMPUS_AGENT_IDS = new Set(["atenea", "hermes", "hades"]);
 
 /**
  * Translate OlimpusConfig to oh-my-opencode compatible config format.

@@ -7,7 +7,7 @@ import type { MetaAgentDef } from "../../config/schema.js";
  * framework patterns → validation agents, complexity → strategic agents.
  * Always falls back to metis for general analysis
  */
-export const ateneo: MetaAgentDef = {
+export const atenea: MetaAgentDef = {
   base_model: "", // Uses default from config
   delegates_to: [
     "librarian",
@@ -24,7 +24,16 @@ export const ateneo: MetaAgentDef = {
     {
       matcher: {
         type: "keyword",
-        keywords: ["jira", "ticket", "task", "subtask", "story", "issue", "sprint", "backlog"],
+        keywords: [
+          "jira",
+          "ticket",
+          "task",
+          "subtask",
+          "story",
+          "issue",
+          "sprint",
+          "backlog",
+        ],
         mode: "any",
       },
       target_agent: "librarian",
