@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  isManagedWorktreePath,
   normalizeForCompare,
   parseWorktreeListPorcelain,
   stripHeadsPrefix,
@@ -36,5 +37,18 @@ describe("worktree cleanup helpers", () => {
 
   test("normalizes paths for compare", () => {
     expect(normalizeForCompare("/repo/./a/../b")).toBe("/repo/b");
+  });
+
+  test("recognizes managed worktree roots and tmp olympus paths", () => {
+    expect(isManagedWorktreePath("/repo/.sisyphus/worktrees/a", "/repo")).toBe(
+      true,
+    );
+    expect(
+      isManagedWorktreePath("/repo/.auto-claude/worktrees/tasks/b", "/repo"),
+    ).toBe(true);
+    expect(
+      isManagedWorktreePath("/private/tmp/olympus-pr23-20260309", "/repo"),
+    ).toBe(true);
+    expect(isManagedWorktreePath("/repo/other/worktree", "/repo")).toBe(false);
   });
 });

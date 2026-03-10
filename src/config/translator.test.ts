@@ -3,23 +3,19 @@ import { extractMetaAgentDefs } from "./translator.js";
 import type { OlimpusConfig } from "./schema.js";
 
 describe("extractMetaAgentDefs", () => {
-  test("normalizes Olimpus built-in aliases to namespaced canonical names", () => {
+  test("returns meta agents without alias normalization", () => {
     const config: OlimpusConfig = {
       meta_agents: {
-        atenea: {
+        "olimpus:atenea": {
           base_model: "",
-          delegates_to: ["hermes", "oracle"],
+          delegates_to: ["olimpus:hermes", "oracle"],
           routing_rules: [
             {
               matcher: { type: "always" },
-              target_agent: "hades",
+              target_agent: "olimpus:hades",
             },
           ],
         },
-      },
-      settings: {
-        namespace_prefix: "olimpus",
-        max_delegation_depth: 3,
       },
     };
 
@@ -27,14 +23,13 @@ describe("extractMetaAgentDefs", () => {
 
     expect(defs["olimpus:atenea"]).toBeDefined();
     expect(defs.atenea).toBeUndefined();
-
-    const atenea = defs["olimpus:atenea"];
-    expect(atenea?.delegates_to).toContain("olimpus:hermes");
-    expect(atenea?.delegates_to).toContain("oracle");
-    expect(atenea?.routing_rules[0]?.target_agent).toBe("olimpus:hades");
+    expect(defs["olimpus:atenea"]?.delegates_to).toContain("olimpus:hermes");
+    expect(defs["olimpus:atenea"]?.routing_rules[0]?.target_agent).toBe(
+      "olimpus:hades",
+    );
   });
 
-  test("keeps non-builtin custom meta-agents unmodified", () => {
+  test("keeps custom meta-agent IDs unchanged", () => {
     const config: OlimpusConfig = {
       meta_agents: {
         reviewer: {
@@ -54,6 +49,39 @@ describe("extractMetaAgentDefs", () => {
 
     expect(defs.reviewer).toBeDefined();
     expect(defs["olimpus:reviewer"]).toBeUndefined();
-    expect(defs.reviewer?.routing_rules[0]?.target_agent).toBe("oracle");
+  });
+
+  test("drops legacy unscoped Olimpus built-in IDs", () => {
+    const config: OlimpusConfig = {
+      meta_agents: {
+        atenea: {
+          base_model: "",
+          delegates_to: ["oracle"],
+          routing_rules: [
+            { matcher: { type: "always" }, target_agent: "oracle" },
+          ],
+        },
+        hefesto: {
+          base_model: "",
+          delegates_to: ["sisyphus"],
+          routing_rules: [
+            { matcher: { type: "always" }, target_agent: "sisyphus" },
+          ],
+        },
+        "olimpus:hades": {
+          base_model: "",
+          delegates_to: ["sisyphus"],
+          routing_rules: [
+            { matcher: { type: "always" }, target_agent: "sisyphus" },
+          ],
+        },
+      },
+    };
+
+    const defs = extractMetaAgentDefs(config);
+
+    expect(defs.atenea).toBeUndefined();
+    expect(defs.hefesto).toBeUndefined();
+    expect(defs["olimpus:hades"]).toBeDefined();
   });
 });

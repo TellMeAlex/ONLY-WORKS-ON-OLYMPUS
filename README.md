@@ -390,7 +390,7 @@ Olimpus provides CLI commands for managing analytics data:
 
 #### Cleanup Stale Worktrees
 
-Remove stale orchestration worktrees under `.sisyphus/worktrees` safely.
+Remove stale orchestration worktrees under managed Olimpus paths safely.
 
 ```bash
 # Preview removable worktrees (safe default)
@@ -405,7 +405,10 @@ bun run olimpus worktrees clean --force --verbose
 
 Removal criteria:
 
-- Worktree is under `.sisyphus/worktrees/`
+- Worktree is under one managed path:
+  - `.sisyphus/worktrees/`
+  - `.auto-claude/worktrees/tasks/`
+  - `/tmp/olympus-pr*`
 - Worktree is not active in `.sisyphus/boulder.json`
 - Worktree branch is already merged into the default branch (`master` or `main`)
 - Worktree has no uncommitted changes

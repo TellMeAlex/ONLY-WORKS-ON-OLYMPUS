@@ -30,6 +30,12 @@ import { success, warning, error, info, bold, dim } from "../utils/colors.js";
 
 export type { WizardAnswers };
 
+const DEFAULT_NAMESPACE_PREFIX = "olimpus";
+
+function withNamespace(namespace: string, id: string): string {
+  return `${namespace}:${id}`;
+}
+
 /**
  * Config template for a specific project type
  */
@@ -73,7 +79,7 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
    * Web Application - Frontend-focused development
    */
   web: {
-    defaultMetaAgents: ["atenea", "hermes", "hefesto", "frontend_specialist"],
+    defaultMetaAgents: ["atenea", "hermes", "hades", "frontend_specialist"],
     defaultAgents: {
       sisyphus: {
         model: "claude-sonnet-4-20250217",
@@ -119,7 +125,7 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
    * Backend API - Server-side development
    */
   backend: {
-    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultMetaAgents: ["atenea", "hermes", "hades"],
     defaultAgents: {
       sisyphus: {
         model: "claude-sonnet-4-20250217",
@@ -165,7 +171,7 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
    * Full Stack - Both frontend and backend
    */
   fullstack: {
-    defaultMetaAgents: ["atenea", "hermes", "hefesto", "frontend_specialist"],
+    defaultMetaAgents: ["atenea", "hermes", "hades", "frontend_specialist"],
     defaultAgents: {
       sisyphus: {
         model: "claude-sonnet-4-20250217",
@@ -221,7 +227,7 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
    * CLI Tool - Command-line applications
    */
   cli: {
-    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultMetaAgents: ["atenea", "hermes", "hades"],
     defaultAgents: {
       sisyphus: {
         model: "claude-sonnet-4-20250217",
@@ -267,7 +273,7 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
    * Library/Package - Reusable code libraries
    */
   library: {
-    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultMetaAgents: ["atenea", "hermes", "hades"],
     defaultAgents: {
       sisyphus: {
         model: "claude-sonnet-4-20250217",
@@ -313,7 +319,7 @@ const PROJECT_CONFIG_TEMPLATES: Record<ProjectTypeId, ProjectConfigTemplate> = {
    * Other - Generic or mixed project types
    */
   other: {
-    defaultMetaAgents: ["atenea", "hermes", "hefesto"],
+    defaultMetaAgents: ["atenea", "hermes", "hades"],
     defaultAgents: {
       sisyphus: {
         model: "claude-sonnet-4-20250217",
@@ -650,6 +656,7 @@ async function showMessage(
 function createMetaAgents(
   selectedIds: string[],
   baseModel: string,
+  namespace: string,
 ): Record<string, MetaAgentDef> {
   const templates: Record<string, MetaAgentDef> = {
     atenea: {
@@ -696,7 +703,7 @@ function createMetaAgents(
         },
       ],
     },
-    hefesto: {
+    hades: {
       base_model: baseModel,
       delegates_to: ["sisyphus", "hephaestus"],
       temperature: 0.3,
@@ -751,7 +758,7 @@ function createMetaAgents(
   const result: Record<string, MetaAgentDef> = {};
   for (const id of selectedIds) {
     if (templates[id]) {
-      result[id] = templates[id];
+      result[withNamespace(namespace, id)] = templates[id];
     }
   }
 
@@ -822,7 +829,7 @@ function createSettings(
   );
 
   return {
-    namespace_prefix: "olimpus",
+    namespace_prefix: DEFAULT_NAMESPACE_PREFIX,
     max_delegation_depth: 3,
     background_parallelization: backgroundParallelization
       ? {
@@ -863,6 +870,7 @@ function buildConfig(answers: WizardAnswers): OlimpusConfig {
   const primaryModel = categoryFirst ? "" : answers.primary_model;
   const researchModel = categoryFirst ? "" : answers.research_model;
   const projectTemplate = getProjectTemplate(answers.project_type);
+  const namespace = DEFAULT_NAMESPACE_PREFIX;
 
   // Determine meta-agents to use: user selection or project template defaults
   const metaAgentIds =
@@ -913,7 +921,7 @@ function buildConfig(answers: WizardAnswers): OlimpusConfig {
   return {
     meta_agents:
       metaAgentIds.length > 0
-        ? createMetaAgents(metaAgentIds, primaryModel)
+        ? createMetaAgents(metaAgentIds, primaryModel, namespace)
         : undefined,
     providers: createProviderConfig(primaryModel, researchModel),
     settings: createSettings(
@@ -1089,7 +1097,7 @@ export async function runWizardNonInteractive(
     project_type: presetAnswers.project_type ?? "web",
     language: presetAnswers.language ?? "typescript",
     model_strategy: presetAnswers.model_strategy ?? "explicit_models",
-    meta_agents: presetAnswers.meta_agents ?? ["atenea", "hermes", "hefesto"],
+    meta_agents: presetAnswers.meta_agents ?? ["atenea", "hermes", "hades"],
     primary_model: presetAnswers.primary_model ?? "claude-sonnet-4-20250217",
     research_model: presetAnswers.research_model ?? "claude-haiku-4-5",
     settings: presetAnswers.settings ?? [

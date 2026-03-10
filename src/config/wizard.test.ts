@@ -174,19 +174,19 @@ describe("runWizardNonInteractive", () => {
   test("respects custom meta_agents answer", async () => {
     // Arrange
     const answers: Partial<WizardAnswers> = {
-      meta_agents: ["atenea", "hefesto"],
+      meta_agents: ["atenea", "hades"],
     };
 
     // Act
     const result = await runWizardNonInteractive(answers);
 
     // Assert
-    expect(result?.answers.meta_agents).toEqual(["atenea", "hefesto"]);
+    expect(result?.answers.meta_agents).toEqual(["atenea", "hades"]);
     expect(result?.config.meta_agents).toBeDefined();
-    expect(result?.config.meta_agents?.atenea).toBeDefined();
-    expect(result?.config.meta_agents?.hefesto).toBeDefined();
+    expect(result?.config.meta_agents?.["olimpus:atenea"]).toBeDefined();
+    expect(result?.config.meta_agents?.["olimpus:hades"]).toBeDefined();
     // hermes should not be in the config
-    expect(result?.config.meta_agents?.hermes).toBeUndefined();
+    expect(result?.config.meta_agents?.["olimpus:hermes"]).toBeUndefined();
   });
 
   test("respects custom models answer", async () => {
@@ -570,7 +570,7 @@ describe("runWizardNonInteractive", () => {
       language: "python",
       primary_model: "claude-sonnet-4-20250217",
       research_model: "claude-haiku-4-5",
-      meta_agents: ["atenea", "hefesto"],
+      meta_agents: ["atenea", "hades"],
       settings: ["ultrawork_enabled"],
       skills_path: "/path/to/skills",
     };
@@ -583,7 +583,7 @@ describe("runWizardNonInteractive", () => {
     expect(result?.answers.language).toBe("python");
     expect(result?.answers.primary_model).toBe("claude-sonnet-4-20250217");
     expect(result?.answers.research_model).toBe("claude-haiku-4-5");
-    expect(result?.answers.meta_agents).toEqual(["atenea", "hefesto"]);
+    expect(result?.answers.meta_agents).toEqual(["atenea", "hades"]);
     expect(result?.answers.settings).toEqual(["ultrawork_enabled"]);
     expect(result?.answers.skills_path).toBe("/path/to/skills");
   });
@@ -625,7 +625,7 @@ describe("runWizardNonInteractive", () => {
     // Arrange
     const answers: Partial<WizardAnswers> = {
       project_type: "other",
-      meta_agents: ["atenea", "hermes", "hefesto"],
+      meta_agents: ["atenea", "hermes", "hades"],
     };
 
     // Act
@@ -640,8 +640,8 @@ describe("runWizardNonInteractive", () => {
 
     // Should have default meta-agents in the config
     expect(result?.answers.meta_agents).toBeInstanceOf(Array);
-    expect(result?.config.meta_agents?.atenea).toBeDefined();
-    expect(result?.config.meta_agents?.hermes).toBeDefined();
-    expect(result?.config.meta_agents?.hefesto).toBeDefined();
+    expect(result?.config.meta_agents?.["olimpus:atenea"]).toBeDefined();
+    expect(result?.config.meta_agents?.["olimpus:hermes"]).toBeDefined();
+    expect(result?.config.meta_agents?.["olimpus:hades"]).toBeDefined();
   });
 });

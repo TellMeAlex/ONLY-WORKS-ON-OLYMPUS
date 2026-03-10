@@ -46,6 +46,7 @@ import {
 } from "../src/templates/loader.js";
 import { type Template } from "../src/templates/types.js";
 import {
+  isManagedWorktreePath,
   normalizeForCompare,
   parseWorktreeListPorcelain,
   stripHeadsPrefix,
@@ -202,17 +203,15 @@ function worktreesCleanCommand(args: string[]): number {
 
   try {
     const repoRoot = runGit(process.cwd(), ["rev-parse", "--show-toplevel"]);
-    const managedRoot = path.join(repoRoot, ".sisyphus", "worktrees");
-
     const porcelain = runGit(repoRoot, ["worktree", "list", "--porcelain"]);
     const allWorktrees = parseWorktreeListPorcelain(porcelain);
 
     const managed = allWorktrees.filter((wt) =>
-      normalizeForCompare(wt.path).startsWith(normalizeForCompare(managedRoot)),
+      isManagedWorktreePath(wt.path, repoRoot),
     );
 
     if (managed.length === 0) {
-      console.log("\n✅ No managed .sisyphus worktrees found.\n");
+      console.log("\n✅ No managed Olimpus worktrees found.\n");
       return 0;
     }
 
@@ -344,7 +343,10 @@ function showWorktreesHelp(): void {
   console.log(`
 Usage: olimpus worktrees <subcommand> [options]
 
-Manage Olimpus-managed worktrees under .sisyphus/worktrees.
+Manage Olimpus-managed worktrees under:
+- .sisyphus/worktrees
+- .auto-claude/worktrees/tasks
+- /tmp/olympus-pr* (temporary maintenance worktrees)
 
 Subcommands:
   clean             Remove stale worktrees safely
@@ -368,7 +370,7 @@ Usage: olimpus worktrees clean [options]
 Cleanup stale worktrees created by Olimpus orchestration.
 
 A worktree is removable when all are true:
-  - It is under .sisyphus/worktrees/
+  - It is under a managed Olimpus worktree path
   - It is not the active worktree in .sisyphus/boulder.json
   - Its branch is merged into the default branch (master/main)
   - It has no uncommitted changes

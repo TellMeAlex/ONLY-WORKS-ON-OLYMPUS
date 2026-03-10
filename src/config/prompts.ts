@@ -73,8 +73,8 @@ export const META_AGENT_PRESETS = [
     enabled_by_default: true,
   },
   {
-    id: "hefesto",
-    name: "Hefesto",
+    id: "hades",
+    name: "Hades",
     description: "Implementation & building",
     enabled_by_default: true,
   },
@@ -366,7 +366,7 @@ Press Enter to generate configuration or Ctrl+C to cancel...
 You can now use Olimpus! Try:
   • "ulw implement a new feature" - Ultrawork mode
   • "research API patterns" - Research mode
-  • "@atenea plan architecture" - Strategic planning
+  • "@<namespace>:atenea plan architecture" - Strategic planning
 
 Edit your config at anytime: ~/.config/opencode/olimpus.jsonc
 `,

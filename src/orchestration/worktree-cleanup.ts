@@ -38,6 +38,23 @@ export function normalizeForCompare(input: string): string {
   return resolve(input);
 }
 
+export function isManagedWorktreePath(
+  worktreePath: string,
+  repoRoot: string,
+): boolean {
+  const normalizedPath = normalizeForCompare(worktreePath);
+  const managedRoots = [
+    normalizeForCompare(`${repoRoot}/.sisyphus/worktrees`),
+    normalizeForCompare(`${repoRoot}/.auto-claude/worktrees/tasks`),
+  ];
+
+  if (managedRoots.some((root) => normalizedPath.startsWith(root))) {
+    return true;
+  }
+
+  return /\/tmp\/olympus-pr[0-9-]/.test(normalizedPath);
+}
+
 export function stripHeadsPrefix(ref: string | undefined): string {
   if (!ref) {
     return "";
