@@ -5,6 +5,8 @@ import type {
   CategoryConfig,
 } from "./schema";
 
+const LEGACY_OLIMPUS_AGENT_IDS = new Set(["atenea", "hermes", "hades"]);
+
 /**
  * Translate OlimpusConfig to oh-my-opencode compatible config format.
  * Extracts only oh-my-opencode passthrough fields (agents, categories, disabled_hooks).
@@ -24,9 +26,19 @@ export function translateToOMOConfig(config: OlimpusConfig): OMOPluginConfig {
  * Returns only the meta_agents section (olimpus-specific extension).
  */
 export function extractMetaAgentDefs(
-  config: OlimpusConfig
+  config: OlimpusConfig,
 ): Record<string, MetaAgentDef> {
-  return config.meta_agents ?? {};
+  const defs = config.meta_agents ?? {};
+  const filtered: Record<string, MetaAgentDef> = {};
+
+  for (const [name, def] of Object.entries(defs)) {
+    if (LEGACY_OLIMPUS_AGENT_IDS.has(name)) {
+      continue;
+    }
+    filtered[name] = def;
+  }
+
+  return filtered;
 }
 
 /**

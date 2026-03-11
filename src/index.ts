@@ -8,11 +8,12 @@ import {
   type PluginInterface,
 } from "./plugin/wrapper.js";
 import { MetaAgentRegistry } from "./agents/registry.js";
-import { ateneo, hermes, hades } from "./agents/definitions/index.js";
+import { atenea, hermes, hades } from "./agents/definitions/index.js";
 import { loadOlimpusSkills } from "./skills/loader.js";
 import { AnalyticsStorage } from "./analytics/storage.js";
 import { success, warning, bold } from "./utils/colors.js";
-import { join } from "path";
+import { join } from "node:path";
+import type { OlimpusConfig } from "./config/schema.js";
 
 /**
  * OlimpusPlugin - Meta-orchestrator plugin for OpenCode
@@ -30,7 +31,7 @@ import { join } from "path";
  * - If oh-my-opencode fails: throws with helpful message
  */
 const OlimpusPlugin: Plugin = async (input: PluginInput) => {
-  let config;
+  let config: OlimpusConfig;
 
   try {
     config = await loadOlimpusConfig(input.directory);
@@ -62,17 +63,22 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
     });
   }
 
-  const registry = new MetaAgentRegistry(maxDepth, loggerConfig, analyticsStorage);
+  const registry = new MetaAgentRegistry(
+    maxDepth,
+    loggerConfig,
+    analyticsStorage,
+  );
 
+  const namespace = config.settings?.namespace_prefix ?? "olimpus";
   const configMetaAgents = extractMetaAgentDefs(config);
   for (const [name, def] of Object.entries(configMetaAgents)) {
     registry.register(name, def);
   }
 
   const builtInMetaAgents = [
-    { name: "olimpus:atenea", def: ateneo },
-    { name: "olimpus:hermes", def: hermes },
-    { name: "olimpus:hades", def: hades },
+    { name: `${namespace}:atenea`, def: atenea },
+    { name: `${namespace}:hermes`, def: hermes },
+    { name: `${namespace}:hades`, def: hades },
   ];
 
   for (const { name, def } of builtInMetaAgents) {
@@ -93,8 +99,6 @@ const OlimpusPlugin: Plugin = async (input: PluginInput) => {
   }
 
   const baseConfigHandler = pluginInterface.config;
-  const namespace = config.settings?.namespace_prefix ?? "olimpus";
-
   pluginInterface.config = async (configInput: Config) => {
     if (baseConfigHandler) {
       await baseConfigHandler(configInput);

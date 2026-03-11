@@ -76,7 +76,7 @@ describe("mergePluginInterfaces", () => {
 
     // Call the merged config handler
     if (merged.config) {
-      await merged.config({ agent: {} } as any);
+      await merged.config({ agent: {} } as unknown as Record<string, unknown>);
     }
 
     // Base should execute first, then extension
@@ -97,7 +97,7 @@ describe("mergePluginInterfaces", () => {
     const merged = mergePluginInterfaces(base, extension);
 
     if (merged.config) {
-      await merged.config({ agent: {} } as any);
+      await merged.config({ agent: {} } as unknown as Record<string, unknown>);
     }
 
     expect(executedHandlers).toEqual(["base"]);
@@ -131,15 +131,21 @@ describe("mergePluginInterfaces", () => {
     const merged = mergePluginInterfaces(base, extension);
 
     if (merged.event) {
-      await merged.event({ event: {} as any });
+      await merged.event({ event: {} as unknown });
     }
 
     expect(events).toEqual(["base", "extension"]);
   });
 
   test("extension auth overwrites base auth", () => {
-    const baseAuth = { provider: "base", methods: [] } as any;
-    const extensionAuth = { provider: "extension", methods: [] } as any;
+    const baseAuth = {
+      provider: "base",
+      methods: [],
+    } as unknown as NonNullable<PluginInterface["auth"]>;
+    const extensionAuth = {
+      provider: "extension",
+      methods: [],
+    } as unknown as NonNullable<PluginInterface["auth"]>;
 
     const base: PluginInterface = {
       auth: baseAuth,
@@ -152,5 +158,33 @@ describe("mergePluginInterfaces", () => {
     const merged = mergePluginInterfaces(base, extension);
 
     expect(merged.auth?.provider).toBe("extension");
+  });
+
+  test("command.execute.before runs extension first", async () => {
+    const executionOrder: string[] = [];
+
+    const base: PluginInterface = {
+      "command.execute.before": async () => {
+        executionOrder.push("base");
+      },
+    };
+
+    const extension: PluginInterface = {
+      "command.execute.before": async () => {
+        executionOrder.push("extension");
+      },
+    };
+
+    const merged = mergePluginInterfaces(base, extension);
+    const hook = merged["command.execute.before"];
+
+    if (hook) {
+      await (hook as (input: unknown, output: unknown) => Promise<void>)(
+        {},
+        { parts: [] },
+      );
+    }
+
+    expect(executionOrder).toEqual(["extension", "base"]);
   });
 });

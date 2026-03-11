@@ -18,28 +18,28 @@ describe("MetaAgentRegistry", () => {
     test("exports single delegation edge in DOT format", () => {
       // Arrange
       const registry = new MetaAgentRegistry();
-      registry.trackDelegation("atenea", "hefesto");
+      registry.trackDelegation("atenea", "hades");
 
       // Act
       const graph = registry.exportDelegationGraph();
 
       // Assert
-      expect(graph).toBe('digraph {\n  "atenea" -> "hefesto";\n}\n');
+      expect(graph).toBe('digraph {\n  "atenea" -> "hades";\n}\n');
     });
 
     test("exports multiple delegation edges in DOT format", () => {
       // Arrange
       const registry = new MetaAgentRegistry();
-      registry.trackDelegation("atenea", "hefesto");
-      registry.trackDelegation("hefesto", "hermes");
+      registry.trackDelegation("atenea", "hades");
+      registry.trackDelegation("hades", "hermes");
       registry.trackDelegation("hermes", "atenea");
 
       // Act
       const graph = registry.exportDelegationGraph();
 
       // Assert
-      expect(graph).toContain('  "atenea" -> "hefesto";');
-      expect(graph).toContain('  "hefesto" -> "hermes";');
+      expect(graph).toContain('  "atenea" -> "hades";');
+      expect(graph).toContain('  "hades" -> "hermes";');
       expect(graph).toContain('  "hermes" -> "atenea";');
       // Check that graph has the structure of digraph with content
       expect(graph).toContain("digraph {");
@@ -51,16 +51,16 @@ describe("MetaAgentRegistry", () => {
       // Arrange
       const registry = new MetaAgentRegistry();
       registry.trackDelegation("sisyphus", "atenea");
-      registry.trackDelegation("atenea", "hefesto");
-      registry.trackDelegation("hefesto", "hermes");
+      registry.trackDelegation("atenea", "hades");
+      registry.trackDelegation("hades", "hermes");
 
       // Act
       const graph = registry.exportDelegationGraph();
 
       // Assert
       expect(graph).toContain('  "sisyphus" -> "atenea";');
-      expect(graph).toContain('  "atenea" -> "hefesto";');
-      expect(graph).toContain('  "hefesto" -> "hermes";');
+      expect(graph).toContain('  "atenea" -> "hades";');
+      expect(graph).toContain('  "hades" -> "hermes";');
       // Verify it starts with "digraph {" and ends with "}"
       expect(graph).toMatch(/^digraph \{/);
       expect(graph).toMatch(/\}\n$/);
@@ -192,16 +192,16 @@ describe("MetaAgentRegistry", () => {
     test("exports graph with circular dependencies", () => {
       // Arrange: Create a cycle
       const registry = new MetaAgentRegistry();
-      registry.trackDelegation("atenea", "hefesto");
-      registry.trackDelegation("hefesto", "hermes");
+      registry.trackDelegation("atenea", "hades");
+      registry.trackDelegation("hades", "hermes");
       registry.trackDelegation("hermes", "atenea");
 
       // Act
       const graph = registry.exportDelegationGraph();
 
       // Assert: Cycle should be visible in the graph
-      expect(graph).toContain('  "atenea" -> "hefesto";');
-      expect(graph).toContain('  "hefesto" -> "hermes";');
+      expect(graph).toContain('  "atenea" -> "hades";');
+      expect(graph).toContain('  "hades" -> "hermes";');
       expect(graph).toContain('  "hermes" -> "atenea";');
 
       // Verify circular dependency detection works
@@ -402,14 +402,14 @@ describe("MetaAgentRegistry", () => {
     test("handles mixed case agent names", () => {
       // Arrange
       const registry = new MetaAgentRegistry();
-      registry.trackDelegation("Atenea", "hefesto");
+      registry.trackDelegation("Atenea", "hades");
       registry.trackDelegation("HEFESTO", "hermes");
 
       // Act
       const graph = registry.exportDelegationGraph();
 
       // Assert: Case should be preserved
-      expect(graph).toContain('  "Atenea" -> "hefesto";');
+      expect(graph).toContain('  "Atenea" -> "hades";');
       expect(graph).toContain('  "HEFESTO" -> "hermes";');
     });
 
@@ -455,22 +455,22 @@ describe("MetaAgentRegistry", () => {
 
       // Main agent delegates to different meta-agents based on task
       registry.trackDelegation("sisyphus", "atenea");
-      registry.trackDelegation("sisyphus", "hefesto");
+      registry.trackDelegation("sisyphus", "hades");
       registry.trackDelegation("sisyphus", "hermes");
 
       // Meta-agents may delegate to each other
-      registry.trackDelegation("atenea", "hefesto"); // Atenea might need build tasks
-      registry.trackDelegation("hefesto", "hermes"); // Hefesto might need research
+      registry.trackDelegation("atenea", "hades"); // Atenea might need build tasks
+      registry.trackDelegation("hades", "hermes");
 
       // Act
       const graph = registry.exportDelegationGraph();
 
       // Assert: Should export complete delegation graph
       expect(graph).toContain('  "sisyphus" -> "atenea";');
-      expect(graph).toContain('  "sisyphus" -> "hefesto";');
+      expect(graph).toContain('  "sisyphus" -> "hades";');
       expect(graph).toContain('  "sisyphus" -> "hermes";');
-      expect(graph).toContain('  "atenea" -> "hefesto";');
-      expect(graph).toContain('  "hefesto" -> "hermes";');
+      expect(graph).toContain('  "atenea" -> "hades";');
+      expect(graph).toContain('  "hades" -> "hermes";');
 
       const edgeCount = (graph.match(/->/g) || []).length;
       expect(edgeCount).toBe(5);

@@ -388,6 +388,31 @@ Add the analytics configuration to your `olimpus.jsonc`:
 
 Olimpus provides CLI commands for managing analytics data:
 
+#### Cleanup Stale Worktrees
+
+Remove stale orchestration worktrees under managed Olimpus paths safely.
+
+```bash
+# Preview removable worktrees (safe default)
+bun run olimpus worktrees clean --dry-run
+
+# Remove eligible worktrees
+bun run olimpus worktrees clean --force
+
+# Show detailed skip reasons
+bun run olimpus worktrees clean --force --verbose
+```
+
+Removal criteria:
+
+- Worktree is under one managed path:
+  - `.sisyphus/worktrees/`
+  - `.auto-claude/worktrees/tasks/`
+  - `/tmp/olympus-pr*`
+- Worktree is not active in `.sisyphus/boulder.json`
+- Worktree branch is already merged into the default branch (`master` or `main`)
+- Worktree has no uncommitted changes
+
 #### Show Analytics Dashboard
 
 Display analytics metrics and routing statistics:
@@ -872,7 +897,7 @@ src/
 │   └── definitions/
 │       ├── atenea.ts      # Strategic planning meta-agent
 │       ├── hermes.ts      # Communication meta-agent
-│       └── hefesto.ts     # Implementation meta-agent
+│       └── hades.ts       # Implementation meta-agent
 ├── plugin/
 │   ├── wrapper.ts         # Plugin interface merging
 │   └── wrapper.test.ts    # Merge tests
@@ -930,8 +955,7 @@ Response
 
 - **meta-agent.ts**: Factory for generating AgentConfig from MetaAgentDef
 - **registry.ts**: Tracks meta-agent definitions, detects circular dependencies
-- **definitions/**: Built-in meta-agent implementations (atenea, hermes,
-  hefesto)
+- **definitions/**: Built-in meta-agent implementations (atenea, hermes, hades)
 
 #### 4. Plugin Wrapper (src/plugin/wrapper.ts)
 

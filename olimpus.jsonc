@@ -15,7 +15,7 @@
   // • Relentless execution: Tasks don't end halfway (todo_continuation=true)
   // • Specialized workers: sisyphus, oracle, librarian, explore, metis, momus, atlas, prometheus
   //
-  // META-AGENTS defined here (atenea, hermes, hefesto, frontend_specialist) are routers
+  // META-AGENTS defined here (atenea, hermes, hades, frontend_specialist) are routers
   // that intelligently delegate to the builtin oh-my-opencode agents above.
   //
   // QUICK START: Include "ulw" or "ultrawork" in your prompt to activate
@@ -120,9 +120,9 @@
     },
 
     // ========================================================================
-    // Hefesto - Implementation & Building
+    // Hades - Implementation & Building
     // ========================================================================
-    "hefesto": {
+    "hades": {
       "base_model": "claude-3-5-sonnet-20241022",
       "delegates_to": ["sisyphus", "hephaestus"],
       "temperature": 0.3,  // Lower temperature for more deterministic output

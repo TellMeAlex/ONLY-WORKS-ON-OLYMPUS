@@ -4,8 +4,10 @@ import OhMyOpenCodePlugin from "oh-my-opencode";
 import {
   translateToOMOConfig,
   extractMetaAgentDefs,
+  type OMOPluginConfig,
 } from "../config/translator";
 import type { OlimpusConfig, MetaAgentDef } from "../config/schema";
+import { createStartWorkWorktreeHook } from "../orchestration/start-work-worktree";
 
 /**
  * PluginInterface is an alias for the Hooks type returned by plugins.
@@ -30,7 +32,7 @@ export type PluginInterface = Hooks;
  */
 export async function createOlimpusWrapper(
   input: PluginInput,
-  config: OlimpusConfig
+  config: OlimpusConfig,
 ): Promise<PluginInterface> {
   // Step 1: Translate to OMO config (extracts agents, categories, disabled_hooks)
   const omoConfig = translateToOMOConfig(config);
@@ -43,12 +45,12 @@ export async function createOlimpusWrapper(
 
   // Step 4: Create Olimpus extension handlers (stub for now)
   // Will be populated by Task 6 with factory that converts meta-agents to agent configs
-  const olimpusExtension = createOlimpusExtension(metaAgents, omoConfig);
+  const olimpusExtension = createOlimpusExtension(input, metaAgents, omoConfig);
 
   // Step 5: Merge base PluginInterface with Olimpus extensions
   const mergedInterface = mergePluginInterfaces(
     omoPluginInterface,
-    olimpusExtension
+    olimpusExtension,
   );
 
   // Step 6: Return combined PluginInterface
@@ -68,15 +70,24 @@ export async function createOlimpusWrapper(
  * @returns Stub PluginInterface for Olimpus extensions
  */
 function createOlimpusExtension(
+  pluginInput: PluginInput,
   metaAgents: Record<string, MetaAgentDef>,
-  omoConfig: any
+  omoConfig: OMOPluginConfig,
 ): PluginInterface {
+  const startWorkWorktreeHook = createStartWorkWorktreeHook(
+    pluginInput.directory,
+  );
+
   return {
     config: async (input: Config) => {
       // Stub config handler for future meta-agent setup
       // Task 6 will implement factory that converts meta-agents to agent configs
       // and calls this handler with the generated config
+      void input;
+      void metaAgents;
+      void omoConfig;
     },
+    "command.execute.before": startWorkWorktreeHook,
   };
 }
 
@@ -95,7 +106,7 @@ function createOlimpusExtension(
  */
 export function mergePluginInterfaces(
   base: PluginInterface,
-  extension: PluginInterface
+  extension: PluginInterface,
 ): PluginInterface {
   const merged: PluginInterface = {};
 
@@ -124,7 +135,7 @@ export function mergePluginInterfaces(
   // Chain event handlers (base first, then extension)
   if (base.event || extension.event) {
     merged.event = async (
-      input: Parameters<NonNullable<typeof base.event>>[0]
+      input: Parameters<NonNullable<typeof base.event>>[0],
     ) => {
       if (base.event) {
         await base.event(input);
@@ -158,14 +169,34 @@ export function mergePluginInterfaces(
     const extensionHook = extension[hookName];
 
     if (baseHook || extensionHook) {
-      (merged[hookName] as any) = async (...args: any[]) => {
-        if (baseHook) {
-          await (baseHook as any)(...args);
-        }
-        if (extensionHook) {
-          await (extensionHook as any)(...args);
-        }
-      };
+      const baseCallable = baseHook as
+        | ((...args: unknown[]) => Promise<unknown> | unknown)
+        | undefined;
+      const extensionCallable = extensionHook as
+        | ((...args: unknown[]) => Promise<unknown> | unknown)
+        | undefined;
+
+      (merged[hookName] as unknown as (...args: unknown[]) => Promise<void>) =
+        async (...args: unknown[]) => {
+          const extensionFirst = hookName === "command.execute.before";
+
+          if (extensionFirst) {
+            if (extensionCallable) {
+              await extensionCallable(...args);
+            }
+            if (baseCallable) {
+              await baseCallable(...args);
+            }
+            return;
+          }
+
+          if (baseCallable) {
+            await baseCallable(...args);
+          }
+          if (extensionCallable) {
+            await extensionCallable(...args);
+          }
+        };
     }
   }
 
